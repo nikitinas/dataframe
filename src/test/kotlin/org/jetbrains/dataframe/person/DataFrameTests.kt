@@ -1138,6 +1138,44 @@ class DataFrameTests : BaseTest() {
         res["weight"][0] shouldBe res["age"][1]
         res["weight"][0] as Double should ToleranceMatcher(0.9, 1.0)
     }
+
+    @Test
+    fun crossTab() {
+        val crossed = typed.crossTab {
+            crossRows(name)
+            crossColumns(city) byVals listOf("Moscow", "Milan", "Tokyo")
+        }
+
+        with(crossed.count()) {
+            print()
+
+            ncol() shouldBe 4
+            nrow() shouldBe 3
+
+            // There are 2 Marks from Moscow
+            get("Moscow")[2] shouldBe 2
+            get("column")[2] shouldBe "Mark"
+
+            // We have no Alices from Milan
+            get("Milan")[0] shouldBe 0
+            get("column")[0] shouldBe "Alice"
+        }
+
+        with(crossed.aggregate(-1) { age.mean() }) {
+            print()
+
+            ncol() shouldBe 4
+            nrow() shouldBe 3
+
+            // Ages of Marks are 20 and 30
+            get("Moscow")[2] shouldBe 25.0
+            get("column")[2] shouldBe "Mark"
+
+            // We have no Alices from Milan
+            get("Milan")[0] shouldBe -1.0
+            get("column")[0] shouldBe "Alice"
+        }
+    }
     
     @Test
     fun `aggregate into grouped column`() {

@@ -53,18 +53,20 @@ class CrossTabAggregator<T>(
     val colsSchema = colsSchema_ ?: colsValues.distinct().toList()
 }
 
-inline fun <T, reified V> CrossTabAggregator<T>.aggregate(defaultValue: V? = null, block: DataFrame<T>.(DataFrame<T>) -> V): AnyFrame {
-    val map = mutableSetOf<Pair<Any?, Any?>>()
+inline fun <T, reified V> CrossTabAggregator<T>.aggregate(defaultValue: V? = null, crossinline block: DataFrame<T>.(DataFrame<T>) -> V): AnyFrame {
+    val indices = mutableMapOf<Pair<Any?, Any?>, MutableList<Int>>()
 
     (0 until rowsValues.size).forEach { index ->
-        map.add(rowsValues[index] to colsValues[index])
+        indices.getOrPut(rowsValues[index] to colsValues[index]) {
+            mutableListOf()
+        }.add(index)
     }
 
     val resMap = mutableMapOf<Pair<Any?, Any?>, V>()
-    map.forEach { (k1, k2) ->
-        val filtered = df.filter { rowsValues.eq(k1) && colsValues.eq(k2) }
+    indices.forEach { (key, valInd) ->
+        val filtered = df[valInd]
         val res = block(filtered, filtered)
-        resMap[k1 to k2] = res
+        resMap[key] = res
     }
 
     val data = colsSchema.mapTo(mutableListOf(column("column", rowsSchema))) { colName ->

@@ -100,7 +100,6 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
     operator fun <C> ColumnSelector<T, C>.invoke() = this(this@SelectReceiver, this@SelectReceiver)
 
     operator fun <C> ColumnReference<C>.invoke(newName: String) = rename(newName)
-    infix fun <C> DataColumn<C>.into(newName: String) = (this as ColumnReference<C>).rename(newName)
 
     infix fun String.and(other: String) = toColumnDef() and other.toColumnDef()
     infix fun <C> String.and(other: ColumnSet<C>) = toColumnDef() and other
@@ -119,3 +118,5 @@ inline fun <reified C> ColumnSet<*>.colsDfsOf(noinline filter: (ColumnWithPath<C
 
 fun <C> ColumnSet<*>.colsOf(type: KType, filter: (DataColumn<C>) -> Boolean = { true }): ColumnSet<C> = colsInternal { it.isSubtypeOf(type) && filter(it.typed()) } as ColumnSet<C>
 inline fun <reified C> ColumnSet<*>.colsOf(noinline filter: (DataColumn<C>) -> Boolean = { true }) = colsOf(getType<C>(), filter)
+
+internal interface AnyReceiver<out T>: SelectReceiver<T>, SortReceiver<T>, ColumnValuesReceiver<T>

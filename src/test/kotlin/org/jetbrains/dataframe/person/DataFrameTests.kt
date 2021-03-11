@@ -1129,7 +1129,7 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun corr() {
-        val fixed = typed.fillNulls {weight}.with(60)
+        val fixed = typed.fillNulls { weight }.with(60)
         val res = fixed.corr()
         res.print()
         res.ncol() shouldBe 3
@@ -1141,6 +1141,9 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun crossTab() {
+
+        typed.cross { name }.with { city }
+
         val crossed = typed.crossTab {
             crossRows(name)
             crossColumns(city) byVals listOf("Moscow", "Milan", "Tokyo")

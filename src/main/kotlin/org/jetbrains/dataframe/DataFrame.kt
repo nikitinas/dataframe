@@ -17,8 +17,8 @@ import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.toIndices
 import kotlin.reflect.KProperty
 
-internal open class SelectReceiverImpl<T>(df: DataFrameBase<T>, allowMissingColumns: Boolean) :
-    DataFrameReceiver<T>(df, allowMissingColumns), SelectReceiver<T>
+internal open class AnyReceiverImpl<T>(df: DataFrameBase<T>, allowMissingColumns: Boolean) :
+    DataFrameReceiver<T>(df, allowMissingColumns), AnyReceiver<T>
 
 data class DataFrameSize(val ncol: Int, val nrow: Int) {
     override fun toString() = "$nrow x $ncol"
@@ -28,12 +28,13 @@ typealias Predicate<T> = (T) -> Boolean
 
 typealias ColumnPath = List<String>
 
+typealias DataFrameSelector<T, R> = Selector<DataFrame<T>, R>
 
-typealias DataFrameSelector<T, R> = DataFrame<T>.(DataFrame<T>) -> R
-
-typealias ColumnsSelector<T, C> = SelectReceiver<T>.(SelectReceiver<T>) -> ColumnSet<C>
+typealias ColumnsSelector<T, C> = Selector<SelectReceiver<T>, ColumnSet<C>>
 
 typealias ColumnSelector<T, C> = SelectReceiver<T>.(SelectReceiver<T>) -> ColumnReference<C>
+
+internal typealias AnyColumnsSelector<T, C> = Selector<AnyReceiver<T>, ColumnSet<C>>
 
 fun <T, C> DataFrame<T>.createSelector(selector: ColumnsSelector<T, C>) = selector
 
@@ -70,7 +71,7 @@ internal fun <T, C> DataFrame<T>.getColumnsWithPaths(
 fun <T, C> DataFrame<T>.getColumnsWithPaths(selector: ColumnsSelector<T, C>): List<ColumnWithPath<C>> =
     getColumnsWithPaths(UnresolvedColumnsPolicy.Fail, selector)
 
-internal fun <T, C> DataFrame<T>.getColumnPaths(selector: ColumnsSelector<T, C>): List<ColumnPath> =
+internal fun <T, C> DataFrame<T>.getColumnPaths(selector: AnyColumnsSelector<T, C>): List<ColumnPath> =
     selector.toColumns().resolve(ColumnResolutionContext(this, UnresolvedColumnsPolicy.Fail)).map { it.path }
 
 internal fun <T, C> DataFrame<T>.getGroupColumns(selector: ColumnsSelector<T, DataRow<C>>) =

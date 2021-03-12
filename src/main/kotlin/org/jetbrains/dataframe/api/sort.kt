@@ -97,9 +97,9 @@ internal fun <T, G> GroupedDataFrame<T, G>.doSortBy(selector: SortColumnsSelecto
 
     return plain()
             .update { groups }
-            .with { it.doSortBy(selector, UnresolvedColumnsPolicy.Skip) }
+            .with { it?.doSortBy(selector, UnresolvedColumnsPolicy.Skip) }
             .doSortBy(selector as SortColumnsSelector<T, *>, UnresolvedColumnsPolicy.Skip)
-            .toGrouped { it.getTable(groups.name()).typed() }
+            .toGrouped { it.frameColumn(groups.name()).typed() }
 }
 
 internal enum class SortFlag { Reversed, NullsLast }

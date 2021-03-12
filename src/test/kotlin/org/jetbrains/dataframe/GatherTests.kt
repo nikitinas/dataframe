@@ -115,7 +115,7 @@ class GatherTests {
         val mode by column<String>()
         val gathered = typed.gather { except(name) }.into(mode)
 
-        val expected = typed.groupBy { name }.updateGroups {
+        val expected = typed.groupBy { name }.mapNotNullGroups {
 
             val cols = columns().drop(1).map { it.asGroup() } // drop 'name' column
             val dataRows = cols.map { it[0] }

@@ -176,6 +176,8 @@ internal fun <T, K, V> SpreadClause<T, K, V, SpreadContext.GroupAggregator<T>>.e
     }.takeUnless { it?.classifier == Any::class }
 
     df.groupBy(keyColumn).forEach { key, group ->
+        if(group == null) return@forEach
+
         val keyValue = key[0] as K
         val path = columnPath(keyValue) ?: return@forEach
 

@@ -55,7 +55,7 @@ class CodeGeneratorImpl : CodeGenerator {
 
     }
 
-    private enum class CompareResult {
+    internal enum class CompareResult {
         Equals,
         IsSuper,
         IsDerived,
@@ -77,7 +77,7 @@ class CodeGeneratorImpl : CodeGenerator {
     }
 
     // Data Frame Schema
-    private data class FieldInfo(val fieldName: String, val columnName: String, private val type: KType?, val columnKind: ColumnKind = ColumnKind.Value, val childScheme: Scheme? = null) {
+    internal data class FieldInfo(val fieldName: String, val columnName: String, private val type: KType?, val columnKind: ColumnKind = ColumnKind.Value, val childScheme: Scheme? = null) {
 
         init {
             when(columnKind) {
@@ -113,7 +113,7 @@ class CodeGeneratorImpl : CodeGenerator {
         }
     }
 
-    private class Scheme(val values: List<FieldInfo>) {
+    internal class Scheme(val values: List<FieldInfo>) {
 
         val byColumn: Map<String, FieldInfo> by lazy { values.associateBy { it.columnName } }
 

@@ -188,6 +188,8 @@ interface DataFrame<out T> : DataFrameBase<T> {
 
     fun <R> mapIndexed(action: (Int, DataRow<T>) -> R) = rows().mapIndexed(action)
 
+    fun <R> mapIndexedNotNull(action: (Int, DataRow<T>) -> R?) = rows().mapIndexedNotNull(action)
+
     fun size() = DataFrameSize(ncol(), nrow())
 }
 

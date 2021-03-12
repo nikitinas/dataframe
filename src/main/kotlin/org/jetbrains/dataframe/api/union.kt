@@ -7,7 +7,7 @@ import org.jetbrains.dataframe.io.valueColumnName
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
 
-fun Iterable<AnyFrame>.union() = merge(asList())
+fun Iterable<AnyFrame?>.union() = merge(filterNotNull())
 
 fun DataColumn<AnyFrame>.union() = values.union()
 

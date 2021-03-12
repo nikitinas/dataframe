@@ -48,14 +48,14 @@ class DataFrameTreeTests : BaseTest() {
     val nameInGroup = nameAndCity.subcolumn<String>("name")
 
     @Test
-    fun create(){
+    fun create() {
         val nameAndCity by column(typed.name, typed.city)
         val df3 = nameAndCity + typed.age + typed.weight
         df3 shouldBe df2
     }
 
     @Test
-    fun createFrameColumn(){
+    fun createFrameColumn() {
         val rowsColumn by column(typed[0..3], typed[4..5], typed[6..6])
         val df = dataFrameOf(rowsColumn).toGrouped { rowsColumn }
         val res = df.ungroup()
@@ -63,7 +63,7 @@ class DataFrameTreeTests : BaseTest() {
     }
 
     @Test
-    fun createFrameColumn2(){
+    fun createFrameColumn2() {
         val id by column(typed.indices)
         val groups by id.map { typed[it..it] }
         val df = dataFrameOf(id, groups)
@@ -75,7 +75,7 @@ class DataFrameTreeTests : BaseTest() {
     }
 
     @Test
-    fun `select dfs under group`(){
+    fun `select dfs under group`() {
         df2.select { nameAndCity.colsDfsOf<String>() } shouldBe typed2.select { nameAndCity.name }
         df2.select { nameAndCity.colsDfsOf<String?>() } shouldBe typed2.select { nameAndCity.name and nameAndCity.city }
     }
@@ -97,7 +97,12 @@ class DataFrameTreeTests : BaseTest() {
         typed2.select { nameAndCity.cols(0..1) } shouldBe typed2.nameAndCity.select { all() }
         typed2.select { nameAndCity.col(1) } shouldBe typed2.select { nameAndCity.city }
         typed2.select { nameAndCity.col("city") } shouldBe typed2.select { nameAndCity.city }
-        typed2.select { nameAndCity.cols("city", "name") } shouldBe typed2.select { nameAndCity.city and nameAndCity.name }
+        typed2.select {
+            nameAndCity.cols(
+                "city",
+                "name"
+            )
+        } shouldBe typed2.select { nameAndCity.city and nameAndCity.name }
         typed2.select { nameAndCity.cols(name, city) } shouldBe typed2.select { nameAndCity.all() }
         typed2.select { nameAndCity[name] } shouldBe typed2.nameAndCity.select { name }
         typed2.select { nameAndCity.cols().drop(1) } shouldBe typed2.nameAndCity.select { city }
@@ -156,7 +161,7 @@ class DataFrameTreeTests : BaseTest() {
     }
 
     @Test
-    fun `move`(){
+    fun `move`() {
 
         val actual = typed2.move { nameAndCity.name }.into("name")
         actual.columnNames() shouldBe listOf("nameAndCity", "name", "age", "weight")
@@ -171,7 +176,7 @@ class DataFrameTreeTests : BaseTest() {
     }
 
     @Test
-    fun `distinct`(){
+    fun `distinct`() {
 
         val duplicated = typed2 + typed2
         duplicated.nrow() shouldBe typed2.nrow() * 2
@@ -181,7 +186,7 @@ class DataFrameTreeTests : BaseTest() {
     }
 
     @Test
-    fun selectDfs(){
+    fun selectDfs() {
 
         val cols = typed2.select { colsDfs { it.hasNulls } }
         cols shouldBe typed2.select { nameAndCity.city and weight }
@@ -202,18 +207,20 @@ class DataFrameTreeTests : BaseTest() {
     fun spread() {
 
         val modified = df.append("Alice", 55, "Moscow", 100)
-        val df2 =  modified.move { name and city }.under("nameAndCity")
+        val df2 = modified.move { name and city }.under("nameAndCity")
         val typed2 = df2.typed<GroupedPerson>()
 
-        val expected = modified.typed<Person>().select { name and city and age }.groupBy { city }.sortBy { city.nullsLast }.map { key1, group ->
-            val ages = group.groupBy { name }
-            val cityName = key1.city ?: "null"
-            val isList = ages.groups.asIterable().any { it.nrow() > 1 }
-            ages.map { key2, group ->
-                val value = if(isList) group.age.toList() else group.age.single()
-                (cityName to key2.name) to value
-            }.sortedBy { it.first.second }
-        }.flatten()
+        val expected =
+            modified.typed<Person>().select { name and city and age }.groupBy { city }.sortBy { city.nullsLast }
+                .mapNotNull { key1, group ->
+                    val ages = group.groupBy { name }
+                    val cityName = key1.city ?: "null"
+                    val isList = ages.groups.asIterable().any { it!!.nrow() > 1 }
+                    ages.mapNotNull { key2, group ->
+                        val value = if (isList) group.age.toList() else group.age.single()
+                        (cityName to key2.name) to value
+                    }.sortedBy { it.first.second }
+                }.flatten()
 
         val cities by columnGroup()
 
@@ -223,29 +230,32 @@ class DataFrameTreeTests : BaseTest() {
             val group = this[cities]
             group.ncol() shouldBe typed.city.ndistinct
             group.columns().forEach {
-                if(it.name() == "Moscow") it.type shouldBe getType<List<Int>?>()
+                if (it.name() == "Moscow") it.type shouldBe getType<List<Int>?>()
                 else it.type shouldBe getType<Int?>()
             }
 
             val actual = group.columns().sortedBy { it.name() }.flatMap { col ->
-                rows().sortedBy { it[name] }.map { row -> (col.name() to row[name]) to row[col] }.filter { it.second != null }
+                rows().sortedBy { it[name] }.map { row -> (col.name() to row[name]) to row[col] }
+                    .filter { it.second != null }
             }
             actual shouldBe expected
         }
 
         typed2.select { nameAndCity and age }.spread { nameAndCity.city }.by { age }.into("cities").check()
         df2.select(nameAndCity, age).spread { it[nameAndCity][city] }.by(age).into(cities).check()
-        df2.select(GroupedPerson::nameAndCity, GroupedPerson::age).spread { it[GroupedPerson::nameAndCity][NameAndCity::city] }.by(GroupedPerson::age).into("cities").check()
+        df2.select(GroupedPerson::nameAndCity, GroupedPerson::age)
+            .spread { it[GroupedPerson::nameAndCity][NameAndCity::city] }.by(GroupedPerson::age).into("cities").check()
         df2.select("nameAndCity", "age").spread { it["nameAndCity"]["city"] }.by("age").into("cities").check()
     }
 
     @Test
-    fun `spread grouped column`(){
-        val grouped = typed.group { age and weight}.into("info")
+    fun `spread grouped column`() {
+        val grouped = typed.group { age and weight }.into("info")
         val spread = grouped.spread { city }.by("info").execute()
         spread.ncol() shouldBe typed.city.ndistinct + 1
 
-        val expected = typed.rows().groupBy { it.name to (it.city ?: "null") }.mapValues { it.value.map { it.age to it.weight } }
+        val expected =
+            typed.rows().groupBy { it.name to (it.city ?: "null") }.mapValues { it.value.map { it.age to it.weight } }
         val dataCols = spread.columns().drop(1)
 
         dataCols.forEach { (it.isGroup() || it.isTable()) shouldBe true }
@@ -257,22 +267,25 @@ class DataFrameTreeTests : BaseTest() {
                 val name = names[row]
                 val value = col[row]
                 val expValues = expected[name to city]
-                when{
-                    expValues == null -> when(value){
-                            null -> {}
-                            is AnyRow -> value.isEmpty() shouldBe true
-                            is AnyFrame -> value.isEmpty() shouldBe true
+                when {
+                    expValues == null -> when (value) {
+                        null -> {
+                        }
+                        is AnyRow -> value.isEmpty() shouldBe true
+                        is AnyFrame -> value.isEmpty() shouldBe true
                     }
                     expValues.size == 1 -> {
                         value shouldNotBe null
-                        val single = if(value is AnyRow) value else if(value is AnyFrame) value[0] else fail("invalid value type")
+                        val single =
+                            if (value is AnyRow) value else if (value is AnyFrame) value[0] else fail("invalid value type")
                         single.size() shouldBe 2
                         single.int("age") to single.nint("weight") shouldBe expValues[0]
                     }
                     else -> {
                         val df = value as? AnyFrame
                         df shouldNotBe null
-                        df!!.map { int("age") to nint("weight") }.sortedBy { it.first } shouldBe expValues.sortedBy { it.first }
+                        df!!.map { int("age") to nint("weight") }
+                            .sortedBy { it.first } shouldBe expValues.sortedBy { it.first }
                     }
                 }
             }
@@ -290,7 +303,7 @@ class DataFrameTreeTests : BaseTest() {
         nameGroup.name() shouldBe "name"
         nameGroup.isGroup() shouldBe true
         nameGroup.ncol() shouldBe typed2.nameAndCity.name.map { it.length }.max()
-        nameGroup.columnNames() shouldBe (1 .. nameGroup.ncol()).map { "char$it" }
+        nameGroup.columnNames() shouldBe (1..nameGroup.ncol()).map { "char$it" }
     }
 
     @Test
@@ -303,7 +316,7 @@ class DataFrameTreeTests : BaseTest() {
     }
 
     @Test
-    fun `all except`(){
+    fun `all except`() {
         val info by columnGroup()
         val moved = typed.group { except(name) }.into(info)
         val actual = moved.select { except(info) }
@@ -312,7 +325,7 @@ class DataFrameTreeTests : BaseTest() {
     }
 
     @Test
-    fun `move and group`(){
+    fun `move and group`() {
         val info by columnGroup()
         val moved = typed.group { except(name) }.into(info)
         val grouped = moved.groupBy { except(info) }.plain()
@@ -325,16 +338,16 @@ class DataFrameTreeTests : BaseTest() {
         val info by columnGroup()
         val moved = typed.group { except(name) }.into(info)
         val merged = moved.mergeRows { info }
-        val grouped = typed.groupBy { name }.updateGroups { remove { name } }
+        val grouped = typed.groupBy { name }.mapNotNullGroups { remove { name } }
         val expected = grouped.plain().rename(grouped.groups).into(info)
         merged shouldBe expected
     }
 
     @Test
-    fun `update grouped column to table`(){
+    fun `update grouped column to table`() {
         val info by columnGroup()
         val grouped = typed.group { age and weight }.into(info)
-        val updated = grouped.update(info).with2 { row, column -> column.asGroup().df}
+        val updated = grouped.update(info).with2 { row, column -> column.asGroup().df }
         val col = updated[info.name()]
         col.kind() shouldBe ColumnKind.Frame
         val table = col.asTable()
@@ -365,7 +378,7 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun parentColumnTest() {
-        val res = typed2.move { colsDfs { it.depth > 0 } }.toTop { it.parent!!.name + "-" + it.name}
+        val res = typed2.move { colsDfs { it.depth > 0 } }.toTop { it.parent!!.name + "-" + it.name }
         res.ncol shouldBe 4
         res.columnNames() shouldBe listOf("nameAndCity-name", "nameAndCity-city", "age", "weight")
     }
@@ -374,23 +387,27 @@ class DataFrameTreeTests : BaseTest() {
     fun `group cols`() {
 
         val joined = typed2.move { allDfs() }.into { path(it.path.joinToString(".")) }
-        val grouped = joined.group { nameContains(".") }.into { it.name.substringBefore(".")}
-        val expected = typed2.rename { nameAndCity.all() }.into { it.path.joinToString(".")}
+        val grouped = joined.group { nameContains(".") }.into { it.name.substringBefore(".") }
+        val expected = typed2.rename { nameAndCity.all() }.into { it.path.joinToString(".") }
         grouped shouldBe expected
     }
 
     @Test
     fun rename() {
-        val res = typed2.rename { nameAndCity.all() }.into { it.name.capitalize()}
+        val res = typed2.rename { nameAndCity.all() }.into { it.name.capitalize() }
         res.nameAndCity.columnNames() shouldBe typed2.nameAndCity.columnNames().map { it.capitalize() }
     }
 
     @Test
-    fun moveAfter(){
+    fun moveAfter() {
         val moved = typed2.move { age }.after { nameAndCity.name }
         moved.ncol() shouldBe 2
         moved.nameAndCity.ncol() shouldBe 3
-        moved.nameAndCity.select { all() } shouldBe dataFrameOf(typed2.nameAndCity.name, typed2.age, typed2.nameAndCity.city)
+        moved.nameAndCity.select { all() } shouldBe dataFrameOf(
+            typed2.nameAndCity.name,
+            typed2.age,
+            typed2.nameAndCity.city
+        )
     }
 
     @Test

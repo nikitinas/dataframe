@@ -18,7 +18,7 @@ inline fun <reified R, T> DataFrame<T>.add(property: KProperty<R>, noinline expr
     (this + newColumn(property.name, expression))
 
 inline fun <reified R, T, G> GroupedDataFrame<T, G>.add(name: String, noinline expression: RowSelector<G, R>) =
-        updateGroups { add(name, expression) }
+        mapNotNullGroups { add(name, expression) }
 
 inline fun <reified R, T> DataFrame<T>.add(column: ColumnDefinition<R>, noinline expression: RowSelector<T, R>) =
         (this + newColumn(column.name(), expression))

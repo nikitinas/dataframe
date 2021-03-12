@@ -18,8 +18,8 @@ interface DataFrameBase<out T>: SingleColumn<DataRow<T>> {
     fun getGroup(columnName: String) = get(columnName).asGroup()
     fun getGroup(columnPath: ColumnPath): MapColumn<*> = get(columnPath).asGroup()
 
-    fun getTable(columnName: String) = get(columnName).asTable()
-    fun getTable(columnPath: ColumnPath): FrameColumn<*> = get(columnPath).asTable()
+    fun frameColumn(columnName: String) = get(columnName).asTable()
+    fun frameColumn(columnPath: ColumnPath): FrameColumn<*> = get(columnPath).asTable()
 
     operator fun <R> get(column: ColumnReference<R>): DataColumn<R>
     operator fun <R> get(column: ColumnReference<DataRow<R>>): MapColumn<R>

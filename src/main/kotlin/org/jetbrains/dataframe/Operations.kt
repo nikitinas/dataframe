@@ -345,7 +345,7 @@ internal fun KClass<*>.createType(typeArgument: KType?) =
 
 internal inline fun <reified T> createType(typeArgument: KType? = null) = T::class.createType(typeArgument)
 
-fun <T> FrameColumn<T>.union() = if (size > 0) values.union() else df.getRows(emptyList())
+fun <T> FrameColumn<T>.union() = if (size > 0) values.union() else emptyDataFrame(0)
 
 internal fun <T> T.asNullable() = this as T?
 

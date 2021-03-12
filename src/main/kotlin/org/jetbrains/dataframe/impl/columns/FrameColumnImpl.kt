@@ -8,16 +8,12 @@ import org.jetbrains.dataframe.createType
 import java.lang.Exception
 import java.lang.UnsupportedOperationException
 import kotlin.reflect.KType
+import kotlin.reflect.full.withNullability
 
-internal class FrameColumnImpl<T> constructor(override val df: DataFrame<T>, name: String, values: List<DataFrame<T>>)
-    : DataColumnImpl<DataFrame<T>>(values, name, createType<AnyFrame>()), FrameColumn<T> {
+internal class FrameColumnImpl<T> constructor(override val df: DataFrame<T>, name: String, values: List<DataFrame<T>?>)
+    : DataColumnImpl<DataFrame<T>?>(values, name, createType<AnyFrame?>().withNullability(values.any { it == null })), FrameColumn<T> {
 
     constructor(name: String, df: DataFrame<T>, startIndices: Sequence<Int>) : this(df, name, df.splitByIndices(startIndices).toList())
-
-    init {
-        if(values.any{ it == null }) // TODO: cleanup
-            throw Exception()
-    }
 
     override fun rename(newName: String) = FrameColumnImpl(df, newName, values)
 
@@ -25,7 +21,7 @@ internal class FrameColumnImpl<T> constructor(override val df: DataFrame<T>, nam
 
     override fun addParent(parent: MapColumn<*>) = FrameColumnWithParent(parent, this)
 
-    override fun createWithValues(values: List<DataFrame<T>>, hasNulls: Boolean?): DataColumn<DataFrame<T>> {
+    override fun createWithValues(values: List<DataFrame<T>?>, hasNulls: Boolean?): DataColumn<DataFrame<T>?> {
         return DataColumn.create(name, values, values.getBaseSchema())
     }
 

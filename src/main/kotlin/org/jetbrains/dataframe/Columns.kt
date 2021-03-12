@@ -139,8 +139,8 @@ class MapColumnDelegate(val columns: List<AnyCol>): ColumnProvider<AnyRow> {
     override operator fun getValue(thisRef: Any?, property: KProperty<*>): DataColumn<DataRow<*>> = DataColumn.create(property.name, columns.toDataFrame())
 }
 
-class FrameColumnDelegate(val frames: List<AnyFrame>): ColumnProvider<AnyFrame> {
-    override fun getValue(thisRef: Any?, property: KProperty<*>): DataColumn<AnyFrame> = DataColumn.create(property.name, frames)
+class FrameColumnDelegate(val frames: List<AnyFrame?>): ColumnProvider<AnyFrame?> {
+    override fun getValue(thisRef: Any?, property: KProperty<*>): DataColumn<AnyFrame?> = DataColumn.create(property.name, frames)
 }
 
 inline fun <reified T> column(values: Iterable<T>): ColumnProvider<T> = when {

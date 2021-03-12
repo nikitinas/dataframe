@@ -3,7 +3,7 @@ package org.jetbrains.dataframe
 import org.jetbrains.dataframe.columns.DataColumn
 
 fun <T,G> GroupedDataFrame<T, G>.forEach(body: (GroupedDataFrame.Entry<T, G>) -> Unit) = this@forEach.forEach { key, group -> body(GroupedDataFrame.Entry(key, group)) }
-fun <T,G> GroupedDataFrame<T, G>.forEach(body: (key: DataRow<T>, group: DataFrame<G>) -> Unit) =
+fun <T,G> GroupedDataFrame<T, G>.forEach(body: (key: DataRow<T>, group: DataFrame<G>?) -> Unit) =
     keys.forEachIndexed { index, row ->
         val group = groups[index]
         body(row, group)

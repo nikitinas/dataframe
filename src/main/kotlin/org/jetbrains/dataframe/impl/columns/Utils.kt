@@ -82,7 +82,7 @@ internal fun <T> DataColumn<DataRow<T>>.asGroup(): MapColumn<T> = this as MapCol
 internal fun AnyCol.asTable(): FrameColumn<*> = this as FrameColumn<*>
 
 @JvmName("asTableT")
-internal fun <T> DataColumn<DataFrame<T>>.asTable(): FrameColumn<T> = this as FrameColumn<T>
+internal fun <T> DataColumn<DataFrame<T>?>.asTable(): FrameColumn<T> = this as FrameColumn<T>
 internal fun AnyCol.isTable(): Boolean = kind() == ColumnKind.Frame
 internal fun <T> DataColumn<T>.assertIsComparable(): DataColumn<T> {
     if (!type.isSubtypeOf(getType<Comparable<*>?>()))

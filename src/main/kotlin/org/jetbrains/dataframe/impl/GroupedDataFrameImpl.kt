@@ -16,8 +16,8 @@ internal class GroupedDataFrameImpl<T, G>(val df: DataFrame<T>, override val gro
         return filtered[groups].values.union().typed<T>()
     }
 
-    override fun <R> updateGroups(transform: DataFrame<G>.() -> DataFrame<R>) =
-            df.update(groups) { transform(it) }.toGrouped { frameColumn<R>(groups.name()) }
+    override fun <R> mapGroups(transform: Selector<DataFrame<G>?, DataFrame<R>?>) =
+            df.update(groups) { transform(it, it) }.toGrouped { frameColumn<R>(groups.name()) }
 
     override fun plain() = df
 

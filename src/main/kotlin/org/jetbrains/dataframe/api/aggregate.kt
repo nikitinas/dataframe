@@ -40,16 +40,19 @@ data class AggregateClause<T, G>(val df: DataFrame<T>, val selector: ColumnSelec
 
 fun <T, G> DataFrame<T>.aggregate(selector: ColumnSelector<T, DataFrame<G>>) = AggregateClause(this, selector)
 
-internal fun <T, G> doAggregate(df: DataFrame<T>, selector: ColumnSelector<T, DataFrame<G>>, removeColumns: Boolean, body: GroupAggregator<G>): DataFrame<T> {
+internal fun <T, G> doAggregate(df: DataFrame<T>, selector: ColumnSelector<T, DataFrame<G>?>, removeColumns: Boolean, body: GroupAggregator<G>): DataFrame<T> {
 
     val column = df.column(selector)
 
     val (df2, removedNodes) = df.doRemove(selector)
 
     val groupedFrame = column.values.map {
-        val builder = GroupAggregateBuilder(it)
-        body(builder, builder)
-        builder.toDataFrame()
+        if(it == null) null
+        else {
+            val builder = GroupAggregateBuilder(it)
+            body(builder, builder)
+            builder.toDataFrame()
+        }
     }.union()
 
     val removedNode = removedNodes.single()

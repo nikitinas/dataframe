@@ -1,13 +1,8 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.AnyFrame
-import org.jetbrains.dataframe.DataFrame
-import org.jetbrains.dataframe.TypedColumnsFromDataRowBuilder
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.dataFrameOf
 import org.jetbrains.dataframe.impl.columns.typed
 import org.jetbrains.dataframe.impl.createDataCollector
-import org.jetbrains.dataframe.name
 import kotlin.reflect.KType
 
 fun <T> DataFrame<T>.map(body: TypedColumnsFromDataRowBuilder<T>.() -> Unit): AnyFrame {
@@ -28,3 +23,18 @@ fun <T, R> DataColumn<T>.map(type: KType?, transform: (T) -> R): DataColumn<R> {
     values.forEach { collector.add(transform(it)) }
     return collector.toColumn(name) as DataColumn<R>
 }
+
+fun <T,G,R> GroupedDataFrame<T,G>.mapNotNullGroups(transform: DataFrame<G>.() -> DataFrame<R>?) = mapGroups { if(it == null) null else transform(it) }
+
+fun <T,G,R> GroupedDataFrame<T,G>.map(body: (key: DataRow<T>, group: DataFrame<G>?) -> R): List<R> =
+    keys.mapIndexed { index, row ->
+        val group = groups[index]
+        body(row, group)
+    }
+
+fun <T,G,R> GroupedDataFrame<T,G>.mapNotNull(body: (key: DataRow<T>, group: DataFrame<G>) -> R): List<R> =
+    keys.mapIndexedNotNull { index, row ->
+        val group = groups[index]
+        if(group == null) null
+        else body(row, group)
+    }

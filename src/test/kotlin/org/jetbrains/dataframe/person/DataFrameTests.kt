@@ -100,7 +100,7 @@ class DataFrameTests : BaseTest() {
         val res = df.chunked(2)
         res.size shouldBe 4
         res.toList().dropLast(1).forEach {
-            it.nrow() shouldBe 2
+            it!!.nrow() shouldBe 2
         }
     }
 
@@ -1049,7 +1049,7 @@ class DataFrameTests : BaseTest() {
     fun `empty group by`() {
         val ungrouped = typed.filter { false }.groupBy { name }.ungroup()
         ungrouped.nrow() shouldBe 0
-        ungrouped.ncol() shouldBe typed.ncol()
+        ungrouped.ncol() shouldBe 0
     }
 
     @Test
@@ -1165,9 +1165,9 @@ class DataFrameTests : BaseTest() {
         }
         d.ncol() shouldBe 2
         d["info"].isTable() shouldBe true
-        val info = d.getTable("info")
+        val info = d.frameColumn("info")
         info.forEach {
-            it.ncol() shouldBe 2
+            it!!.ncol() shouldBe 2
             it.columnNames() shouldBe listOf("age", "weight")
             it.columns().forEach {
                 it.type.classifier shouldBe Int::class

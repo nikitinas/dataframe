@@ -1,7 +1,5 @@
 buildscript {
-
     repositories {
-        maven { url 'https://dl.bintray.com/kotlin/dokka' }
         mavenCentral()
 
         def repoFolder = new File(jupyterApiTCRepo)
@@ -11,22 +9,18 @@ buildscript {
     }
 
     dependencies {
-        classpath "org.jetbrains.dokka:dokka-gradle-plugin:${dokka_version}"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.kotlin:kotlin-jupyter-api-gradle-plugin:$jupyterApiVersion"
     }
 }
 
 plugins {
-    id "com.jfrog.bintray" version "1.8.1"
     id "org.jetbrains.kotlin.jvm" version "$kotlin_version"
+    id "ru.ileasile.kotlin.publisher" version "$libsPublisherVersion"
 }
 
 apply plugin: 'kotlin'
-apply plugin: 'org.jetbrains.dokka'
 apply plugin: 'application'
-apply plugin: 'maven'
-apply plugin: 'maven-publish'
 apply plugin: "org.jetbrains.kotlin.jupyter.api"
 
 // not neeeded but does not work without
@@ -68,41 +62,7 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     }
 }
 
-// see https://github.com/Kotlin/dokka/issues/42
-task dokkaJavadoc(type: org.jetbrains.dokka.gradle.DokkaTask) {
-    outputFormat = 'javadoc'
-    outputDirectory = javadoc.destinationDir
-
-    reportUndocumented = false
-
-    inputs.dir 'src/main/kotlin'
-}
-
-task javadocJar(type: Jar, dependsOn: dokkaJavadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-// http://stackoverflow.com/questions/11474729/how-to-build-sources-jar-with-gradle
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-//Minimal dokka configuration:
-dokka {
-    outputFormat = 'html'
-//    outputDirectory = "$buildDir/javadoc"
-    outputDirectory = "$projectDir/javadoc"
-
-    // Emit warnings about not documented members. Applies globally, also can be overridden by packageOptions
-    reportUndocumented = false
-
-//    http://kotlinlang.org/docs/reference/kotlin-doc.html#module-and-package-documentation
-    includes = ['docs/packages_info.md']
-}
-
-group 'org.jetbrains.kotlin'
+group 'org.jetbrains.kotlinx'
 
 def detectVersion() {
     def buildNumber = rootProject.findProperty("build.number")
@@ -128,51 +88,37 @@ task detectVersionForTC {
 
 version detectVersion()
 
-artifacts {
-    archives sourcesJar
-}
+kotlinPublications {
+    sonatypeSettings(
+            project.findProperty("kds.sonatype.user"),
+            project.findProperty("kds.sonatype.password"),
+            "dataframe project, v. ${project.version}"
+    )
 
-publishing {
-    publications {
-        maven(MavenPublication) {
-            artifactId projectName
-            groupId group
+    signingCredentials(
+            project.findProperty("kds.sign.key.id"),
+            project.findProperty("kds.sign.key.private"),
+            project.findProperty("kds.sign.key.passphrase")
+    )
 
-            from components.java
-            artifact sourcesJar { classifier "sources" }
-        }
-    }
-}
-
-if (hasProperty('bintray_user') && hasProperty('bintray_key')) {
-
-    bintray {
-
-        // property must be set in ~/.gradle/gradle.properties
-
-        user = bintray_user
-        key = bintray_key
-        publications = ['maven'] //When uploading configuration files
-
-        dryRun = false //Whether to run this as dry-run, without deploying
-        publish = true // If version should be auto published after an upload
-
-        pkg {
-            repo = 'kotlin-datascience'
-            name = projectName
-            vcsUrl = 'https://github.com/nikitinas/dataframe'
-            userOrg = 'kotlin'
-            licenses = ['MIT']
-            publicDownloadNumbers = true
-
-            //Optional version descriptor
-            version {
-                name = project.version //Bintray logical version name
-                desc = '.'
-                released = new Date()
-                vcsTag = 'v' + project.version
+    pom {
+        use(ru.ileasile.kotlin.PomUtilKt) {
+            githubRepo("nikitinas", "dataframe")
+            inceptionYear.set("2021")
+            licenses {
+                apache2()
+            }
+            developers {
+                developer("nikitinas", "Anatoly Nikitin", "Anatoly.Nikitin@jetbrains.com")
             }
         }
+    }
+
+    publication {
+        publicationName = "api"
+        artifactId = projectName
+        description = "Data processing in Kotlin"
+        packageName = artifactId
     }
 }
 compileKotlin {

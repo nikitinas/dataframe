@@ -2,6 +2,7 @@ package org.jetbrains.dataframe.columns
 
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.impl.asList
+import org.jetbrains.dataframe.impl.schema.DataFrameSchema
 import org.jetbrains.dataframe.impl.columns.MapColumnImpl
 import org.jetbrains.dataframe.impl.columns.FrameColumnImpl
 import org.jetbrains.dataframe.impl.columns.ValueImplColumn
@@ -26,8 +27,7 @@ interface DataColumn<out T> : ColumnReference<T>, ColumnProvider<T> {
         fun <T> create(name: String, df: DataFrame<T>, startIndices: Iterable<Int>): FrameColumn<T> =
             create(name, df, startIndices.asSequence())
 
-        fun <T> create(name: String, groups: List<DataFrame<T>?>, df: DataFrame<T>? = null): FrameColumn<T> = FrameColumnImpl(df
-                ?: groups.getBaseSchema(), name, groups)
+        internal fun <T> create(name: String, groups: List<DataFrame<T>?>, schema: Lazy<DataFrameSchema>? = null): FrameColumn<T> = FrameColumnImpl(name, groups, schema)
 
         internal fun <T> createGuess(name: String, values: List<T>, type:KType, defaultValue: T? = null): DataColumn<T> {
             val kClass = type.classifier!! as KClass<*>

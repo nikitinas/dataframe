@@ -351,7 +351,7 @@ class DataFrameTreeTests : BaseTest() {
         val col = updated[info.name()]
         col.kind() shouldBe ColumnKind.Frame
         val table = col.asTable()
-        table.df.columnNames() shouldBe typed.select { age and weight }.columnNames()
+        table.schema.columns.map { it.key }.sorted() shouldBe typed.select { age and weight }.columnNames().sorted()
     }
 
     @Test

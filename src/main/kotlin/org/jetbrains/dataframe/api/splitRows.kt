@@ -65,7 +65,7 @@ fun <T> doSplitRows(df: DataFrame<T>, columns: List<ColumnWithPath<List<*>?>>): 
                     if (col.isTable()) DataColumn.create(
                         col.name(),
                         collector.values as List<AnyFrame?>,
-                        col.asTable().df
+                        lazy { col.asTable().schema }
                     )
                     else collector.toColumn(col.name())
                 }

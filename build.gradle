@@ -175,3 +175,8 @@ if (hasProperty('bintray_user') && hasProperty('bintray_key')) {
         }
     }
 }
+compileKotlin {
+    kotlinOptions {
+        freeCompilerArgs = ["-Xinline-classes"]
+    }
+}

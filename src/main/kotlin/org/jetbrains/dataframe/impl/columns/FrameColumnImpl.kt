@@ -5,24 +5,27 @@ import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.createType
-import java.lang.Exception
+import org.jetbrains.dataframe.impl.schema.DataFrameSchema
+import org.jetbrains.dataframe.impl.schema.extractSchema
+import org.jetbrains.dataframe.impl.schema.intersectSchemas
 import java.lang.UnsupportedOperationException
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
 
-internal class FrameColumnImpl<T> constructor(override val df: DataFrame<T>, name: String, values: List<DataFrame<T>?>)
-    : DataColumnImpl<DataFrame<T>?>(values, name, createType<AnyFrame?>().withNullability(values.any { it == null })), FrameColumn<T> {
+internal class FrameColumnImpl<T> constructor(name: String, values: List<DataFrame<T>?>, schema: Lazy<DataFrameSchema>? = null)
+    : DataColumnImpl<DataFrame<T>?>(values, name, createType<AnyFrame?>().withNullability(values.any { it == null })),
+    FrameColumnInternal<T> {
 
-    constructor(name: String, df: DataFrame<T>, startIndices: Sequence<Int>) : this(df, name, df.splitByIndices(startIndices).toList())
+    constructor(name: String, df: DataFrame<T>, startIndices: Sequence<Int>) : this(name, df.splitByIndices(startIndices).toList())
 
-    override fun rename(newName: String) = FrameColumnImpl(df, newName, values)
+    override fun rename(newName: String) = FrameColumnImpl(newName, values, lazySchema)
 
     override fun defaultValue() = null
 
     override fun addParent(parent: MapColumn<*>) = FrameColumnWithParent(parent, this)
 
     override fun createWithValues(values: List<DataFrame<T>?>, hasNulls: Boolean?): DataColumn<DataFrame<T>?> {
-        return DataColumn.create(name, values, values.getBaseSchema())
+        return DataColumn.create(name, values)
     }
 
     override fun changeType(type: KType) = throw UnsupportedOperationException()
@@ -30,4 +33,10 @@ internal class FrameColumnImpl<T> constructor(override val df: DataFrame<T>, nam
     override fun distinct(): FrameColumn<T> {
         return DataColumn.create(name, values.distinct())
     }
+
+    private val lazySchema = schema ?: lazy {
+        values.mapNotNull { it?.extractSchema() }.intersectSchemas()
+    }
+
+    override val schema by lazySchema
 }

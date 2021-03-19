@@ -79,7 +79,7 @@ internal fun AnyCol.asGroup(): MapColumn<*> = this as MapColumn<*>
 
 @JvmName("asGroupedT")
 internal fun <T> DataColumn<DataRow<T>>.asGroup(): MapColumn<T> = this as MapColumn<T>
-internal fun AnyCol.asTable(): FrameColumn<*> = this as FrameColumn<*>
+internal fun AnyCol.asTable(): FrameColumnInternal<*> = this as FrameColumnInternal<*>
 
 @JvmName("asTableT")
 internal fun <T> DataColumn<DataFrame<T>?>.asTable(): FrameColumn<T> = this as FrameColumn<T>

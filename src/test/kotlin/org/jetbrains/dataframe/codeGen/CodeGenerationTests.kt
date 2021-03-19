@@ -22,9 +22,9 @@ class CodeGenerationTests : BaseTest(){
         val expectedDeclaration = """
             @DataSchema(isOpen = false)
             interface DataFrameType1{
-                val name: kotlin.String
                 val age: kotlin.Int
                 val city: kotlin.String?
+                val name: kotlin.String
                 val weight: kotlin.Int?
             }""".trimIndent()
 
@@ -43,15 +43,15 @@ class CodeGenerationTests : BaseTest(){
         val declaration1 = """
             @DataSchema(isOpen = false)
             interface DataFrameType2{
-                val name: kotlin.String
                 val city: kotlin.String?
+                val name: kotlin.String
             }""".trimIndent()
 
         val declaration2 = """
             @DataSchema(isOpen = false)
             interface DataFrameType1{
-                val nameAndCity: $rowType<DataFrameType2>
                 val age: kotlin.Int
+                val nameAndCity: $rowType<DataFrameType2>
                 val weight: kotlin.Int?
             }""".trimIndent()
 

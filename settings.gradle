@@ -1,1 +1,3 @@
 rootProject.name = projectName
+
+includeBuild("generator")

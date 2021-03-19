@@ -7,6 +7,8 @@ import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.keywords.HardKeywords
+import org.jetbrains.dataframe.keywords.ModifierKeywords
 import org.jetbrains.dataframe.stubs.DataFrameToListNamedStub
 import org.jetbrains.dataframe.stubs.DataFrameToListTypedStub
 import org.jetbrains.kotlinx.jupyter.api.Code
@@ -148,7 +150,13 @@ class CodeGeneratorImpl : CodeGenerator {
 
     }
 
-    private fun String.quoteIfNeeded() = if(contains(charsToQuote)) "`$this`" else this
+    private fun String.needsQuoting(): Boolean {
+        return contains(charsToQuote)
+                || HardKeywords.VALUES.contains(this)
+                || ModifierKeywords.VALUES.contains(this)
+    }
+
+    private fun String.quoteIfNeeded() = if(needsQuoting()) "`$this`" else this
 
     private fun getFields(marker: KClass<*>, withBaseTypes: Boolean): Map<String, FieldInfo> {
         val result = mutableMapOf<String, FieldInfo>()
@@ -185,7 +193,7 @@ class CodeGeneratorImpl : CodeGenerator {
 
     private fun generateValidFieldName(name: String, index: Int, usedNames: Collection<String>): String {
         var result = name
-        val needsQuote = name.contains(charsToQuote)
+        val needsQuote = name.needsQuoting()
         if (needsQuote) {
             result = name.replace("<", "{")
                     .replace(">", "}")

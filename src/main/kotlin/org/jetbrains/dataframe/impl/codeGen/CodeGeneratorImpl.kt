@@ -9,14 +9,11 @@ import org.jetbrains.dataframe.DataRowBase
 import org.jetbrains.dataframe.annotations.ColumnName
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.MapColumn
-import org.jetbrains.dataframe.keywords.HardKeywords
-import org.jetbrains.dataframe.keywords.ModifierKeywords
 import org.jetbrains.dataframe.impl.schema.ColumnSchema
 import org.jetbrains.dataframe.impl.schema.DataFrameSchema
 import org.jetbrains.dataframe.impl.schema.extractSchema
+import org.jetbrains.dataframe.keywords.HardKeywords
+import org.jetbrains.dataframe.keywords.ModifierKeywords
 import org.jetbrains.dataframe.stubs.DataFrameToListNamedStub
 import org.jetbrains.dataframe.stubs.DataFrameToListTypedStub
 import org.jetbrains.kotlinx.jupyter.api.Code

@@ -32,7 +32,7 @@ repositories {
     jcenter()
     maven { url 'https://kotlin.bintray.com/kotlin-datascience' }
 
-    def repoFolder = new File(jupyterApiTCRepo)
+    def repoFolder = new File(projectDir as File, jupyterApiTCRepo as String)
     if(repoFolder.exists()) {
         maven { url repoFolder }
     }

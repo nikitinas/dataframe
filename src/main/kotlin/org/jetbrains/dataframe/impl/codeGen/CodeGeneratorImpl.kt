@@ -409,7 +409,7 @@ internal class CodeGeneratorImpl : CodeGenerator {
                     "${override}val ${field.fieldName}: ${render(field.fieldType)}"
                 }.joinToString() + ") " + baseTypes
 
-        fun converter(argumentName: String) = "$argumentName.df.rows.map { $className(" +
+        fun converter(argumentName: String) = "$argumentName.df.rows().map { $className(" +
                 columnNames.map {
                     val field = scheme.byColumn[it]!!
                     "it[\"${field.columnName}\"] as ${render(field.fieldType)}"

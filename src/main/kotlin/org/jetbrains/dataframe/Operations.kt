@@ -339,9 +339,9 @@ internal fun <T> List<T>.splitByIndices(startIndices: Sequence<Int>): Sequence<L
     }
 }
 
-internal fun KClass<*>.createType(typeArgument: KType?) =
-    if (typeArgument != null) createType(listOf(KTypeProjection.invariant(typeArgument)))
-    else createStarProjectedType(false)
+internal fun KClass<*>.createType(typeArgument: KType? = null, nullable: Boolean = false) =
+    if (typeArgument != null) createType(listOf(KTypeProjection.invariant(typeArgument)), nullable)
+    else createStarProjectedType(nullable)
 
 internal inline fun <reified T> createType(typeArgument: KType? = null) = T::class.createType(typeArgument)
 

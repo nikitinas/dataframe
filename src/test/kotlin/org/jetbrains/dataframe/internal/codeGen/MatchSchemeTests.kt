@@ -1,9 +1,10 @@
-package org.jetbrains.dataframe.codeGen
+package org.jetbrains.dataframe.internal.codeGen
 
 import io.kotlintest.shouldBe
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.annotations.DataSchema
-import org.jetbrains.dataframe.impl.codeGen.CodeGeneratorImpl
+import org.jetbrains.dataframe.api.generateCode
+import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
 import org.jetbrains.dataframe.io.readJsonStr
 import org.junit.Test
 
@@ -73,10 +74,10 @@ class MatchSchemeTests {
     @Test
     fun `marker is reused`(){
 
-        val codeGen = CodeGeneratorImpl()
-        codeGen.generateExtensionProperties(DataRecord::class)
-        codeGen.generate(typed, :: typed) shouldBe null
-        val generated = codeGen.generate(df, :: df)!!
+        val codeGen = ReplCodeGenerator.create()
+        codeGen.process(DataRecord::class)
+        codeGen.process(typed, :: typed) shouldBe null
+        val generated = codeGen.process(df, :: df)!!
         generated.declarations.split("\n").size shouldBe 1
     }
 
@@ -85,9 +86,15 @@ class MatchSchemeTests {
     @Test
     fun `marker is implemented`(){
 
-        val codeGen = CodeGeneratorImpl()
-        codeGen.generateExtensionProperties(DataRecord::class)
-        val generated = codeGen.generate(modified, ::modified)!!
+        val codeGen = ReplCodeGenerator.create()
+        codeGen.process(DataRecord::class)
+        val generated = codeGen.process(modified, ::modified)!!
         generated.declarations.contains(DataRecord::class.simpleName!!) shouldBe true
+    }
+
+    @Test
+    fun printSchema(){
+        val res = df.generateCode(false, true)
+        println(res)
     }
 }

@@ -7,7 +7,9 @@ import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.images.Image
+import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
 import org.jetbrains.dataframe.impl.codeGen.CodeGeneratorImpl
+import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
 import org.junit.Test
 
 class PlaylistJsonTest {
@@ -196,8 +198,8 @@ class PlaylistJsonTest {
                 DataFrameType9::class,
                 DataFrameType10::class,
                 DataRecord::class)
-        val codeGen = CodeGeneratorImpl()
-        return types.mapNotNull { codeGen.generateExtensionProperties(it) }
+        val codeGen = ReplCodeGenerator.create()
+        return types.map { codeGen.process(it) }
     }
 
     val path = "data/playlistItems.json"

@@ -1,7 +1,7 @@
 package org.jetbrains.dataframe.impl.columns
 
 import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.impl.schema.DataFrameSchema
+import org.jetbrains.dataframe.internal.schema.DataFrameSchema
 
 internal interface FrameColumnInternal<out T> : FrameColumn<T> {
     val schema: DataFrameSchema

@@ -3,15 +3,74 @@ package org.jetbrains.dataframe.person
 import io.kotlintest.fail
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldNotBe
-import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.AnyFrame
+import org.jetbrains.dataframe.AnyRow
+import org.jetbrains.dataframe.ColumnKind
+import org.jetbrains.dataframe.DataFrame
+import org.jetbrains.dataframe.DataFrameBase
+import org.jetbrains.dataframe.DataRow
+import org.jetbrains.dataframe.DataRowBase
+import org.jetbrains.dataframe.after
 import org.jetbrains.dataframe.annotations.DataSchema
+import org.jetbrains.dataframe.asIterable
+import org.jetbrains.dataframe.by
+import org.jetbrains.dataframe.colsDfsOf
+import org.jetbrains.dataframe.column
+import org.jetbrains.dataframe.columnGroup
+import org.jetbrains.dataframe.columnList
 import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.impl.codeGen.CodeGeneratorImpl
+import org.jetbrains.dataframe.dataFrameOf
+import org.jetbrains.dataframe.distinct
+import org.jetbrains.dataframe.execute
+import org.jetbrains.dataframe.filter
+import org.jetbrains.dataframe.forEach
+import org.jetbrains.dataframe.get
+import org.jetbrains.dataframe.getType
+import org.jetbrains.dataframe.group
+import org.jetbrains.dataframe.groupBy
+import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
+import org.jetbrains.dataframe.impl.codeGen.InterfaceGenerationMode
+import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
+import org.jetbrains.dataframe.impl.codeGen.generate
+import org.jetbrains.dataframe.impl.codeGen.process
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.typed
+import org.jetbrains.dataframe.indices
+import org.jetbrains.dataframe.into
+import org.jetbrains.dataframe.intoRows
+import org.jetbrains.dataframe.inward
+import org.jetbrains.dataframe.isEmpty
+import org.jetbrains.dataframe.isGroup
+import org.jetbrains.dataframe.map
+import org.jetbrains.dataframe.mapNotNull
+import org.jetbrains.dataframe.mapNotNullGroups
+import org.jetbrains.dataframe.max
+import org.jetbrains.dataframe.mergeRows
+import org.jetbrains.dataframe.move
+import org.jetbrains.dataframe.moveTo
+import org.jetbrains.dataframe.ncol
+import org.jetbrains.dataframe.nrow
+import org.jetbrains.dataframe.plus
+import org.jetbrains.dataframe.print
+import org.jetbrains.dataframe.remove
+import org.jetbrains.dataframe.rename
+import org.jetbrains.dataframe.select
+import org.jetbrains.dataframe.single
+import org.jetbrains.dataframe.sortBy
+import org.jetbrains.dataframe.split
+import org.jetbrains.dataframe.spread
+import org.jetbrains.dataframe.subcolumn
+import org.jetbrains.dataframe.toGrouped
+import org.jetbrains.dataframe.toTop
+import org.jetbrains.dataframe.typed
+import org.jetbrains.dataframe.under
+import org.jetbrains.dataframe.ungroup
+import org.jetbrains.dataframe.update
+import org.jetbrains.dataframe.with
+import org.jetbrains.dataframe.with2
 import org.junit.Test
 
 class DataFrameTreeTests : BaseTest() {
@@ -356,7 +415,7 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun extensionPropertiesTest() {
-        val code = CodeGeneratorImpl().generateExtensionProperties(GroupedPerson::class)
+        val code = CodeGenerator.create().generate<GroupedPerson>(interfaceMode = InterfaceGenerationMode.None, extensionProperties = true).declarations
         val dataFrameBase = DataFrameBase::class.qualifiedName
         val dataFrameRowBase = DataRowBase::class.qualifiedName
         val dataFrameRow = DataRow::class.qualifiedName

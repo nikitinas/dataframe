@@ -4,6 +4,7 @@ import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
+import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
 import org.jetbrains.dataframe.io.toHTML
 import org.jetbrains.dataframe.stubs.DataFrameToListNamedStub
 import org.jetbrains.dataframe.stubs.DataFrameToListTypedStub
@@ -19,7 +20,7 @@ internal class Integration : JupyterIntegration(){
 
     override fun Builder.onLoaded() {
 
-        val codeGen = CodeGenerator.create()
+        val codeGen = ReplCodeGenerator.create()
 
         render<AnyFrame> { HTML(it.toHTML()) }
         render<AnyRow> { it.toDataFrame() }
@@ -32,25 +33,25 @@ internal class Integration : JupyterIntegration(){
         import("org.jetbrains.dataframe.io.*")
 
         updateVariable<AnyFrame> { df, property ->
-            codeGen.generate(df, property)?.let {
+            codeGen.process(df, property)?.let {
                 val code = it.with(property.name)
                 execute(code).name
             }
         }
 
         updateVariable<DataFrameToListNamedStub> { stub, prop ->
-            val code = codeGen.generate(stub).with(prop.name)
+            val code = codeGen.process(stub).with(prop.name)
             execute(code).name
         }
 
         updateVariable<DataFrameToListTypedStub> { stub, prop ->
-            val code = codeGen.generate(stub).with(prop.name)
+            val code = codeGen.process(stub).with(prop.name)
             execute(code).name
         }
 
         fun KotlinKernelHost.addDataSchemas(classes: List<KClass<*>>) {
             val code = classes.mapNotNull {
-                codeGen.generateExtensionProperties(it)
+                codeGen.process(it)
             }.joinToString("\n").trim()
 
             if (code.isNotEmpty()) {

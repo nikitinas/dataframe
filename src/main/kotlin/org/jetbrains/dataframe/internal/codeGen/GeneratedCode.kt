@@ -1,4 +1,4 @@
-package org.jetbrains.dataframe.impl.codeGen
+package org.jetbrains.dataframe.internal.codeGen
 
 import org.jetbrains.kotlinx.jupyter.api.Code
 import org.jetbrains.kotlinx.jupyter.api.VariableName

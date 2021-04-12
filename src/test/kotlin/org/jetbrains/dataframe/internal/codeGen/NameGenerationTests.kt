@@ -1,10 +1,13 @@
-package org.jetbrains.dataframe.codeGen
+package org.jetbrains.dataframe.internal.codeGen
 
 import io.kotlintest.shouldBe
 import org.jetbrains.dataframe.annotations.ColumnName
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.dataFrameOf
-import org.jetbrains.dataframe.impl.codeGen.CodeGeneratorImpl
+import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
+import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
+import org.jetbrains.dataframe.impl.codeGen.process
+import org.jetbrains.dataframe.internal.schema.extractSchema
 import org.junit.Test
 
 class NameGenerationTests {
@@ -22,12 +25,12 @@ class NameGenerationTests {
     @Test
     fun `interface generation`(){
 
-        val codeGen = CodeGeneratorImpl()
-        val code = codeGen.generate(df)
+        val codeGen = CodeGenerator.create()
+        val code = codeGen.generate(df.extractSchema(), "DataType", true, false, isOpen = false, emptyList()).first
 
         val expected ="""
             @DataSchema(isOpen = false)
-            interface DataFrameType1{
+            interface DataType{
             	@ColumnName("first column")
                 val `first column`: kotlin.Int
             	@ColumnName("second column")
@@ -35,14 +38,14 @@ class NameGenerationTests {
             }
         """.trimIndent()
 
-        code!!.declarations shouldBe expected
+        code.declarations shouldBe expected
     }
 
     @Test
     fun `properties generation`(){
 
-        val codeGen = CodeGeneratorImpl()
-        val code = codeGen.generateExtensionProperties(DataRecord::class)!!.split("\n")
+        val codeGen = ReplCodeGenerator.create()
+        val code = codeGen.process<DataRecord>().split("\n")
         code.size shouldBe 4
         code.forEach {
             it.count { it == '`' } shouldBe 2

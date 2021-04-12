@@ -2,7 +2,7 @@ package org.jetbrains.dataframe.columns
 
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.impl.asList
-import org.jetbrains.dataframe.impl.schema.DataFrameSchema
+import org.jetbrains.dataframe.internal.schema.DataFrameSchema
 import org.jetbrains.dataframe.impl.columns.MapColumnImpl
 import org.jetbrains.dataframe.impl.columns.FrameColumnImpl
 import org.jetbrains.dataframe.impl.columns.ValueImplColumn

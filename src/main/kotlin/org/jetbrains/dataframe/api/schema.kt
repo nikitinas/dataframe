@@ -1,7 +1,14 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.impl.codeGen.CodeGeneratorImpl
+import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
+import org.jetbrains.dataframe.internal.schema.extractSchema
 
 fun AnyFrame.schema(markerName: String? = null): String {
-    return CodeGeneratorImpl().generateInterfaceDeclarations(this, markerName ?: "DataRecord", generateExtensionProperties = false).joinToString("\n")
+    return CodeGenerator.create().generate(
+        extractSchema(),
+        markerName ?: "DataRecord",
+        fields = true,
+        extensionProperties = false,
+        isOpen = true
+    ).first.declarations
 }

@@ -5,9 +5,9 @@ import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.createType
-import org.jetbrains.dataframe.impl.schema.DataFrameSchema
-import org.jetbrains.dataframe.impl.schema.extractSchema
-import org.jetbrains.dataframe.impl.schema.intersectSchemas
+import org.jetbrains.dataframe.internal.schema.DataFrameSchema
+import org.jetbrains.dataframe.internal.schema.extractSchema
+import org.jetbrains.dataframe.internal.schema.intersectSchemas
 import java.lang.UnsupportedOperationException
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability

@@ -1,4 +1,4 @@
-package org.jetbrains.dataframe.impl.schema
+package org.jetbrains.dataframe.internal.schema
 
 import org.jetbrains.dataframe.AnyFrame
 import org.jetbrains.dataframe.ColumnKind
@@ -6,7 +6,35 @@ import org.jetbrains.dataframe.baseType
 import org.jetbrains.dataframe.getType
 import kotlin.reflect.full.withNullability
 
-internal inline class DataFrameSchema(val columns: Map<String, ColumnSchema>)
+internal class DataFrameSchema(val columns: Map<String, ColumnSchema>) {
+
+    val sortedColumns by lazy { columns.asIterable().sortedBy { it.key } }
+
+    fun compare(other: DataFrameSchema): CompareResult {
+        if (this === other) return CompareResult.Equals
+        var result = CompareResult.Equals
+        columns.forEach {
+            val otherColumn = other.columns[it.key]
+            if (otherColumn == null)
+                result = result.combine(CompareResult.IsDerived)
+            else
+                result = result.combine(it.value.compare(otherColumn))
+            if (result == CompareResult.None) return CompareResult.None
+        }
+        other.columns.forEach {
+            val thisField = columns[it.key]
+            if (thisField == null) {
+                result = result.combine(CompareResult.IsSuper)
+                if (result == CompareResult.None) return CompareResult.None
+            }
+        }
+        return result
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is DataFrameSchema && compare(other).isEqual()
+    }
+}
 
 internal fun AnyFrame.extractSchema() = DataFrameSchema(columns().map { it.name() to it.getColumnType() }.toMap())
 

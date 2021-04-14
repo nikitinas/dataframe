@@ -152,7 +152,7 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
                     "${override}val ${it.fieldName}: ${it.renderFieldType()}"
                 }.joinToString() + ") " + baseTypes
 
-        fun converter(argumentName: String) = "$argumentName.df.rows.map { $className(" +
+        fun converter(argumentName: String) = "$argumentName.df.rows().map { $className(" +
                 fields.map {
                     "it[\"${it.columnName}\"] as ${it.renderFieldType()}"
                 }.joinToString() + ")}"

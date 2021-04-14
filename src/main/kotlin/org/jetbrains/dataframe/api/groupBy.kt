@@ -15,7 +15,7 @@ fun <T> DataFrame<T>.groupBy(cols: Iterable<Column>) = groupBy { cols.toColumnSe
 fun <T> DataFrame<T>.groupBy(vararg cols: KProperty<*>) = groupBy { cols.toColumns() }
 fun <T> DataFrame<T>.groupBy(vararg cols: String) = groupBy { cols.toColumns() }
 fun <T> DataFrame<T>.groupBy(vararg cols: Column) = groupBy { cols.toColumns() }
-fun <T> DataFrame<T>.groupBy(cols: ColumnsSelector<T, *>): GroupedDataFrame<T, T> {
+fun <T> DataFrame<T>.groupBy(cols: ColumnValuesSelector<T, *>): GroupedDataFrame<T, T> {
 
    val tree = collectTree(cols)
 

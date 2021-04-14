@@ -6,7 +6,7 @@ import org.jetbrains.dataframe.addPath
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnWithPath
 
-internal class ColumnWithPathImpl<T> internal constructor(override val data: DataColumn<T>, override val path: ColumnPath,
+internal open class ColumnWithPathImpl<T> internal constructor(override val data: DataColumn<T>, override val path: ColumnPath,
                                                           override val df: DataFrameBase<*>
 ) : ColumnWithPath<T> {
     override val parent by lazy {

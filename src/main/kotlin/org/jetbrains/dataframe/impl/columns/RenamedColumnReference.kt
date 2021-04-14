@@ -1,8 +1,9 @@
 package org.jetbrains.dataframe.impl.columns
 
-import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.ColumnResolutionContext
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.ColumnWithPath
+import org.jetbrains.dataframe.rename
 
 internal class RenamedColumnReference<C>(val source: ColumnReference<C>, val name: String) : ColumnReference<C> {
 
@@ -13,3 +14,4 @@ internal class RenamedColumnReference<C>(val source: ColumnReference<C>, val nam
 
     override fun name() = name
 }
+

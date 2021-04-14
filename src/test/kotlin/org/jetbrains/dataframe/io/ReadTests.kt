@@ -35,6 +35,11 @@ class ReadTests {
     }
 
     @Test
+    fun read2(){
+        DataFrame.read("data/2020-11-02.json")
+    }
+
+    @Test
     fun readFrameColumnEmptySlice(){
         val data = """
             [ [], [ {"a": [{"q":2},{"q":3}] } ] ]

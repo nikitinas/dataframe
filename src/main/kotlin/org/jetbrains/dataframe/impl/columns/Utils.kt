@@ -1,6 +1,7 @@
 package org.jetbrains.dataframe.impl.columns
 
 import org.jetbrains.dataframe.AnyCol
+import org.jetbrains.dataframe.AnyColumnsSelector
 import org.jetbrains.dataframe.ColumnKind
 import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.ColumnPosition
@@ -9,7 +10,7 @@ import org.jetbrains.dataframe.ColumnsSelector
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataFrameBase
 import org.jetbrains.dataframe.DataRow
-import org.jetbrains.dataframe.SelectReceiverImpl
+import org.jetbrains.dataframe.AnyReceiverImpl
 import org.jetbrains.dataframe.SortColumnsSelector
 import org.jetbrains.dataframe.SortReceiverImpl
 import org.jetbrains.dataframe.UnresolvedColumnsPolicy
@@ -105,16 +106,8 @@ internal fun Array<out String>.toColumns(): ColumnSet<Any?> = map { it.toColumnD
 internal fun <C> Iterable<ColumnSet<C>>.toColumnSet(): ColumnSet<C> = ColumnsList(asList())
 internal fun <C> Array<out KProperty<C>>.toColumns() = map { it.toColumnDef() }.toColumnSet()
 internal fun <T> Array<out ColumnReference<T>>.toColumns() = toList().toColumnSet()
-internal fun <T, C> ColumnsSelector<T, C>.toColumns(): ColumnSet<C> = toColumns {
-    SelectReceiverImpl(
-        it.df.typed(),
-        it.allowMissingColumns
-    )
-}
-
-@JvmName("toColumnSetForSort")
-internal fun <T, C> SortColumnsSelector<T, C>.toColumns(): ColumnSet<C> = toColumns {
-    SortReceiverImpl(
+internal fun <T, C> AnyColumnsSelector<T, C>.toColumns(): ColumnSet<C> = toColumns {
+    AnyReceiverImpl(
         it.df.typed(),
         it.allowMissingColumns
     )

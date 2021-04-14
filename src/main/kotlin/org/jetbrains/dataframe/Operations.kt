@@ -195,7 +195,7 @@ fun Column.getPath(): ColumnPath {
     return list
 }
 
-internal fun <T> DataFrame<T>.collectTree(selector: ColumnsSelector<T, *>): TreeNode<AnyCol?> {
+internal fun <T> DataFrame<T>.collectTree(selector: AnyColumnsSelector<T, *>): TreeNode<AnyCol?> {
 
     val colPaths = getColumnPaths(selector)
 

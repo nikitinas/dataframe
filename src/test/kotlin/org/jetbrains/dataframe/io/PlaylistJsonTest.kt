@@ -284,7 +284,7 @@ class PlaylistJsonTest {
 
     @Test
     fun `select with rename`(){
-        val selected = item.select { snippet.thumbnails.default.url into "default" and snippet.thumbnails.maxres.url("maxres") }
+        val selected = item.select { snippet.thumbnails.default.url named "default" and snippet.thumbnails.maxres.url("maxres") }
         selected.columnNames() shouldBe listOf("default", "maxres")
         selected["default"].toList() shouldBe item.snippet.thumbnails.default.url.toList()
         selected["maxres"].toList() shouldBe item.snippet.thumbnails.maxres.url.toList()

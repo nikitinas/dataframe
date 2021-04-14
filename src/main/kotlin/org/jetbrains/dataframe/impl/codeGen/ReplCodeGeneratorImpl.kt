@@ -2,9 +2,9 @@ package org.jetbrains.dataframe.impl.codeGen
 
 import org.jetbrains.dataframe.AnyFrame
 import org.jetbrains.dataframe.DataFrame
-import org.jetbrains.dataframe.internal.codeGen.ClassMarkers
+import org.jetbrains.dataframe.internal.codeGen.MarkersExtractor
 import org.jetbrains.dataframe.internal.codeGen.SchemaProcessor
-import org.jetbrains.dataframe.internal.codeGen.GeneratedCode
+import org.jetbrains.dataframe.internal.codeGen.CodeWithConverter
 import org.jetbrains.dataframe.internal.codeGen.GeneratedField
 import org.jetbrains.dataframe.internal.codeGen.Marker
 import org.jetbrains.dataframe.internal.schema.DataFrameSchema
@@ -21,15 +21,13 @@ import kotlin.reflect.jvm.jvmErasure
 
 internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
 
-    private val processedProperties = mutableSetOf<KProperty<*>>()
+    private val registeredProperties = mutableSetOf<KProperty<*>>()
 
-    private val processedMarkers = mutableMapOf<KClass<*>, Marker>()
+    private val registeredMarkers = mutableMapOf<KClass<*>, Marker>()
 
-    private val tempMarkers = mutableMapOf<String, Marker>()
+    private val generatedMarkers = mutableMapOf<String, Marker>()
 
     private val generator: CodeGenerator = CodeGeneratorImpl()
-
-    override var generationMode: ReplCodeGenerationMode = ReplCodeGenerationMode.InterfaceWithFields
 
     private fun getMarkerClass(dataFrameType: KType): KClass<*>? =
         when (dataFrameType.jvmErasure) {
@@ -37,18 +35,18 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
             else -> null
         }
 
-    override fun process(df: AnyFrame, property: KProperty<*>?): GeneratedCode? {
+    override fun process(df: AnyFrame, property: KProperty<*>?): CodeWithConverter {
 
         var targetSchema = df.extractSchema()
         var isMutable = false
 
         if (property != null) {
-            val wasProcessedBefore = property in processedProperties
-            processedProperties.add(property)
+            val wasProcessedBefore = property in registeredProperties
+            registeredProperties.add(property)
             isMutable = property is KMutableProperty
 
             // maybe property is already properly typed, let's do some checks
-            val currentMarker = getMarkerClass(property.returnType)?.let { processedMarkers[it] ?: ClassMarkers[it] }
+            val currentMarker = getMarkerClass(property.returnType)?.let { registeredMarkers[it] ?: MarkersExtractor[it] }
             if (currentMarker != null) {
                 // if property is mutable, we need to make sure that its marker type is open in order to let derived data frames be assignable to it
                 if (!isMutable || currentMarker.isOpen) {
@@ -57,9 +55,9 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
                     if (wasProcessedBefore || columnSchema == targetSchema) {
                         // property scheme is valid for current data frame, but we should also check that all compatible open markers are implemented by it
                         val requiredBaseMarkers =
-                            getRequiredMarkers(columnSchema, processedMarkers.values)
+                            getRequiredMarkers(columnSchema, registeredMarkers.values)
                         if (requiredBaseMarkers.all { currentMarker.implements(it) })
-                            return null
+                            return CodeWithConverter(""){ it }
                         // use current marker scheme as a target for generation of new marker interface, so that available properties won't change
                         targetSchema = columnSchema
                     }
@@ -67,26 +65,21 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
             }
         }
 
-        val (fields, extensionProperties) = when(generationMode){
-            ReplCodeGenerationMode.InterfaceWithFields -> true to false
-            ReplCodeGenerationMode.EmptyInterfaceWithExtensionProperties -> false to true
-        }
-        return generate(targetSchema, "DataFrameType", fields, extensionProperties, isMutable)
+        return generate(targetSchema, "DataFrameType", isMutable)
     }
 
     fun generate(
         schema: DataFrameSchema,
         name: String,
-        fields: Boolean,
-        extensionProperties: Boolean,
         isOpen: Boolean
-    ): GeneratedCode {
+    ): CodeWithConverter {
 
-        val result = generator.generate(schema, name, fields, extensionProperties, isOpen, processedMarkers.values)
-        result.second.forEach {
-            tempMarkers[it.name] = it
+        val result = generator.generate(schema, name, false, true, isOpen, registeredMarkers.values)
+
+        result.newMarkers.forEach {
+            generatedMarkers[it.name] = it
         }
-        return result.first
+        return result.code
     }
 
     override fun process(markerClass: KClass<*>): Code {
@@ -94,9 +87,9 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
         val newMarkers = mutableListOf<Marker>()
 
         fun resolve(clazz: KClass<*>): Marker {
-            val processed = processedMarkers[clazz]
+            val processed = registeredMarkers[clazz]
             if(processed != null) return processed
-            val temp = tempMarkers[clazz.simpleName!!]
+            val temp = generatedMarkers[clazz.simpleName!!]
             if(temp != null){
                 val baseClasses = clazz.superclasses.filter { it != Any::class }
 
@@ -109,13 +102,13 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
                 if(baseClassNames == tempBaseClassNames){
                     val newBaseMarkers = baseClasses.map { resolve(it) }
                     val newMarker = Marker(clazz.qualifiedName!!, temp.isOpen, temp.fields, newBaseMarkers)
-                    processedMarkers[markerClass] = newMarker
-                    tempMarkers.remove(temp.name)
+                    registeredMarkers[markerClass] = newMarker
+                    generatedMarkers.remove(temp.name)
                     return newMarker
                 }
             }
-            val marker = ClassMarkers[markerClass]
-            processedMarkers[markerClass] = marker
+            val marker = MarkersExtractor[markerClass]
+            registeredMarkers[markerClass] = marker
             newMarkers.add(marker)
             return marker
         }
@@ -124,10 +117,10 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
         return newMarkers.map { generator.generate(marker, InterfaceGenerationMode.None, true).declarations }.join()
     }
 
-    override fun process(stub: DataFrameToListTypedStub): GeneratedCode {
+    override fun process(stub: DataFrameToListTypedStub): CodeWithConverter {
         val df = stub.df
         val sourceSchema = df.extractSchema()
-        val marker = ClassMarkers.get(stub.interfaceClass)
+        val marker = MarkersExtractor.get(stub.interfaceClass)
         val requestedSchema = marker.schema
         if (!requestedSchema.compare(sourceSchema).isSuperOrEqual())
             throw Exception() // TODO
@@ -138,7 +131,7 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
         return generateToListConverter(className, marker.fields, interfaceFullName)
     }
 
-    override fun process(stub: DataFrameToListNamedStub): GeneratedCode {
+    override fun process(stub: DataFrameToListNamedStub): CodeWithConverter {
         val schemaGenerator = SchemaProcessor.create(
             stub.className,
             emptyList()
@@ -151,7 +144,7 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
         className: String,
         fields: List<GeneratedField>,
         interfaceName: String? = null
-    ): GeneratedCode {
+    ): CodeWithConverter {
         val override = if (interfaceName != null) "override " else ""
         val baseTypes = if (interfaceName != null) " : $interfaceName" else ""
         val classDeclaration = "data class ${className}(" +
@@ -164,6 +157,6 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
                     "it[\"${it.columnName}\"] as ${it.renderFieldType()}"
                 }.joinToString() + ")}"
 
-        return GeneratedCode(classDeclaration, ::converter)
+        return CodeWithConverter(classDeclaration, ::converter)
     }
 }

@@ -12,7 +12,7 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.superclasses
 import kotlin.reflect.jvm.jvmErasure
 
-internal object ClassMarkers {
+internal object MarkersExtractor {
 
     private val cache = mutableMapOf<KClass<*>, Marker>()
 

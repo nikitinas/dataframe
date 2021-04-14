@@ -10,5 +10,5 @@ fun AnyFrame.schema(markerName: String? = null): String {
         fields = true,
         extensionProperties = false,
         isOpen = true
-    ).first.declarations
+    ).code.declarations
 }

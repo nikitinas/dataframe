@@ -1,29 +1,22 @@
 package org.jetbrains.dataframe.impl.codeGen
 
 import org.jetbrains.dataframe.AnyFrame
-import org.jetbrains.dataframe.internal.codeGen.GeneratedCode
+import org.jetbrains.dataframe.internal.codeGen.CodeWithConverter
 import org.jetbrains.dataframe.stubs.DataFrameToListNamedStub
 import org.jetbrains.dataframe.stubs.DataFrameToListTypedStub
 import org.jetbrains.kotlinx.jupyter.api.Code
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-internal enum class ReplCodeGenerationMode {
-    EmptyInterfaceWithExtensionProperties,
-    InterfaceWithFields
-}
-
 internal interface ReplCodeGenerator {
 
-    fun process(df: AnyFrame, property: KProperty<*>? = null): GeneratedCode?
+    fun process(df: AnyFrame, property: KProperty<*>? = null): CodeWithConverter
 
-    fun process(marker: KClass<*>): Code
+    fun process(markerClass: KClass<*>): Code
 
-    fun process(stub: DataFrameToListNamedStub): GeneratedCode
+    fun process(stub: DataFrameToListNamedStub): CodeWithConverter
 
-    fun process(stub: DataFrameToListTypedStub): GeneratedCode
-
-    var generationMode: ReplCodeGenerationMode
+    fun process(stub: DataFrameToListTypedStub): CodeWithConverter
 
     companion object {
         fun create(): ReplCodeGenerator = ReplCodeGeneratorImpl()

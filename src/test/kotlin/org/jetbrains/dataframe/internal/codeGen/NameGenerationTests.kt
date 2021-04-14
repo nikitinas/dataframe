@@ -26,7 +26,7 @@ class NameGenerationTests {
     fun `interface generation`(){
 
         val codeGen = CodeGenerator.create()
-        val code = codeGen.generate(df.extractSchema(), "DataType", true, false, isOpen = false, emptyList()).first
+        val code = codeGen.generate(df.extractSchema(), "DataType", true, false, isOpen = false, emptyList()).code
 
         val expected ="""
             @DataSchema(isOpen = false)

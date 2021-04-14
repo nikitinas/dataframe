@@ -76,8 +76,8 @@ class MatchSchemeTests {
 
         val codeGen = ReplCodeGenerator.create()
         codeGen.process(DataRecord::class)
-        codeGen.process(typed, :: typed) shouldBe null
-        val generated = codeGen.process(df, :: df)!!
+        codeGen.process(typed, :: typed).hasConverter shouldBe false
+        val generated = codeGen.process(df, :: df)
         generated.declarations.split("\n").size shouldBe 1
     }
 

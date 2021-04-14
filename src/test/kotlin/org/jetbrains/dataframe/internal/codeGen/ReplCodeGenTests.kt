@@ -6,7 +6,6 @@ import org.jetbrains.dataframe.DataRowBase
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.filter
-import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerationMode
 import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
 import org.jetbrains.dataframe.impl.codeGen.process
 import org.jetbrains.dataframe.person.BaseTest
@@ -38,13 +37,22 @@ class ReplCodeGenTests: BaseTest() {
         interface DataFrameType2 : DataFrameType, DataFrameType1
     }
 
+    class Test3 {
+
+        @DataSchema(isOpen = false)
+        interface DataFrameType {
+            val name: String
+            val age: Int
+            val city: String?
+            val weight: Int?
+        }
+    }
 
 
     @Test
     fun `process derived markers`() {
         val repl = ReplCodeGenerator.create()
-        repl.generationMode = ReplCodeGenerationMode.EmptyInterfaceWithExtensionProperties
-        val code = repl.process(df)!!.declarations
+        val code = repl.process(df).declarations
 
         val dfName = (DataFrameBase::class).qualifiedName
         val dfRowName = (DataRowBase::class).qualifiedName
@@ -70,7 +78,7 @@ class ReplCodeGenTests: BaseTest() {
         code2 shouldBe ""
 
         val df3 = typed.filter { city != null }
-        val code3 = repl.process(df3)!!.declarations
+        val code3 = repl.process(df3).declarations
         val marker3 = marker + "1"
         val expected3 = """
             @DataSchema(isOpen = false)
@@ -85,7 +93,7 @@ class ReplCodeGenTests: BaseTest() {
         code4 shouldBe ""
 
         val df5 = typed.filter { weight != null }
-        val code5 = repl.process(df5)!!.declarations
+        val code5 = repl.process(df5).declarations
         val marker5 = marker + "2"
         val expected5 = """
             @DataSchema(isOpen = false)
@@ -102,7 +110,6 @@ class ReplCodeGenTests: BaseTest() {
     @Test
     fun `process markers union`(){
         val repl = ReplCodeGenerator.create()
-        repl.generationMode = ReplCodeGenerationMode.EmptyInterfaceWithExtensionProperties
         repl.process(typed.select { age and name })
         repl.process<Test2.DataFrameType>() shouldBe ""
         repl.process(typed.select { city and weight })
@@ -113,14 +120,13 @@ class ReplCodeGenTests: BaseTest() {
             interface ${Test2.DataFrameType2::class.simpleName!!} : ${Test2.DataFrameType::class.qualifiedName}, ${Test2.DataFrameType1::class.qualifiedName}
         """.trimIndent()
 
-        val code = repl.process(typed)!!.declarations.trimIndent()
+        val code = repl.process(typed).declarations.trimIndent()
         code shouldBe expected
     }
 
     @Test
     fun `process wrong marker inheritance`(){
         val repl = ReplCodeGenerator.create()
-        repl.generationMode = ReplCodeGenerationMode.EmptyInterfaceWithExtensionProperties
         repl.process(typed.select { age and name })
         repl.process<Test2.DataFrameType>() shouldBe ""
         repl.process(typed.select { city and weight })
@@ -139,7 +145,9 @@ class ReplCodeGenTests: BaseTest() {
             val $dfRowName<$marker>.weight: kotlin.Int? @JvmName("${marker}_weight") get() = this["weight"] as kotlin.Int?
         """.trimIndent()
 
-        val code = repl.process(typed)!!.declarations.trimIndent()
+        val code = repl.process(typed).declarations.trimIndent()
         code shouldBe expected
     }
+
+
 }

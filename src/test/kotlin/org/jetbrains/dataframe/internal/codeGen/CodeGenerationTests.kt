@@ -2,6 +2,7 @@ package org.jetbrains.dataframe.internal.codeGen
 
 import io.kotlintest.shouldBe
 import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
 import org.jetbrains.dataframe.impl.codeGen.InterfaceGenerationMode
@@ -15,24 +16,38 @@ import kotlin.reflect.full.memberProperties
 
 class CodeGenerationTests : BaseTest(){
 
-    val personClassName = Person::class.qualifiedName
+    val personClassName = Person::class.qualifiedName!!
 
     val personShortName = Person::class.simpleName!!
+
+    val dfName = (DataFrameBase::class).qualifiedName
+    val dfRowName = (DataRowBase::class).qualifiedName
+    val dataCol = (DataColumn::class).qualifiedName!!
+    val dataRow = (DataRow::class).qualifiedName!!
+    val colGroup = (ColumnGroup::class).qualifiedName!!
+
+    fun expectedProperties(fullTypeName: String, shortTypeName: String) = """
+            val $dfName<$fullTypeName>.age: $dataCol<kotlin.Int> @JvmName("${shortTypeName}_age") get() = this["age"] as $dataCol<kotlin.Int>
+            val $dfRowName<$fullTypeName>.age: kotlin.Int @JvmName("${shortTypeName}_age") get() = this["age"] as kotlin.Int
+            val $dfName<$fullTypeName>.city: $dataCol<kotlin.String?> @JvmName("${shortTypeName}_city") get() = this["city"] as $dataCol<kotlin.String?>
+            val $dfRowName<$fullTypeName>.city: kotlin.String? @JvmName("${shortTypeName}_city") get() = this["city"] as kotlin.String?
+            val $dfName<$fullTypeName>.name: $dataCol<kotlin.String> @JvmName("${shortTypeName}_name") get() = this["name"] as $dataCol<kotlin.String>
+            val $dfRowName<$fullTypeName>.name: kotlin.String @JvmName("${shortTypeName}_name") get() = this["name"] as kotlin.String
+            val $dfName<$fullTypeName>.weight: $dataCol<kotlin.Int?> @JvmName("${shortTypeName}_weight") get() = this["weight"] as $dataCol<kotlin.Int?>
+            val $dfRowName<$fullTypeName>.weight: kotlin.Int? @JvmName("${shortTypeName}_weight") get() = this["weight"] as kotlin.Int?
+    """.trimIndent()
 
     @Test
     fun `generate marker interface`() {
         val property = DataFrameTests::class.memberProperties.first { it.name == "df" }
-        val generated = ReplCodeGenerator.create().process(df, property)!!
+        val generated = ReplCodeGenerator.create().process(df, property)
+        val typeName = "DataFrameType"
         val expectedDeclaration = """
             @DataSchema(isOpen = false)
-            interface DataFrameType{
-                val age: kotlin.Int
-                val city: kotlin.String?
-                val name: kotlin.String
-                val weight: kotlin.Int?
-            }""".trimIndent()
+            interface $typeName
+            """.trimIndent() + "\n" + expectedProperties(typeName, typeName)
 
-        val expectedConverter = "it.typed<DataFrameType>()"
+        val expectedConverter = "it.typed<$typeName>()"
 
         generated.declarations shouldBe expectedDeclaration
         generated.converter("it") shouldBe expectedConverter
@@ -42,22 +57,28 @@ class CodeGenerationTests : BaseTest(){
     fun `generate marker interface for nested data frame`() {
         val property = DataFrameTests::class.memberProperties.first { it.name == "df" }
         val grouped = df.move { name and city }.under("nameAndCity")
-        val generated = ReplCodeGenerator.create().process(grouped, property)!!
-        val rowType = DataRow::class.qualifiedName
+        val generated = ReplCodeGenerator.create().process(grouped, property)
+        val type1 = "DataFrameType1"
+        val type2 = "DataFrameType"
         val declaration1 = """
             @DataSchema(isOpen = false)
-            interface DataFrameType1{
-                val city: kotlin.String?
-                val name: kotlin.String
-            }""".trimIndent()
+            interface $type1
+            val $dfName<$type1>.city: $dataCol<kotlin.String?> @JvmName("${type1}_city") get() = this["city"] as $dataCol<kotlin.String?>
+            val $dfRowName<$type1>.city: kotlin.String? @JvmName("${type1}_city") get() = this["city"] as kotlin.String?
+            val $dfName<$type1>.name: $dataCol<kotlin.String> @JvmName("${type1}_name") get() = this["name"] as $dataCol<kotlin.String>
+            val $dfRowName<$type1>.name: kotlin.String @JvmName("${type1}_name") get() = this["name"] as kotlin.String
+            """.trimIndent()
 
         val declaration2 = """
             @DataSchema(isOpen = false)
-            interface DataFrameType{
-                val age: kotlin.Int
-                val nameAndCity: $rowType<DataFrameType1>
-                val weight: kotlin.Int?
-            }""".trimIndent()
+            interface DataFrameType
+            val $dfName<$type2>.age: $dataCol<kotlin.Int> @JvmName("${type2}_age") get() = this["age"] as $dataCol<kotlin.Int>
+            val $dfRowName<$type2>.age: kotlin.Int @JvmName("${type2}_age") get() = this["age"] as kotlin.Int
+            val $dfName<$type2>.nameAndCity: $colGroup<$type1> @JvmName("${type2}_nameAndCity") get() = this["nameAndCity"] as $colGroup<$type1>
+            val $dfRowName<$type2>.nameAndCity: $dataRow<$type1> @JvmName("${type2}_nameAndCity") get() = this["nameAndCity"] as $dataRow<$type1>
+            val $dfName<$type2>.weight: $dataCol<kotlin.Int?> @JvmName("${type2}_weight") get() = this["weight"] as $dataCol<kotlin.Int?>
+            val $dfRowName<$type2>.weight: kotlin.Int? @JvmName("${type2}_weight") get() = this["weight"] as kotlin.Int?
+            """.trimIndent()
 
         val expectedConverter = "it.typed<DataFrameType>()"
 
@@ -68,22 +89,11 @@ class CodeGenerationTests : BaseTest(){
     @Test
     fun `generate extension properties`() {
 
-        val dfName = (DataFrameBase::class).qualifiedName
-        val dfRowName = (DataRowBase::class).qualifiedName
-        val dataCol = (DataColumn::class).qualifiedName!!
         val personClass = (Person::class).qualifiedName!!
         val expected = """
             @DataSchema
             interface $personClass
-            val $dfName<$personClassName>.age: $dataCol<kotlin.Int> @JvmName("${personShortName}_age") get() = this["age"] as $dataCol<kotlin.Int>
-            val $dfRowName<$personClassName>.age: kotlin.Int @JvmName("${personShortName}_age") get() = this["age"] as kotlin.Int
-            val $dfName<$personClassName>.city: $dataCol<kotlin.String?> @JvmName("${personShortName}_city") get() = this["city"] as $dataCol<kotlin.String?>
-            val $dfRowName<$personClassName>.city: kotlin.String? @JvmName("${personShortName}_city") get() = this["city"] as kotlin.String?
-            val $dfName<$personClassName>.name: $dataCol<kotlin.String> @JvmName("${personShortName}_name") get() = this["name"] as $dataCol<kotlin.String>
-            val $dfRowName<$personClassName>.name: kotlin.String @JvmName("${personShortName}_name") get() = this["name"] as kotlin.String
-            val $dfName<$personClassName>.weight: $dataCol<kotlin.Int?> @JvmName("${personShortName}_weight") get() = this["weight"] as $dataCol<kotlin.Int?>
-            val $dfRowName<$personClassName>.weight: kotlin.Int? @JvmName("${personShortName}_weight") get() = this["weight"] as kotlin.Int?
-        """.trimIndent()
+        """.trimIndent() + "\n" + expectedProperties(personClassName, personShortName)
 
         val code = CodeGenerator.create().generate<Person>(InterfaceGenerationMode.NoFields, extensionProperties = true).declarations
         code shouldBe expected
@@ -101,7 +111,7 @@ class CodeGenerationTests : BaseTest(){
     fun `generate derived interface`() {
         val codeGen = CodeGenerator.create()
         val schema = df.filterNotNull { all() }.extractSchema()
-        val generated = codeGen.generate(schema, "ValidPerson", true, true, isOpen = true, listOf(ClassMarkers.get<Person>())).first
+        val code = codeGen.generate(schema, "ValidPerson", true, true, isOpen = true, listOf(MarkersExtractor.get<Person>())).code.declarations
         val expected = """
             @DataSchema
             interface ValidPerson : $personClassName{
@@ -113,25 +123,32 @@ class CodeGenerationTests : BaseTest(){
             val org.jetbrains.dataframe.DataFrameBase<ValidPerson>.weight: org.jetbrains.dataframe.columns.DataColumn<kotlin.Int> @JvmName("ValidPerson_weight") get() = this["weight"] as org.jetbrains.dataframe.columns.DataColumn<kotlin.Int>
             val org.jetbrains.dataframe.DataRowBase<ValidPerson>.weight: kotlin.Int @JvmName("ValidPerson_weight") get() = this["weight"] as kotlin.Int
         """.trimIndent()
-        generated.declarations shouldBe expected
+        code shouldBe expected
     }
 
     @Test
-    fun `generate empty interface`(){
+    fun `empty interface with properties`(){
         val codeGen = CodeGenerator.create()
-        val generated = codeGen.generate(df.extractSchema(), "Person", false, true, true).first
+        val code = codeGen.generate(df.extractSchema(), "Person", false, true, true).code.declarations
         val expected = """
             @DataSchema
             interface Person
-            val org.jetbrains.dataframe.DataFrameBase<Person>.age: org.jetbrains.dataframe.columns.DataColumn<kotlin.Int> @JvmName("Person_age") get() = this["age"] as org.jetbrains.dataframe.columns.DataColumn<kotlin.Int>
-            val org.jetbrains.dataframe.DataRowBase<Person>.age: kotlin.Int @JvmName("Person_age") get() = this["age"] as kotlin.Int
-            val org.jetbrains.dataframe.DataFrameBase<Person>.city: org.jetbrains.dataframe.columns.DataColumn<kotlin.String?> @JvmName("Person_city") get() = this["city"] as org.jetbrains.dataframe.columns.DataColumn<kotlin.String?>
-            val org.jetbrains.dataframe.DataRowBase<Person>.city: kotlin.String? @JvmName("Person_city") get() = this["city"] as kotlin.String?
-            val org.jetbrains.dataframe.DataFrameBase<Person>.name: org.jetbrains.dataframe.columns.DataColumn<kotlin.String> @JvmName("Person_name") get() = this["name"] as org.jetbrains.dataframe.columns.DataColumn<kotlin.String>
-            val org.jetbrains.dataframe.DataRowBase<Person>.name: kotlin.String @JvmName("Person_name") get() = this["name"] as kotlin.String
-            val org.jetbrains.dataframe.DataFrameBase<Person>.weight: org.jetbrains.dataframe.columns.DataColumn<kotlin.Int?> @JvmName("Person_weight") get() = this["weight"] as org.jetbrains.dataframe.columns.DataColumn<kotlin.Int?>
-            val org.jetbrains.dataframe.DataRowBase<Person>.weight: kotlin.Int? @JvmName("Person_weight") get() = this["weight"] as kotlin.Int?
+            """.trimIndent() + "\n" + expectedProperties("Person", "Person")
+        code shouldBe expected
+    }
+
+    @Test
+    fun `interface with fields`(){
+        val repl = CodeGenerator.create()
+        val code = repl.generate(typed.extractSchema(), "DataType", true, false, false).code.declarations
+        code shouldBe """
+            @DataSchema(isOpen = false)
+            interface DataType{
+                val age: kotlin.Int
+                val city: kotlin.String?
+                val name: kotlin.String
+                val weight: kotlin.Int?
+            }
         """.trimIndent()
-        generated.declarations shouldBe expected
     }
 }

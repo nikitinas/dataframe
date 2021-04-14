@@ -33,7 +33,7 @@ internal class Integration : JupyterIntegration(){
         import("org.jetbrains.dataframe.io.*")
 
         updateVariable<AnyFrame> { df, property ->
-            codeGen.process(df, property)?.let {
+            codeGen.process(df, property).let {
                 val code = it.with(property.name)
                 execute(code).name
             }
@@ -50,7 +50,7 @@ internal class Integration : JupyterIntegration(){
         }
 
         fun KotlinKernelHost.addDataSchemas(classes: List<KClass<*>>) {
-            val code = classes.mapNotNull {
+            val code = classes.map {
                 codeGen.process(it)
             }.joinToString("\n").trim()
 

@@ -7,7 +7,7 @@ import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.DataRowBase
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.internal.codeGen.SchemaProcessor
-import org.jetbrains.dataframe.internal.codeGen.GeneratedCode
+import org.jetbrains.dataframe.internal.codeGen.CodeWithConverter
 import org.jetbrains.dataframe.internal.codeGen.GeneratedField
 import org.jetbrains.dataframe.internal.codeGen.Marker
 import org.jetbrains.dataframe.columns.ColumnGroup
@@ -83,7 +83,7 @@ internal class CodeGeneratorImpl : CodeGenerator {
         return declarations.joinToString("\n")
     }
 
-    override fun generate(marker: Marker, interfaceMode: InterfaceGenerationMode, extensionProperties: Boolean): GeneratedCode {
+    override fun generate(marker: Marker, interfaceMode: InterfaceGenerationMode, extensionProperties: Boolean): CodeWithConverter {
         val generateInterface = interfaceMode != InterfaceGenerationMode.None
         val code = when {
             generateInterface && extensionProperties -> generateInterface(marker, interfaceMode == InterfaceGenerationMode.WithFields) + "\n" + generateExtensionProperties(
@@ -93,7 +93,7 @@ internal class CodeGeneratorImpl : CodeGenerator {
             extensionProperties -> generateExtensionProperties(marker)
             else -> ""
         }
-        return GeneratedCode(code) { "$it.typed<${marker.name}>()" }
+        return CodeWithConverter(code) { "$it.typed<${marker.name}>()" }
     }
 
     override fun generate(
@@ -103,15 +103,18 @@ internal class CodeGeneratorImpl : CodeGenerator {
         extensionProperties: Boolean,
         isOpen: Boolean,
         knownMarkers: Iterable<Marker>
-    ): Pair<GeneratedCode, List<Marker>> {
+    ): CodeGenResult {
 
         val context = SchemaProcessor.create(name, knownMarkers)
         val marker = context.process(schema, isOpen)
         val declarations = mutableListOf<Code>()
-        declarations.addAll(generateInterfaces(context.generatedMarkers, fields))
-        if(extensionProperties)
-            declarations.addAll(generateExtensionProperties(context.generatedMarkers))
-        return GeneratedCode(declarations.join()) { "$it.typed<${marker.name}>()" } to context.generatedMarkers
+        context.generatedMarkers.forEach {
+            declarations.add(generateInterface(it, fields))
+            if(extensionProperties)
+                declarations.add(generateExtensionProperties(it))
+        }
+        val code = CodeWithConverter(declarations.join()) { "$it.typed<${marker.name}>()" }
+        return CodeGenResult(code, context.generatedMarkers)
     }
 
     private fun generateInterfaces(

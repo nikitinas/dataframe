@@ -19,5 +19,5 @@ fun <T> DataFrame<T>.generateCode(markerName: String, fields: Boolean = true, ex
         fields = fields,
         extensionProperties = extensionProperties,
         isOpen = true,
-    ).first.declarations
+    ).code.declarations
 }

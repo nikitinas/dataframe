@@ -11,24 +11,21 @@ val df = dataFrameOf("name", "age")(
 ``` 
 the following actions take place:
 1. Columns in `df` are analyzed to extract data schema
-2. `DataSchema` interface is generated:
+2. Empty interface with `DataSchema` annotation is generated:
 ```kotlin
 @DataSchema
-interface DataFrameType {
-    val name: String
-    val age: Int?
-}
+interface DataFrameType
 ```
-3. Data access properties for this `DataSchema` are generated:
+3. Extension properties for this `DataSchema` are generated:
 ```kotlin
 val DataFrameBase<DataFrameType>.name: DataColumn<String> get() = this["name"] as DataColumn<String>
 val DataRowBase<DataFrameType>.name: String get() = this["name"] as String
 val DataFrameBase<DataFrameType>.age: DataColumn<Int?> get() = this["age"] as DataColumn<Int?>
 val DataRowBase<DataFrameType>.age: Int? get() = this["age"] as Int?
 ```
-Every column of `DataFrame` produces two extension properties:
-* Property for `DataFrameBase<DataFrameType>` returns `DataColumn`
-* Property for `DataRowBase<DataFrameType>` returns value of the cell
+Every column of `DataFrame` produces two properties:
+* Property for `DataFrameBase<DataFrameType>` returns column
+* Property for `DataRowBase<DataFrameType>` returns cell value
 4. `df` variable is typed by schema interface:
 ```kotlin
 val temp = df
@@ -53,24 +50,21 @@ val filtered = df.filter { age != null }.add("isAdult") { age!! > 18 }
 New schema interface for `filtered` variable will be derived from previously generated `DataFrameType`:
 ```kotlin
 @DataSchema
-interface DataFrameType2: DataFrameType {
-    override val age: Int
-    val isAdult: Boolean
-}
+interface DataFrameType1: DataFrameType
 ```
-Extension properties for data access are generated only for new and overriden members of `DataFrameType2` interface: 
+Extension properties for data access are generated only for new and overriden members of `DataFrameType1` interface: 
 ```kotlin
-val DataFrameBase<DataFrameType2>.age: DataColumn<Int> get() = this["age"] as DataColumn<Int>
-val DataRowBase<DataFrameType2>.age: Int get() = this["age"] as Int
-val DataFrameBase<DataFrameType2>.isAdult: DataColumn<Boolean> get() = this["isAdult"] as DataColumn<Boolean>
-val DataRowBase<DataFrameType2>.isAdult: String get() = this["isAdult"] as Boolean
+val DataFrameBase<DataFrameType1>.age: DataColumn<Int> get() = this["age"] as DataColumn<Int>
+val DataRowBase<DataFrameType1>.age: Int get() = this["age"] as Int
+val DataFrameBase<DataFrameType1>.isAdult: DataColumn<Boolean> get() = this["isAdult"] as DataColumn<Boolean>
+val DataRowBase<DataFrameType1>.isAdult: String get() = this["isAdult"] as Boolean
 ```
 Then variable `filtered` is typed by new interface:
 ```kotlin
 val temp = filtered
 ```
 ```kotlin
-val filtered = temp as DataFrame<DataFrameType2>
+val filtered = temp as DataFrame<DataFrameType1>
 ```
 
 ## Custom data schemas
@@ -96,9 +90,9 @@ val df = dataFrameOf("name", "age", "weight")(
 Schema of `df` is compatible with `Person`, so auto-generated schema interface will inherit from it:
 ```kotlin
 @DataSchema(isOpen = false)
-interface DataFrameType : Person{
-    val weight: Double
-}
+interface DataFrameType : Person
+val DataFrameBase<DataFrameType>.age: DataColumn<Double> get() = this["weight"] as DataColumn<Double>
+val DataRowBase<DataFrameType>.age: Double get() = this["weight"] as Int
 ```
 Despite `df` has additional column `weight`, previously defined methods for `DataFrame<Person>` work for it:
 ```kotlin
@@ -131,7 +125,7 @@ internal class Integration : JupyterIntegration() {
     
     override fun Builder.onLoaded() {
         onLoaded {
-            useDataSchemas(Person::class)
+            useSchema<Person>()
         }
     }
 }

@@ -77,6 +77,10 @@ internal class Integration : JupyterIntegration(){
     }
 }
 
-fun KotlinKernelHost.useDataSchemas(vararg schemaClasses: KClass<*>){
+fun KotlinKernelHost.useSchemas(schemaClasses: Iterable<KClass<*>>){
     newDataSchemas.addAll(schemaClasses)
 }
+
+fun KotlinKernelHost.useSchemas(vararg schemaClasses: KClass<*>) = useSchemas(schemaClasses.asIterable())
+
+inline fun <reified T> KotlinKernelHost.useSchema() = useSchemas(T::class)

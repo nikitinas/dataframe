@@ -7,7 +7,8 @@ import kotlin.reflect.jvm.jvmErasure
 
 internal fun <T : Number> Iterable<T>.sum(clazz: KClass<T>) = when (clazz) {
     Double::class -> (this as Iterable<Double>).sum() as T
-    Int::class -> (this as Iterable<Int>).sum() as T
+    Float::class -> (this as Iterable<Float>).sum() as T
+    Int::class, Short::class, Byte::class -> (this as Iterable<Int>).sum() as T
     Long::class -> (this as Iterable<Long>).sum() as T
     BigDecimal::class -> (this as Iterable<BigDecimal>).sum() as T
     else -> throw IllegalArgumentException()

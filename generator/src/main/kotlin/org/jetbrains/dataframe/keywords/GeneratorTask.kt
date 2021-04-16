@@ -6,6 +6,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.jetbrains.kotlin.com.intellij.psi.tree.TokenSet
@@ -20,6 +21,7 @@ open class GeneratorTask : DefaultTask() {
 
     private val taskPackageName = "org.jetbrains.dataframe.keywords"
 
+    @Input
     override fun getGroup() = "codegen"
 
     @TaskAction

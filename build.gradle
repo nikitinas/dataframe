@@ -2,10 +2,7 @@ buildscript {
     repositories {
         mavenCentral()
 
-        def repoFolder = new File(projectDir as File, jupyterApiTCRepo as String)
-        if(repoFolder.exists()) {
-            maven { url repoFolder }
-        }
+        maven { url jupyterApiTCRepo }
     }
 
     dependencies {
@@ -25,11 +22,7 @@ apply plugin: "org.jetbrains.kotlin.jupyter.api"
 repositories {
     mavenCentral()
     maven { url "https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven" }
-
-    def repoFolder = new File(projectDir as File, jupyterApiTCRepo as String)
-    if(repoFolder.exists()) {
-        maven { url repoFolder }
-    }
+    maven { url jupyterApiTCRepo }
 }
 
 configurations {

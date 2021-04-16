@@ -1,0 +1,6 @@
+,user_id,name,duplicate,username,duplicate,duplicate_1,double,number,time,empty
+0,4,George,"",abc,a,null,1203,599.213,2021-01-07 15:12:32,null
+1,5,Paul,"",paul,null,null,N/A,214.211,2021-01-14 14:36:19,null
+2,8,Johnny,,qwerty,b,null,20,412.214,2021-02-23 19:47:00,null
+3,10,Jack,"",buk,N/A,null,2414,01.01,2021-03-08 23:38:52,null
+4,12,Samuel,"",qwerty,NA,null,inf,00,2021-04-01 02:30:22,null

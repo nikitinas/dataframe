@@ -8,7 +8,10 @@ import org.jetbrains.dataframe.getType
 import org.junit.Test
 import java.io.StringWriter
 
+private const val PATH_TO_DATA = "src/test/resources/testCSV.csv"
+
 class CsvTests {
+
 
     @Test
     fun readNulls(){
@@ -39,5 +42,49 @@ class CsvTests {
         val res = DataFrame.readDelimStr(str.buffer.toString())
 
         res shouldBe df
+    }
+
+    @Test
+    fun readCSV() {
+        val df = DataFrame.read(PATH_TO_DATA)
+
+        df.ncol() shouldBe 11
+        df.nrow() shouldBe 5
+        df.columnNames()[5] shouldBe "duplicate_1"
+        df.columnNames()[6] shouldBe "duplicate_1_1"
+        df["duplicate_1"].type shouldBe getType<String?>()
+        df["double"].type shouldBe getType<Double?>()
+        df["time"].type shouldBe getType<java.time.LocalDateTime>()
+
+
+        println(df)
+    }
+
+    @Test
+    fun `read with custom header`() {
+        val header = ('A'..'K').map { it.toString() }
+        val df = DataFrame.readCSV(PATH_TO_DATA, headers = header, skipLines = 1)
+        df.columnNames() shouldBe header
+        df["B"].type shouldBe getType<Int>()
+
+        val headerShort = ('A'..'E').map { it.toString() }
+        val dfShort = DataFrame.readCSV(PATH_TO_DATA, headers = headerShort, skipLines = 1)
+        dfShort.ncol() shouldBe 5
+        dfShort.columnNames() shouldBe headerShort
+    }
+
+    @Test
+    fun `read first rows`() {
+        val expected =
+            listOf("","user_id","name","duplicate","username","duplicate_1","duplicate_1_1","double","number","time","empty")
+        val dfHeader = DataFrame.readCSV(PATH_TO_DATA, readLines = 0)
+        dfHeader.nrow() shouldBe 0
+        dfHeader.columnNames() shouldBe expected
+
+        val dfThree = DataFrame.readCSV(PATH_TO_DATA, readLines = 3)
+        dfThree.nrow() shouldBe 3
+
+        val dfFull = DataFrame.readCSV(PATH_TO_DATA, readLines = 10)
+        dfFull.nrow() shouldBe 5
     }
 }

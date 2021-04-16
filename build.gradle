@@ -1,12 +1,10 @@
 buildscript {
     repositories {
         mavenCentral()
-
         maven { url jupyterApiTCRepo }
     }
 
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.kotlin:kotlin-jupyter-api-gradle-plugin:$jupyterApiVersion"
     }
 }

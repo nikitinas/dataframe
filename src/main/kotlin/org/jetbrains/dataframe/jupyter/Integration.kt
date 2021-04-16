@@ -35,7 +35,14 @@ internal class Integration : JupyterIntegration(){
         updateVariable<AnyFrame> { df, property ->
             codeGen.process(df, property).let {
                 val code = it.with(property.name)
-                execute(code).name
+                if(code.isNotBlank())
+                {
+                    val result = execute(code)
+                    if(it.hasConverter)
+                        result.name
+                    else null
+                }
+                else null
             }
         }
 
@@ -70,6 +77,10 @@ internal class Integration : JupyterIntegration(){
     }
 }
 
-fun KotlinKernelHost.useDataSchemas(vararg schemaClasses: KClass<*>){
+fun KotlinKernelHost.useSchemas(schemaClasses: Iterable<KClass<*>>){
     newDataSchemas.addAll(schemaClasses)
 }
+
+fun KotlinKernelHost.useSchemas(vararg schemaClasses: KClass<*>) = useSchemas(schemaClasses.asIterable())
+
+inline fun <reified T> KotlinKernelHost.useSchema() = useSchemas(T::class)

@@ -9,5 +9,9 @@ data class CodeWithConverter(val declarations: Code, val converter: (VariableNam
 
     val hasConverter: Boolean get() = converter("it").trim() != "it"
 
-    fun with(name: VariableName): Code = declarations + "\n" + converter(name)
+    fun with(name: VariableName): Code {
+        if(!hasConverter) return declarations
+        if(!hasDeclarations) return converter(name)
+        return declarations + "\n" + converter(name)
+    }
 }

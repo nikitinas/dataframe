@@ -183,6 +183,9 @@ enum class ColType {
     Double,
     Boolean,
     BigDecimal,
+    LocalDate,
+    LocalTime,
+    LocalDateTime,
     String,
 }
 
@@ -192,6 +195,9 @@ fun ColType.toType() = when (this) {
     ColType.Double -> Double::class
     ColType.Boolean -> Boolean::class
     ColType.BigDecimal -> BigDecimal::class
+    ColType.LocalDate -> LocalDate::class
+    ColType.LocalTime -> LocalTime::class
+    ColType.LocalDateTime -> LocalDateTime::class
     ColType.String -> String::class
 }
 

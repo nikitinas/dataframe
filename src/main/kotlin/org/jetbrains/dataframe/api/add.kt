@@ -9,6 +9,10 @@ operator fun <T> DataFrame<T>.plus(col: AnyCol) = dataFrameOf(columns() + col).t
 
 operator fun <T> DataFrame<T>.plus(col: Iterable<AnyCol>) = dataFrameOf(columns() + col).typed<T>()
 
+fun <T> DataFrame<T>.add(cols: Iterable<AnyCol>) = this + cols
+
+fun <T> DataFrame<T>.add(other: AnyFrame) = add(other.columns())
+
 fun <T> DataFrame<T>.add(name: String, data: AnyCol) = dataFrameOf(columns() + data.rename(name)).typed<T>()
 
 inline fun <reified R, T> DataFrame<T>.add(name: String, noinline expression: RowSelector<T, R>) =

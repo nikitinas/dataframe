@@ -1273,4 +1273,13 @@ class DataFrameTests : BaseTest() {
         val expected = typed.update { age }.with { 2021 - age }.rename { age }.into("year")
         res shouldBe expected
     }
+
+    @Test
+    fun `add dataframe`(){
+        val first = typed.select { name and age}
+        val second = typed.select { city and weight }
+        first.add(second) shouldBe typed
+        first.add(second.columns()) shouldBe typed
+        first + second.columns() shouldBe typed
+    }
 }

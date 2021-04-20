@@ -681,6 +681,8 @@ df.spread { day }.by { temperature }.into { " Feb, $it" }
 Adds columns from another dataframe. New columns must have the same length as original columns
 ```
 df.add(otherDf)
+df.add(otherDf.columns())
+df + otherDf.columns()
 ```
 ## union
 Adds rows from another dataframe. Columns from both dataframes are unioned, values in missing columns are replaced with `null`

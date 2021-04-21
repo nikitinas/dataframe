@@ -12,3 +12,5 @@ fun AnyFrame.schema(markerName: String? = null): String {
         isOpen = true
     ).code.declarations
 }
+
+fun AnyRow.schema(markerName: String? = null) = owner.schema(markerName)

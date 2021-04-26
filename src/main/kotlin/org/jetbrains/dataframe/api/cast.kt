@@ -6,6 +6,10 @@ import org.jetbrains.dataframe.impl.columns.DataColumnInternal
 import org.jetbrains.dataframe.impl.columns.toColumns
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -111,12 +115,36 @@ fun <T> CastClause<T>.toStr() = to<String>()
 fun <T> CastClause<T>.toLong() = to<Long>()
 fun <T> CastClause<T>.toBigDecimal() = to<BigDecimal>()
 fun <T> CastClause<T>.toDate() = to<LocalDate>()
+fun <T> CastClause<T>.toTime() = to<LocalTime>()
+fun <T> CastClause<T>.toDateTime() = to<LocalDateTime>()
 
 internal class StringParser<T : Any>(val type: KType, val parse: (String) -> T?) {
     fun toConverter(): TypeConverter = { parse(it as String) }
 }
 
 internal object Parsers {
+
+    private val formatterDateTime = DateTimeFormatterBuilder()
+        .parseCaseInsensitive()
+        .append(DateTimeFormatter.ISO_LOCAL_DATE)
+        .appendLiteral(' ')
+        .append(DateTimeFormatter.ISO_LOCAL_TIME).toFormatter()
+
+    private val formatters = listOf(
+        DateTimeFormatter.ISO_LOCAL_DATE_TIME,
+        formatterDateTime
+    )
+
+    private fun String.toLocalDateTimeOrNull(): LocalDateTime? {
+        var ret: LocalDateTime? = null
+        for (format in formatters) {
+            try {
+                ret = LocalDateTime.parse(this, format)
+                return ret
+            } catch (_: Throwable) {}
+        }
+        return ret
+    }
 
     private fun String.toBooleanOrNull() =
         when (toUpperCase()) {
@@ -129,15 +157,33 @@ internal object Parsers {
             else -> null
         }
 
+    private fun String.toLocalDateOrNull(): LocalDate? =
+        try { LocalDate.parse(this) } catch (_: Throwable) { null }
+
+    private fun String.toLocalTimeOrNull(): LocalTime? =
+        try { LocalTime.parse(this) } catch (_: Throwable) { null }
+
+    private fun String.parseDouble() =
+        when (toUpperCase()) {
+            "NAN" -> Double.NaN
+            "INF" -> Double.POSITIVE_INFINITY
+            "-INF" -> Double.NEGATIVE_INFINITY
+            "INFINITY" -> Double.POSITIVE_INFINITY
+            "-INFINITY" -> Double.NEGATIVE_INFINITY
+            else -> toDoubleOrNull()
+        }
+
     inline fun <reified T : Any> stringParser(noinline body: (String) -> T?) = StringParser(getType<T>(), body)
 
     val All = listOf(
         stringParser { it.toIntOrNull() },
         stringParser { it.toLongOrNull() },
-        stringParser { it.toDoubleOrNull() },
+        stringParser { it.parseDouble() },
         stringParser { it.toBooleanOrNull() },
         stringParser { it.toBigDecimalOrNull() },
-        stringParser { try {LocalDate.parse(it)}catch(e:Throwable){ null}}
+        stringParser { it.toLocalDateOrNull() },
+        stringParser { it.toLocalTimeOrNull() },
+        stringParser { it.toLocalDateTimeOrNull() }
     )
 
     private val parsersMap = All.associateBy { it.type }

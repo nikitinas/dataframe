@@ -42,7 +42,7 @@ open class BaseTest {
 // Manual Column Definitions
 
     val name by column<String>()
-    val age = column<Int>("age")
+    val age = column<Int>() named "age"
     val city = Person::city.toColumnDef()
-    val weight by column<Int?>("weight")
+    val weight by column<Int?>()
 }

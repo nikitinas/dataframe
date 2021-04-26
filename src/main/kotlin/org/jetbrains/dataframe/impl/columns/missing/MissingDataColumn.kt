@@ -1,11 +1,14 @@
 package org.jetbrains.dataframe.impl.columns.missing
 
 import org.jetbrains.dataframe.ColumnResolutionContext
+import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.impl.columns.DataColumnInternal
 import kotlin.reflect.KType
 
-internal abstract class MissingDataColumn<T> : DataColumn<T> {
+internal abstract class MissingDataColumn<T> : DataColumnInternal<T> {
 
     val name: String
         get() = throw UnsupportedOperationException()
@@ -35,4 +38,10 @@ internal abstract class MissingDataColumn<T> : DataColumn<T> {
     override fun toSet() = throw UnsupportedOperationException()
 
     override fun resolve(context: ColumnResolutionContext) = emptyList<ColumnWithPath<T>>()
+
+    override fun changeType(type: KType) = throw UnsupportedOperationException()
+
+    override fun rename(newName: String) = throw UnsupportedOperationException()
+
+    override fun addParent(parent: MapColumn<*>) = throw UnsupportedOperationException()
 }

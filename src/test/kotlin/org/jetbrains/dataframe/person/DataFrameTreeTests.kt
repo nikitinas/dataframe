@@ -16,6 +16,7 @@ import org.jetbrains.dataframe.asIterable
 import org.jetbrains.dataframe.by
 import org.jetbrains.dataframe.colsDfsOf
 import org.jetbrains.dataframe.column
+import org.jetbrains.dataframe.columnOf
 import org.jetbrains.dataframe.columnGroup
 import org.jetbrains.dataframe.columnList
 import org.jetbrains.dataframe.columns.ColumnGroup
@@ -27,19 +28,14 @@ import org.jetbrains.dataframe.filter
 import org.jetbrains.dataframe.forEach
 import org.jetbrains.dataframe.get
 import org.jetbrains.dataframe.getColumnPath
-import org.jetbrains.dataframe.getColumnPaths
-import org.jetbrains.dataframe.getColumnWithPath
 import org.jetbrains.dataframe.getType
 import org.jetbrains.dataframe.group
 import org.jetbrains.dataframe.groupBy
 import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
 import org.jetbrains.dataframe.impl.codeGen.InterfaceGenerationMode
-import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
 import org.jetbrains.dataframe.impl.codeGen.generate
-import org.jetbrains.dataframe.impl.codeGen.process
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.asTable
-import org.jetbrains.dataframe.impl.columns.getColumn
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.typed
 import org.jetbrains.dataframe.indices
@@ -69,7 +65,6 @@ import org.jetbrains.dataframe.split
 import org.jetbrains.dataframe.spread
 import org.jetbrains.dataframe.subcolumn
 import org.jetbrains.dataframe.toGrouped
-import org.jetbrains.dataframe.toLeft
 import org.jetbrains.dataframe.toTop
 import org.jetbrains.dataframe.typed
 import org.jetbrains.dataframe.under
@@ -114,14 +109,14 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun create() {
-        val nameAndCity by column(typed.name, typed.city)
+        val nameAndCity by columnOf(typed.name, typed.city)
         val df3 = nameAndCity + typed.age + typed.weight
         df3 shouldBe df2
     }
 
     @Test
     fun createFrameColumn() {
-        val rowsColumn by column(typed[0..3], typed[4..5], typed[6..6])
+        val rowsColumn by columnOf(typed[0..3], typed[4..5], typed[6..6])
         val df = dataFrameOf(rowsColumn).toGrouped { rowsColumn }
         val res = df.ungroup()
         res shouldBe typed

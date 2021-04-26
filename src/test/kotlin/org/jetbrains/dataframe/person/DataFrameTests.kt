@@ -87,8 +87,7 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `incorrect column nullability`() {
 
-        val col =
-            column<Int>("weight") // non-nullable column definition is incorrect here, because actual dataframe has nulls in this column
+        val col = column<Int>().named("weight") // non-nullable column definition is incorrect here, because actual dataframe has nulls in this column
 
         shouldThrow<NullPointerException> {
             println(df[2][col])
@@ -863,7 +862,7 @@ class DataFrameTests : BaseTest() {
     fun mergeRows() {
         val selected = typed.select { name and city }
         val res = selected.mergeRows { city }
-        val cityList by column<List<String?>>("city")
+        val cityList by column<List<String?>>().named("city")
         val expected = selected.map { name to city }.groupBy({ it.first }) { it.second }.mapValues { it.value.toSet() }
         val actual = res.map { name to it[cityList] }.toMap().mapValues { it.value.toSet() }
         actual shouldBe expected
@@ -1098,7 +1097,7 @@ class DataFrameTests : BaseTest() {
     fun `parse`() {
 
         val toStr = typed.update { weight }.notNull { it.toString() }
-        val weightStr = column<String?>("weight")
+        val weightStr = "weight".toColumnOf<String?>()
         val parsed = toStr.cast { weightStr }.toInt()
         parsed shouldBe typed
     }
@@ -1198,8 +1197,8 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `columns sum`() {
 
-        val name by column("Alice", "Bob", "Mark")
-        val age by column(15, 20, 24)
+        val name by columnOf("Alice", "Bob", "Mark")
+        val age by columnOf(15, 20, 24)
         val df = name + age
 
         df.columnNames() shouldBe listOf("name", "age")
@@ -1233,7 +1232,7 @@ class DataFrameTests : BaseTest() {
     @Test
     fun castToDate() {
 
-        val time by column("2020-01-06", "2020-01-07")
+        val time by columnOf("2020-01-06", "2020-01-07")
         val df = dataFrameOf(time)
         val casted = df.cast(time).toDate()
         casted[time].type shouldBe getType<LocalDate>()
@@ -1285,9 +1284,9 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun splitUnequalLists() {
-        val values by column(1, 2, 3)
-        val list1 by column(listOf(1, 2, 3), listOf(1), listOf(1, 2))
-        val list2 by column(listOf(1, 2), listOf(1, 2), listOf(1, 2))
+        val values by columnOf(1, 2, 3)
+        val list1 by columnOf(listOf(1, 2, 3), listOf(1), listOf(1, 2))
+        val list2 by columnOf(listOf(1, 2), listOf(1, 2), listOf(1, 2))
         val df = dataFrameOf(values, list1, list2)
         val res = df.splitRows { list1 and list2 }
         val expected = dataFrameOf(values.name(), list1.name(), list2.name())(
@@ -1304,8 +1303,8 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun splitUnequalListAndFrames() {
-        val values by column(1, 2, 3)
-        val list1 by column(listOf(1, 2, 3), listOf(1), listOf(1, 2))
+        val values by columnOf(1, 2, 3)
+        val list1 by columnOf(listOf(1, 2, 3), listOf(1), listOf(1, 2))
         val frames by listOf(listOf(1, 2), listOf(1, 2), listOf(1, 2)).map {
             val data = column("data", it)
             val dataStr = column("dataStr", it.map { it.toString() })
@@ -1340,5 +1339,20 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `mean by string`() {
         typed.mean("weight") shouldBe typed.weight.mean()
+    }
+
+    @Test
+    fun `create column with single string value`() {
+        val frameCol by columnOf(typed, null, typed)
+        frameCol.kind() shouldBe ColumnKind.Frame
+        frameCol.name shouldBe "frameCol"
+
+        val mapCol by columnOf(typed.name, typed.city)
+        mapCol.kind() shouldBe ColumnKind.Map
+        mapCol.name shouldBe "mapCol"
+
+        val valueCol = columnOf("Alice") named "person"
+        valueCol.kind() shouldBe ColumnKind.Value
+        valueCol.name() shouldBe "person"
     }
 }

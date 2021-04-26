@@ -50,6 +50,10 @@ typealias MapColumnReference = ColumnReference<AnyRow>
 
 fun String.toColumnDef(): ColumnDefinition<Any?> = ColumnDefinitionImpl(this)
 
+fun <T> String.toColumnOf(): ColumnDefinition<T> = ColumnDefinitionImpl(this)
+
+fun <T> ColumnPath.toColumnOf(): ColumnDefinition<T> = ColumnDefinitionImpl(this)
+
 fun ColumnPath.toColumnDef(): ColumnDefinition<Any?> = ColumnDefinitionImpl(this)
 
 internal fun KProperty<*>.getColumnName() = this.findAnnotation<ColumnName>()?.name ?: name
@@ -84,12 +88,6 @@ fun <T> DataColumn<T>.withValues(values: List<T>, hasNulls: Boolean) = when (thi
 
 fun AnyCol.toDataFrame() = dataFrameOf(listOf(this))
 
-class InplaceColumnBuilder(val name: String) {
-    inline operator fun <reified T> invoke(vararg values: T) = column(name, values.toList())
-}
-
-fun column(name: String) = InplaceColumnBuilder(name)
-
 inline fun <T, reified R> DataFrame<T>.newColumn(name: String, noinline expression: RowSelector<T, R>): DataColumn<R> {
     var nullable = false
     val values = (0 until nrow()).map { get(it).let { expression(it, it) }.also { if (it == null) nullable = true } }
@@ -98,7 +96,9 @@ inline fun <T, reified R> DataFrame<T>.newColumn(name: String, noinline expressi
 
 
 class ColumnDelegate<T> {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): ColumnDefinition<T> = ColumnDefinitionImpl(property.name)
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): ColumnDefinition<T> = named(property.name)
+
+    infix fun named(name: String): ColumnDefinition<T> = ColumnDefinitionImpl(name)
 }
 
 fun AnyCol.asFrame(): AnyFrame = when (this) {
@@ -124,19 +124,21 @@ fun <T> columnList(name: String) = column<List<T>>(name)
 fun <T> column(name: String): ColumnDefinition<T> = ColumnDefinitionImpl(name)
 
 interface ColumnProvider<out T>{
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): DataColumn<T>
+    operator fun getValue(thisRef: Any?, property: KProperty<*>) = named(property.name)
+
+    infix fun named(name: String): DataColumn<T>
 }
 
 class DataColumnDelegate<T>(val values: List<T>, val type: KType): ColumnProvider<T> {
-    override operator fun getValue(thisRef: Any?, property: KProperty<*>) = DataColumn.create(property.name, values, type)
+    override fun named(name: String): DataColumn<T> = DataColumn.create(name, values, type)
 }
 
 class MapColumnDelegate(val columns: List<AnyCol>): ColumnProvider<AnyRow> {
-    override operator fun getValue(thisRef: Any?, property: KProperty<*>): DataColumn<DataRow<*>> = DataColumn.create(property.name, columns.toDataFrame())
+    override fun named(name: String): DataColumn<AnyRow> = DataColumn.create(name, columns.toDataFrame())
 }
 
 class FrameColumnDelegate(val frames: List<AnyFrame?>): ColumnProvider<AnyFrame?> {
-    override fun getValue(thisRef: Any?, property: KProperty<*>): DataColumn<AnyFrame?> = DataColumn.create(property.name, frames)
+    override fun named(name: String): DataColumn<AnyFrame?> = DataColumn.create(name, frames)
 }
 
 inline fun <reified T> column(values: Iterable<T>): ColumnProvider<T> = when {
@@ -144,15 +146,15 @@ inline fun <reified T> column(values: Iterable<T>): ColumnProvider<T> = when {
     else -> DataColumnDelegate(values.toList(), getType<T>())
 }
 
-inline fun <reified T> column(vararg values: T) = column(values.asIterable())
+inline fun <reified T> columnOf(vararg values: T) = column(values.asIterable())
 
-fun column(vararg values: AnyCol) = MapColumnDelegate(values.toList())
+fun columnOf(vararg values: AnyCol) = MapColumnDelegate(values.toList())
 
-fun column(vararg frames: AnyFrame) = column(frames.asIterable())
+fun columnOf(vararg frames: AnyFrame?) = columnOf(frames.asIterable())
 
-fun column(frames: Iterable<AnyFrame>) = FrameColumnDelegate(frames.toList())
+fun columnOf(frames: Iterable<AnyFrame?>) = FrameColumnDelegate(frames.toList())
 
-fun Iterable<AnyFrame>.toColumn() = column(this)
+fun Iterable<AnyFrame>.toColumn() = columnOf(this)
 
 fun Iterable<AnyFrame>.toColumn(name: String) = DataColumn.create(name, toList())
 

@@ -87,8 +87,7 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `incorrect column nullability`() {
 
-        val col =
-            column<Int>("weight") // non-nullable column definition is incorrect here, because actual dataframe has nulls in this column
+        val col = column<Int>().named("weight") // non-nullable column definition is incorrect here, because actual dataframe has nulls in this column
 
         shouldThrow<NullPointerException> {
             println(df[2][col])
@@ -96,7 +95,7 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun `chunked`(){
+    fun `chunked`() {
         val res = df.chunked(2)
         res.size shouldBe 4
         res.toList().dropLast(1).forEach {
@@ -841,7 +840,7 @@ class DataFrameTests : BaseTest() {
 
         val src = typed.select { name }
             .add(others) { names }
-            .split{ others }.intoRows()
+            .split { others }.intoRows()
             .add(sum) { name.length + other().length }
 
         val matrix = src.spread { other }.by { sum }.into { it }
@@ -863,7 +862,7 @@ class DataFrameTests : BaseTest() {
     fun mergeRows() {
         val selected = typed.select { name and city }
         val res = selected.mergeRows { city }
-        val cityList by column<List<String?>>("city")
+        val cityList by column<List<String?>>().named("city")
         val expected = selected.map { name to city }.groupBy({ it.first }) { it.second }.mapValues { it.value.toSet() }
         val actual = res.map { name to it[cityList] }.toMap().mapValues { it.value.toSet() }
         actual shouldBe expected
@@ -933,7 +932,7 @@ class DataFrameTests : BaseTest() {
     fun splitStringColGenerateNames() {
         val merged = typed.merge { age and city and weight }.by(",").into("info")
         val info by column<String>()
-        val res = merged.split(info).into("age") { "extra$it"}
+        val res = merged.split(info).into("age") { "extra$it" }
         res.columnNames() shouldBe listOf("name", "age", "extra1", "extra2")
     }
 
@@ -950,7 +949,7 @@ class DataFrameTests : BaseTest() {
 
         fun digits(num: Int) = sequence {
             var k = num
-            while(k > 0) {
+            while (k > 0) {
                 yield(k % 10)
                 k /= 10
             }
@@ -972,16 +971,16 @@ class DataFrameTests : BaseTest() {
     @Test
     fun splitStringCols() {
         val merged = typed.merge { name and city }.by(", ").into("nameAndCity")
-            .merge { age and weight}.into("info")
+            .merge { age and weight }.into("info")
         val nameAndCity by column<String>()
         val info by columnList<Number?>()
-        val res = merged.split { nameAndCity and info }.intoMany { src, count ->
+        val res = merged.split { nameAndCity and info }.intoMany { src, _ ->
             when (src.name) {
                 "nameAndCity" -> listOf("name", "city")
                 else -> listOf("age", "weight")
             }
         }
-        val expected = typed.update {city}.with {it.toString()}.move { city }.to(1)
+        val expected = typed.update { city }.with { it.toString() }.move { city }.to(1)
         res shouldBe expected
     }
 
@@ -1098,7 +1097,7 @@ class DataFrameTests : BaseTest() {
     fun `parse`() {
 
         val toStr = typed.update { weight }.notNull { it.toString() }
-        val weightStr = column<String?>("weight")
+        val weightStr = "weight".toColumnOf<String?>()
         val parsed = toStr.cast { weightStr }.toInt()
         parsed shouldBe typed
     }
@@ -1129,7 +1128,7 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun corr() {
-        val fixed = typed.fillNulls {weight}.with(60)
+        val fixed = typed.fillNulls { weight }.with(60)
         val res = fixed.corr()
         res.print()
         res.ncol() shouldBe 3
@@ -1138,7 +1137,7 @@ class DataFrameTests : BaseTest() {
         res["weight"][0] shouldBe res["age"][1]
         res["weight"][0] as Double should ToleranceMatcher(0.9, 1.0)
     }
-    
+
     @Test
     fun `aggregate into grouped column`() {
 
@@ -1198,16 +1197,16 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `columns sum`() {
 
-        val name by column("Alice", "Bob", "Mark")
-        val age by column(15, 20, 24)
+        val name by columnOf("Alice", "Bob", "Mark")
+        val age by columnOf(15, 20, 24)
         val df = name + age
-        
+
         df.columnNames() shouldBe listOf("name", "age")
         df.nrow() shouldBe 3
     }
 
     @Test
-    fun cast1(){
+    fun cast1() {
 
         val res = typed.cast { age }.to<Double>()
         res.age.valueClass shouldBe Double::class
@@ -1215,7 +1214,7 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun cast2(){
+    fun cast2() {
 
         val res = typed.cast { weight }.to<BigDecimal>()
         res.weight.valueClass shouldBe BigDecimal::class
@@ -1233,7 +1232,7 @@ class DataFrameTests : BaseTest() {
     @Test
     fun castToDate() {
 
-        val time by column("2020-01-06", "2020-01-07")
+        val time by columnOf("2020-01-06", "2020-01-07")
         val df = dataFrameOf(time)
         val casted = df.cast(time).toDate()
         casted[time].type shouldBe getType<LocalDate>()
@@ -1248,21 +1247,21 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun `replace with rename`(){
+    fun `replace with rename`() {
 
         val res = typed.replace { age }.with { it.rename("age2") }
         res shouldBe typed.rename { age }.into("age2")
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun `replace exception`(){
+    fun `replace exception`() {
         typed.replace { intCols() }.with(typed.name)
     }
 
     @Test
-    fun `replace two columns`(){
+    fun `replace two columns`() {
         val res = typed.replace { age and weight }.with(typed.age * 2, typed.weight * 2)
-        val expected = typed.update { age and weight}.with { it?.times(2) }
+        val expected = typed.update { age and weight }.with { it?.times(2) }
         res shouldBe expected
     }
 
@@ -1272,5 +1271,88 @@ class DataFrameTests : BaseTest() {
         val res = typed.replace { age }.with { 2021 - age named "year" }
         val expected = typed.update { age }.with { 2021 - age }.rename { age }.into("year")
         res shouldBe expected
+    }
+
+    @Test
+    fun `add dataframe`() {
+        val first = typed.select { name and age }
+        val second = typed.select { city and weight }
+        first.add(second) shouldBe typed
+        first.add(second.columns()) shouldBe typed
+        first + second.columns() shouldBe typed
+    }
+
+    @Test
+    fun splitUnequalLists() {
+        val values by columnOf(1, 2, 3)
+        val list1 by columnOf(listOf(1, 2, 3), listOf(1), listOf(1, 2))
+        val list2 by columnOf(listOf(1, 2), listOf(1, 2), listOf(1, 2))
+        val df = dataFrameOf(values, list1, list2)
+        val res = df.splitRows { list1 and list2 }
+        val expected = dataFrameOf(values.name(), list1.name(), list2.name())(
+            1, 1, 1,
+            1, 2, 2,
+            1, 3, null,
+            2, 1, 1,
+            2, null, 2,
+            3, 1, 1,
+            3, 2, 2
+        )
+        res shouldBe expected
+    }
+
+    @Test
+    fun splitUnequalListAndFrames() {
+        val values by columnOf(1, 2, 3)
+        val list1 by columnOf(listOf(1, 2, 3), listOf(1), listOf(1, 2))
+        val frames by listOf(listOf(1, 2), listOf(1, 2), listOf(1, 2)).map {
+            val data = column("data", it)
+            val dataStr = column("dataStr", it.map { it.toString() })
+            data + dataStr
+        }.toColumn()
+
+        val df = dataFrameOf(values, list1, frames)
+        val res = df.splitRows { list1 and frames }.ungroup(frames)
+        val expected = dataFrameOf(values.name(), list1.name(), "data", "dataStr")(
+            1, 1, 1, "1",
+            1, 2, 2, "2",
+            1, 3, null, null,
+            2, 1, 1, "1",
+            2, null, 2, "2",
+            3, 1, 1, "1",
+            3, 2, 2, "2"
+        )
+        res shouldBe expected
+    }
+
+    @Test
+    fun `update nullable column with not null`() {
+        val df = dataFrameOf("name", "value")("Alice", 1, null, 2)
+        df.update("name").at(0).with("ALICE")
+    }
+
+    @Test
+    fun `mean all columns`() {
+        typed.mean().values shouldBe listOf(typed.age.mean(), typed.weight.mean())
+    }
+
+    @Test
+    fun `mean by string`() {
+        typed.mean("weight") shouldBe typed.weight.mean()
+    }
+
+    @Test
+    fun `create column with single string value`() {
+        val frameCol by columnOf(typed, null, typed)
+        frameCol.kind() shouldBe ColumnKind.Frame
+        frameCol.name shouldBe "frameCol"
+
+        val mapCol by columnOf(typed.name, typed.city)
+        mapCol.kind() shouldBe ColumnKind.Map
+        mapCol.name shouldBe "mapCol"
+
+        val valueCol = columnOf("Alice") named "person"
+        valueCol.kind() shouldBe ColumnKind.Value
+        valueCol.name() shouldBe "person"
     }
 }

@@ -12,7 +12,7 @@ internal class ColumnNameGenerator(columnNames: List<String> = emptyList()) {
 
     fun addUnique(preferredName: String): String {
         var name = preferredName
-        var k = 2
+        var k = 1
         while (usedNames.contains(name)) {
             name = "${preferredName}_${k++}"
         }

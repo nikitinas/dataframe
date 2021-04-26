@@ -84,5 +84,7 @@ fun <C> DataColumn<C>.allNulls() = size == 0 || (hasNulls && ndistinct == 1)
 
 fun <T> DataColumn<T>.isSubtypeOf(type: KType) = this.type.isSubtypeOf(type) && (!this.type.isMarkedNullable || type.isMarkedNullable)
 
+inline fun <reified T> AnyCol.isSubtypeOf() = isSubtypeOf(getType<T>())
+
 inline fun <reified T> AnyCol.isType() = type == getType<T>()
 fun AnyCol.isNumber() = type.withNullability(false).isSubtypeOf(getType<Number>())

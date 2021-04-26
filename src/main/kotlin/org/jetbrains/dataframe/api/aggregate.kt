@@ -2,6 +2,8 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.isSubtypeOf
+import org.jetbrains.dataframe.impl.createDataCollector
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 
@@ -65,4 +67,17 @@ internal fun <T, G> doAggregate(df: DataFrame<T>, selector: ColumnSelector<T, Da
     }
     val src = if(removeColumns) df2 else df
     return src.doInsert(columnsToInsert)
+}
+
+internal inline fun <T, reified C> DataFrame<T>.aggregateColumns(crossinline selector: (DataColumn<C>) -> Any?) = aggregateColumns(getType<C>()) { selector(it as DataColumn<C>) }
+
+internal fun <T> DataFrame<T>.aggregateColumns(type: KType, selector: (AnyCol) -> Any?) =
+    aggregateColumns({ it.isSubtypeOf(type) }, selector)
+
+internal fun <T> DataFrame<T>.aggregateColumns(filter: Predicate<AnyCol>, selector: (AnyCol) -> Any?): DataRow<T> {
+    return columns().filter(filter).map {
+        val collector = createDataCollector(1)
+        collector.add(selector(it))
+        collector.toColumn(it.name)
+    }.asDataFrame<T>()[0]
 }

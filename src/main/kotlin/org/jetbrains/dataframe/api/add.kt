@@ -9,6 +9,10 @@ operator fun <T> DataFrame<T>.plus(col: AnyCol) = dataFrameOf(columns() + col).t
 
 operator fun <T> DataFrame<T>.plus(col: Iterable<AnyCol>) = dataFrameOf(columns() + col).typed<T>()
 
+fun <T> DataFrame<T>.add(cols: Iterable<AnyCol>) = this + cols
+
+fun <T> DataFrame<T>.add(other: AnyFrame) = add(other.columns())
+
 fun <T> DataFrame<T>.add(name: String, data: AnyCol) = dataFrameOf(columns() + data.rename(name)).typed<T>()
 
 inline fun <reified R, T> DataFrame<T>.add(name: String, noinline expression: RowSelector<T, R>) =
@@ -21,7 +25,7 @@ inline fun <reified R, T, G> GroupedDataFrame<T, G>.add(name: String, noinline e
         mapNotNullGroups { add(name, expression) }
 
 inline fun <reified R, T> DataFrame<T>.add(column: ColumnDefinition<R>, noinline expression: RowSelector<T, R>) =
-        (this + newColumn(column.name(), expression))
+        (this + newColumn(column.name(), expression)) // TODO: support column path
 
 fun <T> DataFrame<T>.add(body: TypedColumnsFromDataRowBuilder<T>.() -> Unit) =
     with(TypedColumnsFromDataRowBuilder(this)) {

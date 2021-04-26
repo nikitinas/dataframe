@@ -16,6 +16,7 @@ import org.jetbrains.dataframe.asIterable
 import org.jetbrains.dataframe.by
 import org.jetbrains.dataframe.colsDfsOf
 import org.jetbrains.dataframe.column
+import org.jetbrains.dataframe.columnOf
 import org.jetbrains.dataframe.columnGroup
 import org.jetbrains.dataframe.columnList
 import org.jetbrains.dataframe.columns.ColumnGroup
@@ -26,14 +27,13 @@ import org.jetbrains.dataframe.execute
 import org.jetbrains.dataframe.filter
 import org.jetbrains.dataframe.forEach
 import org.jetbrains.dataframe.get
+import org.jetbrains.dataframe.getColumnPath
 import org.jetbrains.dataframe.getType
 import org.jetbrains.dataframe.group
 import org.jetbrains.dataframe.groupBy
 import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
 import org.jetbrains.dataframe.impl.codeGen.InterfaceGenerationMode
-import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
 import org.jetbrains.dataframe.impl.codeGen.generate
-import org.jetbrains.dataframe.impl.codeGen.process
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.impl.columns.isTable
@@ -51,6 +51,7 @@ import org.jetbrains.dataframe.max
 import org.jetbrains.dataframe.mergeRows
 import org.jetbrains.dataframe.move
 import org.jetbrains.dataframe.moveTo
+import org.jetbrains.dataframe.moveToLeft
 import org.jetbrains.dataframe.ncol
 import org.jetbrains.dataframe.nrow
 import org.jetbrains.dataframe.plus
@@ -108,14 +109,14 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun create() {
-        val nameAndCity by column(typed.name, typed.city)
+        val nameAndCity by columnOf(typed.name, typed.city)
         val df3 = nameAndCity + typed.age + typed.weight
         df3 shouldBe df2
     }
 
     @Test
     fun createFrameColumn() {
-        val rowsColumn by column(typed[0..3], typed[4..5], typed[6..6])
+        val rowsColumn by columnOf(typed[0..3], typed[4..5], typed[6..6])
         val df = dataFrameOf(rowsColumn).toGrouped { rowsColumn }
         val res = df.ungroup()
         res shouldBe typed
@@ -170,6 +171,13 @@ class DataFrameTreeTests : BaseTest() {
         df2.select { nameInGroup } shouldBe typed2.nameAndCity.select { name }
 
         df2[nameInGroup] shouldBe typed2.nameAndCity.name
+    }
+
+    @Test
+    fun getColumnPath() {
+        typed2.getColumnPath { nameAndCity["city"] }.size shouldBe 2
+        typed2.getColumnPath { nameAndCity.col("city") }.size shouldBe 2
+        typed2.getColumnPath { nameAndCity.col(1) }.size shouldBe 2
     }
 
     @Test
@@ -475,5 +483,14 @@ class DataFrameTreeTests : BaseTest() {
         moved.ncol() shouldBe 4
         moved.nameAndCity.ncol() shouldBe 1
         moved.remove { nameAndCity } shouldBe typed2.select { age and nameAndCity.name and weight }
+    }
+
+    @Test
+    fun splitFrameColumnsIntoRows() {
+        val grouped = typed.groupBy { city }
+        val groupCol = grouped.groups.name()
+        val plain = grouped.plain()
+        val res = plain.split(groupCol).intoRows().remove { it[groupCol]["city"] }.ungroup(groupCol).sortBy { name and age }
+        res shouldBe typed.sortBy { name and age }.moveToLeft { city }
     }
 }

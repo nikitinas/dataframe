@@ -1,6 +1,7 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.ColumnDefinition
+import org.jetbrains.dataframe.columns.ColumnDefinitionImpl
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.ColumnSet
 import org.jetbrains.dataframe.columns.ColumnWithPath
@@ -51,14 +52,14 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
 
     operator fun String.invoke() = toColumnDef()
 
-    fun <C> String.cast() = ColumnDefinition<C>(this)
+    fun <C> String.cast(): ColumnDefinition<C> = ColumnDefinitionImpl(this)
 
     fun <C> col(property: KProperty<C>) = property.toColumnDef()
 
     fun DataFrameBase<*>.col(index: Int) = column(index)
     fun ColumnSet<*>.col(index: Int) = transform { it.mapNotNull { it.getChild(index) } }
 
-    fun DataFrameBase<*>.col(colName: String) = getColumn<Any?>(colName)
+    fun DataFrameBase<*>.col(colName: String) = get(colName)
     fun ColumnSet<*>.col(colName: String) = transform { it.mapNotNull { it.getChild(colName) } }
 
     operator fun ColumnSet<*>.get(colName: String) = col(colName)

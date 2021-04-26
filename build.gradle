@@ -31,7 +31,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
     implementation "org.jetbrains.kotlin:kotlin-reflect"
 
-    implementation "org.apache.commons:commons-csv:1.3"
+    implementation "org.apache.commons:commons-csv:1.8"
     implementation "com.beust:klaxon:5.5"
 
     testImplementation "junit:junit:4.12"

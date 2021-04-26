@@ -13,7 +13,6 @@ interface DataFrameBase<out T>: SingleColumn<DataRow<T>> {
 
     operator fun get(columnName: String): AnyCol
     fun tryGetColumn(columnName: String): AnyCol?
-    fun <R> getColumn(columnName: String) = get(columnName) as DataColumn<R>
 
     fun getGroup(columnName: String) = get(columnName).asGroup()
     fun getGroup(columnPath: ColumnPath): MapColumn<*> = get(columnPath).asGroup()

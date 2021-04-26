@@ -1,13 +1,8 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.impl.ColumnDataCollector
-import org.jetbrains.dataframe.impl.columns.addPath
-import org.jetbrains.dataframe.impl.columns.asGroup
-import org.jetbrains.dataframe.impl.columns.asTable
-import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.toColumnWithPath
 import org.jetbrains.dataframe.impl.createDataCollector
 import org.jetbrains.dataframe.impl.nameGenerator
@@ -51,18 +46,25 @@ fun <T, C> SplitClause<T, C>.into(firstName: ColumnReference<*>, vararg otherNam
 fun <T, C> SplitClause<T, C>.intoMany(namesProvider: (ColumnWithPath<C>, numberOfNewColumns: Int) -> List<String>) =
     doSplitCols(this, namesProvider)
 
-fun <T, C> SplitClause<T, C>.into(vararg names: String, extraNamesGenerator: (ColumnWithPath<C>.(extraColumnIndex: Int) -> String)? = null) = into(names.toList(), extraNamesGenerator)
+fun <T, C> SplitClause<T, C>.into(
+    vararg names: String,
+    extraNamesGenerator: (ColumnWithPath<C>.(extraColumnIndex: Int) -> String)? = null
+) = into(names.toList(), extraNamesGenerator)
 
-fun <T, C> SplitClause<T, C>.into(names: List<String>, extraNamesGenerator: (ColumnWithPath<C>.(extraColumnIndex: Int) -> String)? = null) = intoMany { col, numberOfNewCols ->
-    if(extraNamesGenerator != null && names.size < numberOfNewCols)
-        names + (1 .. (numberOfNewCols-names.size)).map { extraNamesGenerator(col, it) }
+fun <T, C> SplitClause<T, C>.into(
+    names: List<String>,
+    extraNamesGenerator: (ColumnWithPath<C>.(extraColumnIndex: Int) -> String)? = null
+) = intoMany { col, numberOfNewCols ->
+    if (extraNamesGenerator != null && names.size < numberOfNewCols)
+        names + (1..(numberOfNewCols - names.size)).map { extraNamesGenerator(col, it) }
     else names
 }
 
-internal fun valueToList(value: Any?) = when (value) {
+internal fun valueToList(value: Any?): List<Any?> = when (value) {
     null -> emptyList()
     is List<*> -> value
-    else -> value.toString().split(",").map {it.trim()}
+    is DataFrame<*> -> value.rows().toList()
+    else -> value.toString().split(",").map { it.trim() }
 }
 
 fun <T, C> doSplitCols(
@@ -95,8 +97,8 @@ fun <T, C> doSplitCols(
         }
 
         var names = columnNamesGenerator(column, columnCollectors.size)
-        if(names.size < columnCollectors.size)
-            names = names + (1..(columnCollectors.size - names.size)).map {"splitted$it" }
+        if (names.size < columnCollectors.size)
+            names = names + (1..(columnCollectors.size - names.size)).map { "splitted$it" }
 
         columnCollectors.mapIndexed { i, col ->
 
@@ -111,8 +113,5 @@ fun <T, C> doSplitCols(
     return removeResult.df.doInsert(toInsert)
 }
 
-
-fun <T, C> SplitClause<T, C>.intoRows() = doSplitRows(
-    df,
-    df.getColumnsWithPaths(columns).map { it.data.map { valueToList(transform(it)) }.addPath(it.path, df) })
+fun <T, C> SplitClause<T, C>.intoRows() = df.splitRows(columns)
 

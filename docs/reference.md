@@ -92,8 +92,8 @@ val df = dataFrameOf("name", "age")(
 ### from columns
 `DataFrame` can be created from one or several `DataColumn`s
 ```kotlin
-val name by column("Alice", "Bob")
-val age by column(15, 20)
+val name by columnOf("Alice", "Bob")
+val age by columnOf(15, 20)
 
 val df1 = dataFrameOf(name, age)
 val df2 = listOf(name, age).toDataFrame()
@@ -681,6 +681,8 @@ df.spread { day }.by { temperature }.into { " Feb, $it" }
 Adds columns from another dataframe. New columns must have the same length as original columns
 ```
 df.add(otherDf)
+df.add(otherDf.columns())
+df + otherDf.columns()
 ```
 ## union
 Adds rows from another dataframe. Columns from both dataframes are unioned, values in missing columns are replaced with `null`

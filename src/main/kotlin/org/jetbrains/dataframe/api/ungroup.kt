@@ -8,7 +8,6 @@ fun <T> DataFrame<T>.ungroup(vararg columns: KProperty<*>) = ungroup { columns.t
 fun <T> DataFrame<T>.ungroup(vararg columns: String) = ungroup { columns.toColumns() }
 fun <T> DataFrame<T>.ungroup(vararg columns: Column) = ungroup { columns.toColumns() }
 
-
 fun <T, C> DataFrame<T>.ungroup(selector: ColumnsSelector<T, C>): DataFrame<T> {
 
     return move { selector.toColumns().children() }

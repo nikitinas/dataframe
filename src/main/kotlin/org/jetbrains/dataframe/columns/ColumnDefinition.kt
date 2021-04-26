@@ -10,21 +10,24 @@ import org.jetbrains.dataframe.isGroup
 import org.jetbrains.dataframe.impl.columns.typed
 import kotlin.reflect.KProperty
 
-class ColumnDefinition<T> : ColumnReference<T> {
-
-    val path: ColumnPath
-
-    override fun name() = path.last()
-
-    override fun path() = path
+interface ColumnDefinition<out T> : ColumnReference<T> {
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = this
 
     fun <C> changeType() = this as ColumnDefinition<C>
+}
 
-    constructor(path: ColumnPath){
-        this.path = path
-    }
+fun <T> ColumnReference<T>.toColumnDefinition(): ColumnDefinition<T> = when(this){
+    is ColumnDefinition<T> -> this
+    else -> ColumnDefinitionImpl(path())
+}
+
+
+internal class ColumnDefinitionImpl<T>(val path: ColumnPath) : ColumnDefinition<T> {
+
+    override fun name() = path.last()
+
+    override fun path() = path
 
     constructor(vararg path: String): this(path.toList())
 

@@ -26,6 +26,9 @@ import org.jetbrains.dataframe.execute
 import org.jetbrains.dataframe.filter
 import org.jetbrains.dataframe.forEach
 import org.jetbrains.dataframe.get
+import org.jetbrains.dataframe.getColumnPath
+import org.jetbrains.dataframe.getColumnPaths
+import org.jetbrains.dataframe.getColumnWithPath
 import org.jetbrains.dataframe.getType
 import org.jetbrains.dataframe.group
 import org.jetbrains.dataframe.groupBy
@@ -36,6 +39,7 @@ import org.jetbrains.dataframe.impl.codeGen.generate
 import org.jetbrains.dataframe.impl.codeGen.process
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.asTable
+import org.jetbrains.dataframe.impl.columns.getColumn
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.typed
 import org.jetbrains.dataframe.indices
@@ -51,6 +55,7 @@ import org.jetbrains.dataframe.max
 import org.jetbrains.dataframe.mergeRows
 import org.jetbrains.dataframe.move
 import org.jetbrains.dataframe.moveTo
+import org.jetbrains.dataframe.moveToLeft
 import org.jetbrains.dataframe.ncol
 import org.jetbrains.dataframe.nrow
 import org.jetbrains.dataframe.plus
@@ -64,6 +69,7 @@ import org.jetbrains.dataframe.split
 import org.jetbrains.dataframe.spread
 import org.jetbrains.dataframe.subcolumn
 import org.jetbrains.dataframe.toGrouped
+import org.jetbrains.dataframe.toLeft
 import org.jetbrains.dataframe.toTop
 import org.jetbrains.dataframe.typed
 import org.jetbrains.dataframe.under
@@ -170,6 +176,13 @@ class DataFrameTreeTests : BaseTest() {
         df2.select { nameInGroup } shouldBe typed2.nameAndCity.select { name }
 
         df2[nameInGroup] shouldBe typed2.nameAndCity.name
+    }
+
+    @Test
+    fun getColumnPath() {
+        typed2.getColumnPath { nameAndCity["city"] }.size shouldBe 2
+        typed2.getColumnPath { nameAndCity.col("city") }.size shouldBe 2
+        typed2.getColumnPath { nameAndCity.col(1) }.size shouldBe 2
     }
 
     @Test
@@ -475,5 +488,14 @@ class DataFrameTreeTests : BaseTest() {
         moved.ncol() shouldBe 4
         moved.nameAndCity.ncol() shouldBe 1
         moved.remove { nameAndCity } shouldBe typed2.select { age and nameAndCity.name and weight }
+    }
+
+    @Test
+    fun splitFrameColumnsIntoRows() {
+        val grouped = typed.groupBy { city }
+        val groupCol = grouped.groups.name()
+        val plain = grouped.plain()
+        val res = plain.split(groupCol).intoRows().remove { it[groupCol]["city"] }.ungroup(groupCol).sortBy { name and age }
+        res shouldBe typed.sortBy { name and age }.moveToLeft { city }
     }
 }

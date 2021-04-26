@@ -10,7 +10,10 @@ internal class MapColumnWithParent<T>(override val parent: MapColumnReference?, 
 
     private fun <T> DataColumn<T>.addParent(parent: MapColumn<*>) = (this as DataColumnInternal<T>).addParent(parent)
 
-    override fun get(columnName: String) = df[columnName].addParent(this)
+    override fun get(columnName: String): AnyCol {
+        val col = df[columnName]
+        return col.addParent(this)
+    }
     override fun <R> get(column: ColumnReference<R>) = df[column].addParent(this)
     override fun <R> get(column: ColumnReference<DataRow<R>>) = df[column].addParent(this) as MapColumn<R>
     override fun columns() = df.columns().map { it.addParent(this) }

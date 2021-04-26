@@ -2,6 +2,7 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.annotations.ColumnName
 import org.jetbrains.dataframe.columns.ColumnDefinition
+import org.jetbrains.dataframe.columns.ColumnDefinitionImpl
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.ColumnSet
 import org.jetbrains.dataframe.columns.ColumnWithPath
@@ -47,17 +48,17 @@ typealias Column = ColumnReference<*>
 
 typealias MapColumnReference = ColumnReference<AnyRow>
 
-fun String.toColumnDef(): ColumnReference<Any?> = ColumnDefinition(this)
+fun String.toColumnDef(): ColumnDefinition<Any?> = ColumnDefinitionImpl(this)
 
-fun ColumnPath.toColumnDef(): ColumnReference<Any?> = ColumnDefinition(this)
+fun ColumnPath.toColumnDef(): ColumnDefinition<Any?> = ColumnDefinitionImpl(this)
 
 internal fun KProperty<*>.getColumnName() = this.findAnnotation<ColumnName>()?.name ?: name
 
-fun <T> KProperty<T>.toColumnDef() = ColumnDefinition<T>(name)
+fun <T> KProperty<T>.toColumnDef(): ColumnDefinition<T> = ColumnDefinitionImpl<T>(name)
 
-fun <T> ColumnDefinition<DataRow<*>>.subcolumn(childName: String) = ColumnDefinition<T>(path + childName)
+fun <T> ColumnDefinition<DataRow<*>>.subcolumn(childName: String): ColumnDefinition<T> = ColumnDefinitionImpl(path() + childName)
 
-inline fun <reified T> ColumnDefinition<T>.nullable() = ColumnDefinition<T?>(name())
+inline fun <reified T> ColumnDefinition<T>.nullable() = changeType<T?>()
 
 enum class ColumnKind {
     Value,
@@ -97,7 +98,7 @@ inline fun <T, reified R> DataFrame<T>.newColumn(name: String, noinline expressi
 
 
 class ColumnDelegate<T> {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>) = ColumnDefinition<T>(property.name)
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): ColumnDefinition<T> = ColumnDefinitionImpl(property.name)
 }
 
 fun AnyCol.asFrame(): AnyFrame = when (this) {
@@ -120,7 +121,7 @@ fun <T> frameColumn(name: String) = column<DataFrame<T>>(name)
 
 fun <T> columnList(name: String) = column<List<T>>(name)
 
-fun <T> column(name: String) = ColumnDefinition<T>(name)
+fun <T> column(name: String): ColumnDefinition<T> = ColumnDefinitionImpl(name)
 
 interface ColumnProvider<out T>{
     operator fun getValue(thisRef: Any?, property: KProperty<*>): DataColumn<T>
@@ -150,6 +151,10 @@ fun column(vararg values: AnyCol) = MapColumnDelegate(values.toList())
 fun column(vararg frames: AnyFrame) = column(frames.asIterable())
 
 fun column(frames: Iterable<AnyFrame>) = FrameColumnDelegate(frames.toList())
+
+fun Iterable<AnyFrame>.toColumn() = column(this)
+
+fun Iterable<AnyFrame>.toColumn(name: String) = DataColumn.create(name, toList())
 
 inline fun <reified T> column(name: String, values: List<T>): DataColumn<T> = when {
     values.size > 0 && values.all {it is AnyCol} -> DataColumn.create(name, values.map {it as AnyCol}.toDataFrame()) as DataColumn<T>

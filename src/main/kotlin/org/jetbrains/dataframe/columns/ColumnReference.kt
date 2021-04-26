@@ -18,4 +18,5 @@ interface ColumnReference<out C> : SingleColumn<C> {
     override fun resolveSingle(context: ColumnResolutionContext): ColumnWithPath<C>? {
         return context.df.getColumn<C>(name, context.unresolvedColumnsPolicy)?.addPath(listOf(name), context.df)
     }
+
 }

@@ -21,6 +21,7 @@ import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.ValueColumn
+import org.jetbrains.dataframe.columns.toColumnDefinition
 import org.jetbrains.dataframe.getType
 import org.jetbrains.dataframe.impl.TreeNode
 import org.jetbrains.dataframe.impl.asList
@@ -51,22 +52,24 @@ internal fun <T> DataColumn<T>.getHashCode(): Int {
     return result
 }
 
-internal fun <C> TreeNode<ColumnPosition>.toColumnWithPath(df: DataFrameBase<*>) = (data.column as DataColumn<C>).addPath(pathFromRoot(), df)
+internal fun <C> TreeNode<ColumnPosition>.toColumnWithPath(df: DataFrameBase<*>) =
+    (data.column as DataColumn<C>).addPath(pathFromRoot(), df)
 
 @JvmName("toColumnWithPathAnyCol")
 internal fun <C> TreeNode<DataColumn<C>>.toColumnWithPath(df: DataFrameBase<*>) = data.addPath(pathFromRoot(), df)
 
-internal fun <T> DataColumn<T>.addPath(path: ColumnPath, df: DataFrameBase<*>): ColumnWithPath<T> = ColumnWithPathImpl(this, path, df)
+internal fun <T> DataColumn<T>.addPath(path: ColumnPath, df: DataFrameBase<*>): ColumnWithPath<T> =
+    ColumnWithPathImpl(this, path, df)
 
 internal fun <T> ColumnWithPath<T>.changePath(path: ColumnPath): ColumnWithPath<T> = data.addPath(path, df)
 
-internal fun <T> DataColumn<T>.addParentPath(path: ColumnPath, df: DataFrameBase<*>) = addPath (path + name, df)
+internal fun <T> DataColumn<T>.addParentPath(path: ColumnPath, df: DataFrameBase<*>) = addPath(path + name, df)
 
 internal fun <T> DataColumn<T>.addPath(df: DataFrameBase<*>): ColumnWithPath<T> = addPath(listOf(name), df)
 
 internal fun ColumnPath.depth() = size - 1
 
-internal fun ColumnWithPath<*>.asGroup() = if(data.isGroup()) data.asGroup() else null
+internal fun ColumnWithPath<*>.asGroup() = if (data.isGroup()) data.asGroup() else null
 internal fun <T> AnyCol.typed() = this as DataColumn<T>
 internal fun <T> ColumnWithPath<*>.typed() = this as ColumnWithPath<T>
 internal fun <T> AnyCol.asValues() = this as ValueColumn<T>
@@ -90,9 +93,12 @@ internal fun <T> DataColumn<T>.assertIsComparable(): DataColumn<T> {
     return this
 }
 
-internal fun <A,B> ColumnSet<A>.transform(transform: (List<ColumnWithPath<A>>) -> List<ColumnWithPath<B>>): ColumnSet<B> {
+internal fun <A, B> ColumnSet<A>.transform(transform: (List<ColumnWithPath<A>>) -> List<ColumnWithPath<B>>): ColumnSet<B> {
 
-    class TransformedColumnSet<A,B>(val src: ColumnSet<A>, val transform: (List<ColumnWithPath<A>>) -> List<ColumnWithPath<B>>) :
+    class TransformedColumnSet<A, B>(
+        val src: ColumnSet<A>,
+        val transform: (List<ColumnWithPath<A>>) -> List<ColumnWithPath<B>>
+    ) :
         ColumnSet<B> {
 
         override fun resolve(context: ColumnResolutionContext) = transform(src.resolve(context))
@@ -104,7 +110,7 @@ internal fun <A,B> ColumnSet<A>.transform(transform: (List<ColumnWithPath<A>>) -
 internal fun Array<out String>.toColumns(): ColumnSet<Any?> = map { it.toColumnDef() }.toColumnSet()
 internal fun <C> Iterable<ColumnSet<C>>.toColumnSet(): ColumnSet<C> = ColumnsList(asList())
 internal fun <C> Array<out KProperty<C>>.toColumns() = map { it.toColumnDef() }.toColumnSet()
-internal fun <T> Array<out ColumnReference<T>>.toColumns() = toList().toColumnSet()
+internal fun <T> Array<out ColumnReference<T>>.toColumns() = map { it.toColumnDefinition() }.toColumnSet()
 internal fun <T, C> ColumnsSelector<T, C>.toColumns(): ColumnSet<C> = toColumns {
     SelectReceiverImpl(
         it.df.typed(),
@@ -121,10 +127,10 @@ internal fun <T, C> SortColumnsSelector<T, C>.toColumns(): ColumnSet<C> = toColu
 }
 
 internal fun <C> DataFrameBase<*>.getColumn(name: String, policy: UnresolvedColumnsPolicy) =
-        tryGetColumn(name)?.typed()
-                ?: when (policy) {
-                    UnresolvedColumnsPolicy.Fail ->
-                        error("Column not found: $name")
-                    UnresolvedColumnsPolicy.Skip -> null
-                    UnresolvedColumnsPolicy.Create -> DataColumn.empty().typed<C>()
-                }
+    tryGetColumn(name)?.typed()
+        ?: when (policy) {
+            UnresolvedColumnsPolicy.Fail ->
+                error("Column not found: $name")
+            UnresolvedColumnsPolicy.Skip -> null
+            UnresolvedColumnsPolicy.Create -> DataColumn.empty().typed<C>()
+        }

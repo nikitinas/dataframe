@@ -36,7 +36,7 @@ fun <T, C> UpdateClause<T, C>.suggestTypes(vararg suggestions: Pair<KClass<*>, K
     return copy(targetType = null) { map[it] ?: it.createStarProjectedType(false) }
 }
 
-fun <T, C, R> doUpdate(clause: UpdateClause<T, C>, expression: (DataRow<T>, DataColumn<C>) -> R): DataFrame<T> {
+fun <T, C> doUpdate(clause: UpdateClause<T, C>, expression: (DataRow<T>, DataColumn<C>) -> Any?): DataFrame<T> {
 
     val removeResult = clause.df.doRemove(clause.selector)
 
@@ -50,7 +50,7 @@ fun <T, C, R> doUpdate(clause: UpdateClause<T, C>, expression: (DataRow<T>, Data
         else
             clause.df.forEach { row ->
                 val currentValue = srcColumn[row.index]
-                val newValue = if (clause.filter.invoke(row, currentValue)) expression(row, srcColumn) else currentValue as R
+                val newValue = if (clause.filter.invoke(row, currentValue)) expression(row, srcColumn) else currentValue
                 collector.add(newValue)
             }
 
@@ -74,7 +74,7 @@ fun <T, C, R> UpdateClause<T, C>.with(targetType: KType?, expression: RowCellSel
 inline infix fun <T, C, reified R> UpdateClause<T, C>.with(noinline expression: RowCellSelector<T, C, R>) = doUpdate(copy(filter = null, targetType = targetType ?: getType<R>())) { row, column ->
     val currentValue = column[row.index]
     if (filter?.invoke(row, currentValue) == false)
-        currentValue as R
+        currentValue
     else expression(row, currentValue)
 }
 

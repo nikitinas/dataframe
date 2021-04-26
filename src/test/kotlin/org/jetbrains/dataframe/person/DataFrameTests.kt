@@ -975,7 +975,7 @@ class DataFrameTests : BaseTest() {
             .merge { age and weight }.into("info")
         val nameAndCity by column<String>()
         val info by columnList<Number?>()
-        val res = merged.split { nameAndCity and info }.intoMany { src, count ->
+        val res = merged.split { nameAndCity and info }.intoMany { src, _ ->
             when (src.name) {
                 "nameAndCity" -> listOf("name", "city")
                 else -> listOf("age", "weight")
@@ -1324,5 +1324,11 @@ class DataFrameTests : BaseTest() {
             3, 2, 2,"2"
         )
         res shouldBe expected
+    }
+
+    @Test
+    fun `update nullable column with not null`(){
+        val df = dataFrameOf("name", "value")("Alice", 1, null, 2)
+        df.update("name").at(0).with("ALICE")
     }
 }

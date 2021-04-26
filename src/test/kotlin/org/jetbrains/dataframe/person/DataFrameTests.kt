@@ -1315,25 +1315,30 @@ class DataFrameTests : BaseTest() {
         val df = dataFrameOf(values, list1, frames)
         val res = df.splitRows { list1 and frames }.ungroup(frames)
         val expected = dataFrameOf(values.name(), list1.name(), "data", "dataStr")(
-            1, 1, 1,"1",
-            1, 2, 2,"2",
-            1, 3, null,null,
-            2, 1, 1,"1",
-            2, null, 2,"2",
-            3, 1, 1,"1",
-            3, 2, 2,"2"
+            1, 1, 1, "1",
+            1, 2, 2, "2",
+            1, 3, null, null,
+            2, 1, 1, "1",
+            2, null, 2, "2",
+            3, 1, 1, "1",
+            3, 2, 2, "2"
         )
         res shouldBe expected
     }
 
     @Test
-    fun `update nullable column with not null`(){
+    fun `update nullable column with not null`() {
         val df = dataFrameOf("name", "value")("Alice", 1, null, 2)
         df.update("name").at(0).with("ALICE")
     }
 
     @Test
-    fun `mean all columns`(){
+    fun `mean all columns`() {
         typed.mean().values shouldBe listOf(typed.age.mean(), typed.weight.mean())
+    }
+
+    @Test
+    fun `mean by string`() {
+        typed.mean("weight") shouldBe typed.weight.mean()
     }
 }

@@ -18,6 +18,7 @@ inline fun <T, reified D : Number> DataFrame<T>.mean(crossinline selector: RowSe
 
 inline fun <T, reified D : Number> DataFrame<T>.mean(col: ColumnReference<D>): Double = get(col).mean()
 inline fun <T, reified D : Number> DataFrame<T>.mean(col: KProperty<D>): Double = get(col).mean()
+fun <T> DataFrame<T>.mean(column: String): Double = (get(column) as DataColumn<Number?>).mean()
 
 inline fun <T, G, reified R : Number> GroupedDataFrame<T, G>.mean(
     columnName: String = "mean",

@@ -2,32 +2,35 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.isSubtypeOf
+import org.jetbrains.dataframe.impl.createDataCollector
 import java.math.BigDecimal
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.KType
 import kotlin.reflect.jvm.jvmErasure
 
 
 inline fun <reified T : Number> Iterable<T>.mean(): Double = mean(T::class)
 
-inline fun <T, reified D : Number> DataFrame<T>.mean(crossinline selector: RowSelector<T, D?>): Double = rows().asSequence().map { selector(it, it) }.filterNotNull().asIterable().mean()
+inline fun <T, reified D : Number> DataFrame<T>.mean(crossinline selector: RowSelector<T, D?>): Double =
+    rows().asSequence().map { selector(it, it) }.filterNotNull().asIterable().mean()
+
 inline fun <T, reified D : Number> DataFrame<T>.mean(col: ColumnReference<D>): Double = get(col).mean()
 inline fun <T, reified D : Number> DataFrame<T>.mean(col: KProperty<D>): Double = get(col).mean()
 
-inline fun <T, G, reified R : Number> GroupedDataFrame<T, G>.mean(columnName: String = "mean", noinline selector: RowSelector<G, R?>) = aggregate { mean(selector) into columnName }
+inline fun <T, G, reified R : Number> GroupedDataFrame<T, G>.mean(
+    columnName: String = "mean",
+    noinline selector: RowSelector<G, R?>
+) = aggregate { mean(selector) into columnName }
 
-fun <T> DataFrame<T>.mean(): DataRow<T> {
-    return columns().map {
-        column(it.name(), listOf((it as DataColumn<Number>).mean()))
-    }.asDataFrame<T>()[0]
-}
+fun <T> DataFrame<T>.mean(): DataRow<T> = aggregateColumns<T, Number?> { it.mean() }
 
 fun <T, G> GroupedDataFrame<T, G>.mean(): DataFrame<T> {
 
     val keyColumnNames = keys.columnNames().toSet()
     return aggregate {
-        columns().filter { (it.type.classifier!! as KClass<*>).isSubclassOf(Number::class) && !keyColumnNames.contains(it.name()) }
+        columns().filter { it.isSubtypeOf<Number?>() && !keyColumnNames.contains(it.name) }
             .forEach { col ->
                 (col as DataColumn<Number?>).mean() into col.name()
             }
@@ -42,7 +45,8 @@ fun <T : Number> Iterable<T>.mean(clazz: KClass<T>) = when (clazz) {
     else -> throw IllegalArgumentException()
 }
 
-fun <T: Number> DataColumn<T?>.mean(): Double = (if(hasNulls) values.filterNotNull() else (values as Iterable<T>)).mean(type.jvmErasure as KClass<T>)
+fun <T : Number> DataColumn<T?>.mean(): Double =
+    (if (hasNulls) values.filterNotNull() else (values as Iterable<T>)).mean(type.jvmErasure as KClass<T>)
 
 @JvmName("doubleMean")
 fun Iterable<Double>.mean(): Double {

@@ -1331,4 +1331,9 @@ class DataFrameTests : BaseTest() {
         val df = dataFrameOf("name", "value")("Alice", 1, null, 2)
         df.update("name").at(0).with("ALICE")
     }
+
+    @Test
+    fun `mean all columns`(){
+        typed.mean().values shouldBe listOf(typed.age.mean(), typed.weight.mean())
+    }
 }

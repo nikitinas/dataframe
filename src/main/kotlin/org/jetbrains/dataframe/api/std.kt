@@ -2,6 +2,7 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.isNumber
 import java.math.BigDecimal
 import kotlin.math.sqrt
 import kotlin.reflect.KClass
@@ -18,7 +19,9 @@ inline fun <T, reified D : Number> DataFrame<T>.std(col: KProperty<D>): Double =
 
 fun <T> DataFrame<T>.std(): DataRow<T> {
     return columns().map {
-        column(it.name, listOf((it as DataColumn<Number>).std()))
+        it.takeIf { it.isNumber() }?.let {
+            column(it.name, listOf((it as DataColumn<Number>).std()))
+        } ?: column(it.name(), listOf(""))
     }.asDataFrame<T>()[0]
 }
 
@@ -35,7 +38,8 @@ fun <T, G> GroupedDataFrame<T, G>.std(): DataFrame<T> {
 
 fun <T : Number> Iterable<T>.std(clazz: KClass<T>) = when (clazz) {
     Double::class -> (this as Iterable<Double>).std()
-    Int::class -> (this as Iterable<Int>).std()
+    Float::class -> (this as Iterable<Float>).std()
+    Int::class, Short::class, Byte::class -> (this as Iterable<Int>).std()
     Long::class -> (this as Iterable<Long>).std()
     BigDecimal::class -> (this as Iterable<BigDecimal>).std()
     else -> throw IllegalArgumentException()
@@ -45,6 +49,9 @@ fun <T: Number> DataColumn<T?>.std(): Double = (if(hasNulls) values.filterNotNul
 
 @JvmName("doubleStd")
 fun Iterable<Double>.std() = stdMean().first
+
+@JvmName("floatStd")
+fun Iterable<Float>.std() = stdMean().first
 
 @JvmName("intStd")
 fun Iterable<Int>.std() = stdMean().first
@@ -59,6 +66,15 @@ fun Iterable<BigDecimal>.std() = stdMean().first
 fun Iterable<Double>.stdMean(): Pair<Double, Double> {
     val m = mean()
     return sqrt(fold(0.0) { acc, el ->
+        val diff = el - m
+        acc + diff * diff
+    }) to m
+}
+
+@JvmName("floatStdMean")
+fun Iterable<Float>.stdMean(): Pair<Double, Double> {
+    val m = mean()
+    return sqrt(fold(0.0){ acc, el ->
         val diff = el - m
         acc + diff * diff
     }) to m

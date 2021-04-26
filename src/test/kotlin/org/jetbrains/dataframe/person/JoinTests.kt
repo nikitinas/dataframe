@@ -43,7 +43,7 @@ class JoinTests : BaseTest() {
         val res = typed.innerJoin(typed2) { name and it.city.match(right.origin) }
         res.ncol() shouldBe 6
         res.nrow() shouldBe 7
-        res["age_2"].hasNulls shouldBe false
+        res["age_1"].hasNulls shouldBe false
         res.count { name == "Mark" && city == "Moscow" } shouldBe 4
         res.select { city and name }.distinct().nrow() shouldBe 3
         res[Person2::grade].hasNulls shouldBe false
@@ -56,7 +56,7 @@ class JoinTests : BaseTest() {
 
         res.ncol() shouldBe 6
         res.nrow() shouldBe 10
-        res["age_2"].hasNulls shouldBe true
+        res["age_1"].hasNulls shouldBe true
         res.select { city and name }.distinct().nrow() shouldBe 6
         res.count { it["grade"] == null } shouldBe 3
         res.age.hasNulls shouldBe false
@@ -69,7 +69,7 @@ class JoinTests : BaseTest() {
 
         res.ncol() shouldBe 6
         res.nrow() shouldBe 9
-        res["age_2"].hasNulls shouldBe true
+        res["age_1"].hasNulls shouldBe true
         res.select { city and name }.distinct().nrow() shouldBe 4
         res[Person2::grade].hasNulls shouldBe false
         res.age.hasNulls shouldBe true

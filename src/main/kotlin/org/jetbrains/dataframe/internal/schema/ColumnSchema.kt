@@ -69,6 +69,6 @@ internal abstract class ColumnSchema {
 internal fun AnyCol.getColumnType(): ColumnSchema = when (this) {
     is ValueColumn<*> -> ColumnSchema.Value(type)
     is MapColumn<*> -> ColumnSchema.Map(df.extractSchema())
-    is FrameColumn<*> -> ColumnSchema.Frame(internal().schema, hasNulls)
+    is FrameColumn<*> -> ColumnSchema.Frame(internal().schema.value, hasNulls)
     else -> throw RuntimeException()
 }

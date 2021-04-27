@@ -13,7 +13,10 @@ class GroupAggregateBuilder<T>(internal val df: DataFrame<T>): DataFrame<T> by d
 
     private val values = mutableListOf<NamedValue>()
 
-    internal fun toDataFrame() = values.map { it.path to DataColumn.createGuess(it.path.last(), listOf(it.value), it.type, it.defaultValue) }.toDataFrame<T>() ?: emptyDataFrame(1).typed()
+    internal fun toDataFrame() = values.map { it.path to DataColumn.createGuess(it.path.last(), listOf(it.value), it.type, it.defaultValue) }.let {
+        if(it.isEmpty()) emptyDataFrame(1)
+        else it.toDataFrame<T>()
+    }
 
     fun <R> addValue(path: ColumnPath, value: R, type: KType, default: R? = null) {
         values.add(NamedValue(path, value, type, default))
@@ -63,10 +66,10 @@ internal fun <T, G> doAggregate(df: DataFrame<T>, selector: ColumnSelector<T, Da
     if(!removeColumns) removedNode.data.wasRemoved = false
 
     val columnsToInsert = groupedFrame.columns().map {
-        ColumnToInsert(insertPath + it.name(), removedNode, it)
+        ColumnToInsert(insertPath + it.name(), it, removedNode)
     }
     val src = if(removeColumns) df2 else df
-    return src.doInsert(columnsToInsert)
+    return src.insert(columnsToInsert)
 }
 
 internal inline fun <T, reified C> DataFrame<T>.aggregateColumns(crossinline selector: (DataColumn<C>) -> Any?) = aggregateColumns(getType<C>()) { selector(it as DataColumn<C>) }

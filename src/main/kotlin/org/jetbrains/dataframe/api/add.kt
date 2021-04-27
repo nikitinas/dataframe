@@ -24,8 +24,12 @@ inline fun <reified R, T> DataFrame<T>.add(property: KProperty<R>, noinline expr
 inline fun <reified R, T, G> GroupedDataFrame<T, G>.add(name: String, noinline expression: RowSelector<G, R>) =
         mapNotNullGroups { add(name, expression) }
 
-inline fun <reified R, T> DataFrame<T>.add(column: ColumnDefinition<R>, noinline expression: RowSelector<T, R>) =
-        (this + newColumn(column.name(), expression)) // TODO: support column path
+inline fun <reified R, T> DataFrame<T>.add(column: ColumnDefinition<R>, noinline expression: RowSelector<T, R>): DataFrame<T> {
+    val col = newColumn(column.name(), expression)
+    val path = column.path()
+    if(path.size == 1) return this + col
+    return insert(path, col)
+}
 
 fun <T> DataFrame<T>.add(body: TypedColumnsFromDataRowBuilder<T>.() -> Unit) =
     with(TypedColumnsFromDataRowBuilder(this)) {

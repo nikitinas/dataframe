@@ -16,6 +16,6 @@ internal class MissingFrameColumn<T>: MissingDataColumn<DataFrame<T>?>(), FrameC
         throw UnsupportedOperationException()
     }
 
-    override val schema: DataFrameSchema
+    override val schema: Lazy<DataFrameSchema>
         get() = throw UnsupportedOperationException()
 }

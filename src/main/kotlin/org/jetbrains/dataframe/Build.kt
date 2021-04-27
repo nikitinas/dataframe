@@ -3,6 +3,7 @@ package org.jetbrains.dataframe
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnWithPath
+import org.jetbrains.dataframe.impl.ColumnNameGenerator
 import org.jetbrains.dataframe.impl.DataFrameImpl
 import org.jetbrains.dataframe.impl.TreeNode
 import org.jetbrains.dataframe.impl.columns.DataColumnWithParentImpl
@@ -21,7 +22,8 @@ class IterableDataFrameBuilder<T>(val source: Iterable<T>) {
 
     fun add(column: AnyCol) = columns.add(column)
 
-    inline fun <reified R> add(name: String, noinline expression: T.(T) -> R?) = add(column(name, source.map { expression(it, it) }))
+    inline fun <reified R> add(name: String, noinline expression: T.(T) -> R?) =
+        add(column(name, source.map { expression(it, it) }))
 
     inline infix fun <reified R> String.to(noinline expression: T.(T) -> R?) = add(this, expression)
 
@@ -37,30 +39,34 @@ fun <T> Iterable<T>.toDataFrame(body: IterableDataFrameBuilder<T>.() -> Unit): A
 }
 
 inline fun <reified T> Iterable<T>.toDataFrame() = T::class.declaredMembers
-        .filter { it.parameters.toList().size == 1 }
-        .filter { it is KProperty }
-        .map {
-            val property = (it as KProperty)
-            property.javaField?.isAccessible = true
-            var nullable = false
-            val values = this.map { obj ->
-                if(obj == null) {
-                    nullable = true
-                    null
-                }else {
-                    val value = it.call(obj)
-                    if(value == null) nullable = true
-                    value
-                }
+    .filter { it.parameters.toList().size == 1 }
+    .filter { it is KProperty }
+    .map {
+        val property = (it as KProperty)
+        property.javaField?.isAccessible = true
+        var nullable = false
+        val values = this.map { obj ->
+            if (obj == null) {
+                nullable = true
+                null
+            } else {
+                val value = it.call(obj)
+                if (value == null) nullable = true
+                value
             }
-            DataColumn.create(it.name, values, property.returnType.withNullability(nullable))
-        }.let { dataFrameOf(it) }
+        }
+        DataColumn.create(it.name, values, property.returnType.withNullability(nullable))
+    }.let { dataFrameOf(it) }
 
 fun DataFrame.Companion.of(columns: Iterable<AnyCol>) = dataFrameOf(columns)
 fun DataFrame.Companion.of(vararg header: String) = dataFrameOf(header.toList())
 fun DataFrame.Companion.of(vararg columns: AnyCol) = dataFrameOf(columns.asIterable())
 
-fun dataFrameOf(columns: Iterable<AnyCol>): AnyFrame = DataFrameImpl<Unit>(columns.map { it.unbox() })
+fun dataFrameOf(columns: Iterable<AnyCol>): AnyFrame {
+    val cols = columns.map { it.unbox() }
+    if(cols.isEmpty()) return DataFrame.empty()
+    return DataFrameImpl<Unit>(cols)
+}
 
 fun dataFrameOf(vararg header: ColumnReference<*>) = DataFrameBuilder(header.map { it.name() })
 
@@ -83,30 +89,58 @@ internal fun AnyCol.unbox(): AnyCol = when (this) {
 
 fun <T> Iterable<AnyCol>.asDataFrame() = dataFrameOf(this).typed<T>()
 
+@JvmName("toDataFrameColumnPathAnyCol")
+fun <T> Iterable<Pair<ColumnPath, AnyCol>>.toDataFrame(): DataFrame<T> {
+
+    val nameGenerator = ColumnNameGenerator()
+    val columnNames = mutableListOf<String>()
+    val columnGroups = mutableListOf<MutableList<Pair<ColumnPath, AnyCol>>?>()
+    val columns = mutableListOf<AnyCol?>()
+    val columnIndices = mutableMapOf<String, Int>()
+    val columnGroupName = mutableMapOf<String, String>()
+
+    forEach { (path, col) ->
+        when(path.size){
+            0 -> {}
+            1 -> {
+                val name = path[0]
+                val uniqueName = nameGenerator.addUnique(name)
+                val index = columns.size
+                columnNames.add(uniqueName)
+                columnGroups.add(null)
+                columns.add(col.rename(uniqueName))
+                columnIndices[uniqueName] = index
+            }
+            else -> {
+                val name = path[0]
+                val uniqueName = columnGroupName.getOrPut(name){
+                    nameGenerator.addUnique(name)
+                }
+                val index = columnIndices.getOrPut(uniqueName){
+                    columnNames.add(uniqueName)
+                    columnGroups.add(mutableListOf())
+                    columns.add(null)
+                    columns.size - 1
+                }
+                val list = columnGroups[index]!!
+                list.add(path.subList(1, path.size) to col)
+            }
+        }
+    }
+    columns.indices.forEach { index ->
+        val group = columnGroups[index]
+        if(group != null){
+            val nestedDf = group.toDataFrame<Unit>()
+            val col = DataColumn.create(columnNames[index], nestedDf)
+            assert(columns[index] == null)
+            columns[index] = col
+        } else assert(columns[index] != null)
+    }
+    return columns.map { it!! }.asDataFrame()
+}
+
 @JvmName("toDataFrameAnyCol")
 fun Iterable<AnyCol>.toDataFrame() = asDataFrame<Unit>()
-
-fun <T> List<Pair<List<String>, AnyCol>>.toDataFrame(): DataFrame<T>? {
-    if(size == 0) return null
-    val tree = TreeNode.createRoot(null as AnyCol?)
-    forEach {
-        val (path, col) = it
-        val node = tree.getOrPut(path)
-        if(node.data != null)
-            throw UnsupportedOperationException("Duplicate column paths: $path")
-        node.data = col
-    }
-    fun dfs(node: TreeNode<AnyCol?>){
-        if(node.children.isNotEmpty()){
-            if(node.data != null)
-                throw UnsupportedOperationException("Can not add data to grouped column: ${node.pathFromRoot()}")
-            node.children.forEach { dfs(it) }
-            node.data = DataColumn.create(node.name, node.children.map { it.data!! }.toDataFrame())
-        }else assert(node.data != null)
-    }
-    dfs(tree)
-    return tree.data!!.asFrame().typed<T>()
-}
 
 class DataFrameBuilder(private val columnNames: List<String>) {
 
@@ -117,10 +151,10 @@ class DataFrameBuilder(private val columnNames: List<String>) {
         }
 
         val columnValues = values
-                .mapIndexed { i, value -> i.rem(columnNames.size) to value }
-                .groupBy { it.first }.values.map {
-                    it.map { it.second }
-                }
+            .mapIndexed { i, value -> i.rem(columnNames.size) to value }
+            .groupBy { it.first }.values.map {
+                it.map { it.second }
+            }
 
         val columns = columnNames.zip(columnValues).map { (columnName, values) ->
             guessColumnType(columnName, values)

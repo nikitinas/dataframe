@@ -105,7 +105,7 @@ interface DataFrame<out T> : DataFrameBase<T> {
 
     fun nrow(): Int
 
-    fun indices(): IntRange = 0..nrow() - 1
+    fun indices(): IntRange = 0 until nrow
 
     override fun ncol(): Int = columns().size
 
@@ -121,7 +121,7 @@ interface DataFrame<out T> : DataFrameBase<T> {
     override operator fun get(columnName: String) =
         tryGetColumn(columnName) ?: throw Exception("Column not found: '$columnName'")
 
-    override operator fun <R> get(column: ColumnReference<R>): DataColumn<R> = tryGetColumn(column)!!
+    override operator fun <R> get(column: ColumnReference<R>): DataColumn<R> = tryGetColumn(column) ?: error("Column not found: ${column.path().joinToString("/")}")
     override operator fun <R> get(column: ColumnReference<DataRow<R>>): MapColumn<R> =
         get<DataRow<R>>(column) as MapColumn<R>
 

@@ -32,7 +32,7 @@ fun <T> DataFrame<T>.groupBy(cols: ColumnsSelector<T, *>): GroupedDataFrame<T, T
    val keyColumnsToInsert = nodes.map {
        val column = it.data.slice(keyIndices)
        val path = it.path
-       ColumnToInsert(path, null, column)
+       ColumnToInsert(path, column, null)
    }
 
    val keyColumnsDf = insertColumns(keyColumnsToInsert).typed<T>()

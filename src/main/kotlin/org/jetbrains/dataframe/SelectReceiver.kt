@@ -33,6 +33,7 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
         transform { it.flatMap { col -> names.mapNotNull { col.getChild(it) } } }
     }
 
+    fun ColumnSet<*>.cols(vararg indices: Int) = transform { it.flatMap { it.children().let { children -> indices.map { children[it]}} } }
     fun ColumnSet<*>.cols(range: IntRange) = transform { it.flatMap { it.children().subList(range.start, range.endInclusive+1) } }
     fun ColumnSet<*>.cols(predicate: (AnyCol) -> Boolean = {true}) = colsInternal(predicate)
 
@@ -40,7 +41,7 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
 
     fun DataFrameBase<*>.all(): ColumnSet<*> = ColumnsList(children())
 
-    fun DataFrameBase<*>.allDfs() = colsDfs { !it.isGroup() }
+    fun ColumnSet<*>.allDfs() = colsDfs { !it.isGroup() }
 
     fun DataFrameBase<*>.colGroups(filter: (MapColumn<*>) -> Boolean = { true }): ColumnSet<AnyRow> = this.columns().filter { it.isGroup() && filter(it.asGroup()) }.map { it.asGroup() }.toColumnSet()
 

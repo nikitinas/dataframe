@@ -86,7 +86,7 @@ fun <T> DataFrame<T>.splitRows(selector: ColumnsSelector<T, *>): DataFrame<T> {
                 if (col.isTable()) DataColumn.create(
                     col.name,
                     collector.values as List<AnyFrame?>,
-                    lazy { col.asTable().schema } // keep original schema
+                    col.asTable().schema // keep original schema
                 )
                 else collector.toColumn(col.name)
             }

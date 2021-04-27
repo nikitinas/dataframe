@@ -17,11 +17,10 @@ interface ColumnDefinition<out T> : ColumnReference<T> {
     fun <C> changeType() = this as ColumnDefinition<C>
 }
 
-fun <T> ColumnReference<T>.toColumnDefinition(): ColumnDefinition<T> = when(this){
+fun <T> ColumnReference<T>.definition(): ColumnDefinition<T> = when(this){
     is ColumnDefinition<T> -> this
     else -> ColumnDefinitionImpl(path())
 }
-
 
 internal class ColumnDefinitionImpl<T>(val path: ColumnPath) : ColumnDefinition<T> {
 

@@ -21,7 +21,7 @@ import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.ValueColumn
-import org.jetbrains.dataframe.columns.toColumnDefinition
+import org.jetbrains.dataframe.columns.definition
 import org.jetbrains.dataframe.getType
 import org.jetbrains.dataframe.impl.TreeNode
 import org.jetbrains.dataframe.impl.asList
@@ -85,7 +85,7 @@ internal fun <T> DataColumn<DataRow<T>>.asGroup(): MapColumn<T> = this as MapCol
 internal fun AnyCol.asTable(): FrameColumnInternal<*> = this as FrameColumnInternal<*>
 
 @JvmName("asTableT")
-internal fun <T> DataColumn<DataFrame<T>?>.asTable(): FrameColumn<T> = this as FrameColumn<T>
+internal fun <T> DataColumn<DataFrame<T>?>.asTable(): FrameColumn<T> = this as FrameColumnInternal<T>
 internal fun AnyCol.isTable(): Boolean = kind() == ColumnKind.Frame
 internal fun <T> DataColumn<T>.assertIsComparable(): DataColumn<T> {
     if (!type.isSubtypeOf(getType<Comparable<*>?>()))
@@ -110,7 +110,7 @@ internal fun <A, B> ColumnSet<A>.transform(transform: (List<ColumnWithPath<A>>) 
 internal fun Array<out String>.toColumns(): ColumnSet<Any?> = map { it.toColumnDef() }.toColumnSet()
 internal fun <C> Iterable<ColumnSet<C>>.toColumnSet(): ColumnSet<C> = ColumnsList(asList())
 internal fun <C> Array<out KProperty<C>>.toColumns() = map { it.toColumnDef() }.toColumnSet()
-internal fun <T> Array<out ColumnReference<T>>.toColumns() = map { it.toColumnDefinition() }.toColumnSet()
+internal fun <T> Array<out ColumnReference<T>>.toColumns() = map { it.definition() }.toColumnSet()
 internal fun <T, C> ColumnsSelector<T, C>.toColumns(): ColumnSet<C> = toColumns {
     SelectReceiverImpl(
         it.df.typed(),

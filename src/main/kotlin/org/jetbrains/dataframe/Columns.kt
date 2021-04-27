@@ -56,6 +56,8 @@ fun <T> ColumnPath.toColumnOf(): ColumnDefinition<T> = ColumnDefinitionImpl(this
 
 fun ColumnPath.toColumnDef(): ColumnDefinition<Any?> = ColumnDefinitionImpl(this)
 
+fun ColumnPath.toGroupColumnDef(): ColumnDefinition<AnyRow> = ColumnDefinitionImpl(this)
+
 internal fun KProperty<*>.getColumnName() = this.findAnnotation<ColumnName>()?.name ?: name
 
 fun <T> KProperty<T>.toColumnDef(): ColumnDefinition<T> = ColumnDefinitionImpl<T>(name)
@@ -95,10 +97,10 @@ inline fun <T, reified R> DataFrame<T>.newColumn(name: String, noinline expressi
 }
 
 
-class ColumnDelegate<T> {
+class ColumnDelegate<T>(private val parent: MapColumnReference? = null) {
     operator fun getValue(thisRef: Any?, property: KProperty<*>): ColumnDefinition<T> = named(property.name)
 
-    infix fun named(name: String): ColumnDefinition<T> = ColumnDefinitionImpl(name)
+    infix fun named(name: String): ColumnDefinition<T> = parent?.let { ColumnDefinitionImpl(it.path() + name) } ?: ColumnDefinitionImpl(name)
 }
 
 fun AnyCol.asFrame(): AnyFrame = when (this) {
@@ -113,6 +115,8 @@ fun <T> column() = ColumnDelegate<T>()
 
 fun columnGroup() = column<AnyRow>()
 
+fun columnGroup(parent: MapColumnReference) = column<AnyRow>(parent)
+
 fun <T> columnList() = column<List<T>>()
 
 fun <T> columnGroup(name: String) = column<DataRow<T>>(name)
@@ -122,6 +126,10 @@ fun <T> frameColumn(name: String) = column<DataFrame<T>>(name)
 fun <T> columnList(name: String) = column<List<T>>(name)
 
 fun <T> column(name: String): ColumnDefinition<T> = ColumnDefinitionImpl(name)
+
+fun <T> column(parent: MapColumnReference): ColumnDelegate<T> = ColumnDelegate(parent)
+
+fun <T> column(parent: MapColumnReference, name: String): ColumnDefinition<T> = ColumnDefinitionImpl(parent.path() + name)
 
 interface ColumnProvider<out T>{
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = named(property.name)

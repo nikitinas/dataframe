@@ -29,7 +29,7 @@ fun <T, C> ReplaceCause<T, C>.with(transform: DataFrameBase<T>.(DataColumn<C>)->
     val removeResult = df.doRemove(selector)
     val toInsert = removeResult.removedColumns.map {
         val newCol = transform(df, it.data.column as DataColumn<C>)
-        ColumnToInsert(it.pathFromRoot().dropLast(1) + newCol.name, it, newCol)
+        ColumnToInsert(it.pathFromRoot().dropLast(1) + newCol.name, newCol, it)
     }
-    return removeResult.df.doInsert(toInsert)
+    return removeResult.df.insert(toInsert)
 }

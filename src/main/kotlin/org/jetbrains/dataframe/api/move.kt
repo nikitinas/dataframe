@@ -53,9 +53,9 @@ fun <T, C> MoveColsClause<T, C>.under(parentPath: DataFrameForMove<T>.(ColumnWit
     val receiver = MoveReceiver(df)
     val columnsToInsert = removed.map {
         val col = it.column
-        ColumnToInsert(parentPath(receiver, col) + it.name, it, col.data)
+        ColumnToInsert(parentPath(receiver, col) + it.name, col.data, it)
     }
-    return df.doInsert(columnsToInsert)
+    return df.insert(columnsToInsert)
 }
 
 fun <T, C> MoveColsClause<T, C>.toTop(groupNameExpression: DataFrameForMove<T>.(ColumnWithPath<C>) -> String = { it.name() }) =
@@ -73,9 +73,9 @@ fun <T, C> MoveColsClause<T, C>.into(newPathExpression: DataFrameForMove<T>.(Col
     val receiver = MoveReceiver(df)
     val columnsToInsert = removed.map {
         val col = it.column
-        ColumnToInsert(newPathExpression(receiver, col), it, col.data)
+        ColumnToInsert(newPathExpression(receiver, col), col.data, it)
     }
-    return df.doInsert(columnsToInsert)
+    return df.insert(columnsToInsert)
 }
 
 fun <T, C> MoveColsClause<T, C>.into(vararg path: String) = into(path.toList())
@@ -109,9 +109,9 @@ fun <T, C> MoveColsClause<T, C>.after(column: ColumnSelector<T, *>): DataFrame<T
 
     val toInsert = removed.map {
         val path = parentPath + it.name
-        ColumnToInsert(path, refNode, it.column.data)
+        ColumnToInsert(path, it.column.data, refNode)
     }
-    return df.doInsert(toInsert)
+    return df.insert(toInsert)
 }
 
 fun <T, C> MoveColsClause<T, C>.toLeft() = to(0)

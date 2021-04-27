@@ -56,9 +56,9 @@ fun <T, C> doUpdate(clause: UpdateClause<T, C>, expression: (DataRow<T>, DataCol
 
         val newColumn = collector.toColumn(srcColumn.name())
 
-        ColumnToInsert(it.pathFromRoot(), it, newColumn)
+        ColumnToInsert(it.pathFromRoot(), newColumn, it)
     }
-    return removeResult.df.doInsert(toInsert)
+    return removeResult.df.insert(toInsert)
 }
 
 // TODO: rename

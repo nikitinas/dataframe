@@ -12,13 +12,13 @@ import java.lang.UnsupportedOperationException
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
 
-internal class FrameColumnImpl<T> constructor(name: String, values: List<DataFrame<T>?>, schema: Lazy<DataFrameSchema>? = null)
-    : DataColumnImpl<DataFrame<T>?>(values, name, createType<AnyFrame?>().withNullability(values.any { it == null })),
+internal class FrameColumnImpl<T> constructor(name: String, values: List<DataFrame<T>?>, columnSchema: Lazy<DataFrameSchema>? = null)
+    : DataColumnImpl<DataFrame<T>?>(values, name, createType<AnyFrame>().withNullability(values.any { it == null })),
     FrameColumnInternal<T> {
 
     constructor(name: String, df: DataFrame<T>, startIndices: Sequence<Int>) : this(name, df.splitByIndices(startIndices).toList())
 
-    override fun rename(newName: String) = FrameColumnImpl(newName, values, lazySchema)
+    override fun rename(newName: String) = FrameColumnImpl(newName, values, schema)
 
     override fun defaultValue() = null
 
@@ -34,9 +34,7 @@ internal class FrameColumnImpl<T> constructor(name: String, values: List<DataFra
         return DataColumn.create(name, values.distinct())
     }
 
-    private val lazySchema = schema ?: lazy {
+    override val schema = columnSchema ?: lazy {
         values.mapNotNull { it?.extractSchema() }.intersectSchemas()
     }
-
-    override val schema by lazySchema
 }

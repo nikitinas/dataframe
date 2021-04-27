@@ -106,11 +106,11 @@ fun <T, C> doSplitCols(
             val sourcePath = node.pathFromRoot()
             val path = if (clause.inward) sourcePath + name else sourcePath.dropLast(1) + name
             val data = col.toColumn(name)
-            ColumnToInsert(path, node, data)
+            ColumnToInsert(path, data, node)
         }
     }
 
-    return removeResult.df.doInsert(toInsert)
+    return removeResult.df.insert(toInsert)
 }
 
 fun <T, C> SplitClause<T, C>.intoRows() = df.splitRows(columns)

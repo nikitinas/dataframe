@@ -27,6 +27,8 @@ interface DataColumn<out T> : ColumnReference<T>, ColumnProvider<T> {
         fun <T> create(name: String, df: DataFrame<T>, startIndices: Iterable<Int>): FrameColumn<T> =
             create(name, df, startIndices.asSequence())
 
+        fun <T> frames(name: String, groups: List<DataFrame<T>?>) = create(name, groups)
+
         internal fun <T> create(name: String, groups: List<DataFrame<T>?>, schema: Lazy<DataFrameSchema>? = null): FrameColumn<T> = FrameColumnImpl(name, groups, schema)
 
         internal fun <T> createGuess(name: String, values: List<T>, type:KType, defaultValue: T? = null): DataColumn<T> {

@@ -195,6 +195,8 @@ interface DataFrame<out T> : DataFrameBase<T> {
     fun size() = DataFrameSize(ncol(), nrow())
 }
 
+fun AnyFrame.getFrame(path: ColumnPath): AnyFrame = if(path.isNotEmpty()) this[path].asFrame() else this
+
 fun <T> AnyFrame.typed(): DataFrame<T> = this as DataFrame<T>
 
 fun <T> DataFrameBase<*>.typed(): DataFrameBase<T> = this as DataFrameBase<T>

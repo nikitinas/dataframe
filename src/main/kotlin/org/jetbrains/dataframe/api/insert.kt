@@ -1,17 +1,39 @@
 package org.jetbrains.dataframe
 
+import org.jetbrains.dataframe.columns.ColumnDefinition
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.MapColumn
-import org.jetbrains.dataframe.impl.TreeNode
+import org.jetbrains.dataframe.impl.ReadonlyTreeNode
 import org.jetbrains.dataframe.impl.columns.withDf
 import org.jetbrains.dataframe.impl.getAncestor
+import org.jetbrains.dataframe.impl.removeAt
 
 fun <T> DataFrame<T>.insert(path: ColumnPath, column: AnyCol) = insertColumns(this, listOf(ColumnToInsert(path, column)))
+
+inline fun <T, reified R> DataFrame<T>.insert(noinline expression: RowSelector<T, R>) = insert("", expression)
+
+inline fun <T, reified R> DataFrame<T>.insert(name: String, noinline expression: RowSelector<T, R>) = InsertClause(this, newColumn(name, expression))
+
+data class InsertClause<T>(val df: DataFrame<T>, val column: AnyCol)
+
+fun <T> InsertClause<T>.into(path: ColumnPath) = df.insert(path, column.rename(path.last()))
+fun <T> InsertClause<T>.into(reference: ColumnDefinition<*>) = into(reference.path())
+
+fun <T> InsertClause<T>.under(path: ColumnPath) = df.insert(path + column.name, column)
+fun <T> InsertClause<T>.under(selector: ColumnSelector<T, *>) = under(df.getColumnPath(selector))
+
+fun <T> InsertClause<T>.after(name: String) = df.add(column).move(column).after(name)
+fun <T> InsertClause<T>.after(selector: ColumnSelector<T, *>) = after(df.getColumnPath(selector))
+
+fun <T> InsertClause<T>.after(path: ColumnPath): DataFrame<T> {
+    val colPath = path.removeAt(path.size - 1) + column.name()
+    return df.insert(colPath, column).move(colPath).after(path)
+}
 
 internal data class ColumnToInsert(
     val insertionPath: ColumnPath,
     val column: AnyCol,
-    val referenceNode: TreeNode<ColumnPosition>? = null
+    val referenceNode: ReadonlyTreeNode<ReferenceData>? = null
 )
 
 internal fun <T> DataFrame<T>.insert(columns: List<ColumnToInsert>) = insertColumns(this, columns)
@@ -25,7 +47,7 @@ internal fun insertColumns(columns: List<ColumnToInsert>) =
 internal fun <T> insertColumns(
     df: DataFrame<T>?,
     columns: List<ColumnToInsert>,
-    treeNode: TreeNode<ColumnPosition>?,
+    treeNode: ReadonlyTreeNode<ReferenceData>?,
     depth: Int
 ): DataFrame<T> {
 

@@ -25,9 +25,11 @@ import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.definition
 import org.jetbrains.dataframe.dataFrameOf
 import org.jetbrains.dataframe.distinct
+import org.jetbrains.dataframe.duplicate
 import org.jetbrains.dataframe.execute
 import org.jetbrains.dataframe.filter
 import org.jetbrains.dataframe.forEach
+import org.jetbrains.dataframe.frameColumn
 import org.jetbrains.dataframe.get
 import org.jetbrains.dataframe.getColumnPath
 import org.jetbrains.dataframe.getType
@@ -41,6 +43,7 @@ import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.typed
 import org.jetbrains.dataframe.indices
+import org.jetbrains.dataframe.insert
 import org.jetbrains.dataframe.into
 import org.jetbrains.dataframe.intoRows
 import org.jetbrains.dataframe.inward
@@ -539,5 +542,29 @@ class DataFrameTreeTests : BaseTest() {
         joined.select { cols(2, 1) }.rename(name_1).into(typed.name) shouldBe right.plain()
         joined.name shouldBe left.keys.name
         joined.forEach { name_1() shouldBe name.reversed() }
+    }
+
+    @Test
+    fun `add frame column`() {
+
+        val frameCol by frameColumn()
+        val added = typed2.add(frameCol) { nameAndCity.duplicate(3) }
+        added[frameCol].kind() shouldBe ColumnKind.Frame
+    }
+
+    @Test
+    fun `insert column`() {
+
+        val colName = "reversed"
+        fun DataFrame<GroupedPerson>.check() {
+            nameAndCity.ncol() shouldBe 3
+            nameAndCity.columnNames() shouldBe listOf(
+                typed2.nameAndCity.name.name(),
+                colName,
+                typed2.nameAndCity.city.name()
+            )
+        }
+
+        typed2.insert(colName) { nameAndCity.name.reversed() }.after { nameAndCity.name }.check()
     }
 }

@@ -13,6 +13,8 @@ fun <T> DataFrame<T>.add(cols: Iterable<AnyCol>) = this + cols
 
 fun <T> DataFrame<T>.add(other: AnyFrame) = add(other.columns())
 
+fun <T> DataFrame<T>.add(column: AnyCol) = this + column
+
 fun <T> DataFrame<T>.add(name: String, data: AnyCol) = dataFrameOf(columns() + data.rename(name)).typed<T>()
 
 inline fun <reified R, T> DataFrame<T>.add(name: String, noinline expression: RowSelector<T, R>) =

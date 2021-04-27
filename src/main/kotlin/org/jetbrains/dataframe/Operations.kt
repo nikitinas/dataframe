@@ -169,8 +169,12 @@ internal fun <D> List<ColumnWithPath<*>>.collectTree(emptyData: D, createData: (
     return root
 }
 
-//TODO: make immutable
-internal data class ColumnPosition(val originalIndex: Int, var wasRemoved: Boolean, var column: AnyCol?)
+interface ReferenceData {
+    val originalIndex: Int
+    val wasRemoved: Boolean
+}
+
+internal data class ColumnPosition(override val originalIndex: Int, override var wasRemoved: Boolean, var column: AnyCol?): ReferenceData
 
 fun Column.getParent(): MapColumnReference? = when (this) {
     is ColumnWithParent<*> -> parent

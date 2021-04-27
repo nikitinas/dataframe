@@ -93,9 +93,9 @@ fun AnyCol.toDataFrame() = dataFrameOf(listOf(this))
 inline fun <T, reified R> DataFrame<T>.newColumn(name: String, noinline expression: RowSelector<T, R>): DataColumn<R> {
     var nullable = false
     val values = (0 until nrow()).map { get(it).let { expression(it, it) }.also { if (it == null) nullable = true } }
+    if(R::class == DataFrame::class) return DataColumn.frames(name, values as List<AnyFrame?>) as DataColumn<R>
     return column(name, values, nullable)
 }
-
 
 class ColumnDelegate<T>(private val parent: MapColumnReference? = null) {
     operator fun getValue(thisRef: Any?, property: KProperty<*>): ColumnDefinition<T> = named(property.name)
@@ -116,6 +116,8 @@ fun <T> column() = ColumnDelegate<T>()
 fun columnGroup() = column<AnyRow>()
 
 fun columnGroup(parent: MapColumnReference) = column<AnyRow>(parent)
+
+fun frameColumn() = column<AnyFrame>()
 
 fun <T> columnList() = column<List<T>>()
 

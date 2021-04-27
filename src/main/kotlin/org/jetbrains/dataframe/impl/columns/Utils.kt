@@ -108,6 +108,7 @@ internal fun <A, B> ColumnSet<A>.transform(transform: (List<ColumnWithPath<A>>) 
 }
 
 internal fun Array<out String>.toColumns(): ColumnSet<Any?> = map { it.toColumnDef() }.toColumnSet()
+internal fun Array<out ColumnPath>.toColumns(): ColumnSet<Any?> = map { it.toColumnDef() }.toColumnSet()
 internal fun <C> Iterable<ColumnSet<C>>.toColumnSet(): ColumnSet<C> = ColumnsList(asList())
 internal fun <C> Array<out KProperty<C>>.toColumns() = map { it.toColumnDef() }.toColumnSet()
 internal fun <T> Array<out ColumnReference<T>>.toColumns() = map { it.definition() }.toColumnSet()

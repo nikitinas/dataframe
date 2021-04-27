@@ -2,7 +2,20 @@ package org.jetbrains.dataframe.impl
 
 import org.jetbrains.dataframe.ColumnPath
 
-internal class TreeNode<T>(val name: String, val depth: Int, var data: T, val parent: TreeNode<T>? = null) {
+internal interface ReadonlyTreeNode<out T> {
+
+    val name: String
+    val depth: Int
+    val data: T
+    val parent: ReadonlyTreeNode<T>?
+    val children: List<ReadonlyTreeNode<T>>
+
+    fun getRoot(): ReadonlyTreeNode<T>?
+
+    operator fun get(childName: String): ReadonlyTreeNode<T>?
+}
+
+internal class TreeNode<T>(override val name: String, override val depth: Int, override var data: T, override val parent: TreeNode<T>? = null): ReadonlyTreeNode<T> {
 
     companion object {
         fun <T> createRoot(data: T) = TreeNode<T>("", 0, data)
@@ -11,14 +24,14 @@ internal class TreeNode<T>(val name: String, val depth: Int, var data: T, val pa
     private val myChildren = mutableListOf<TreeNode<T>>()
     private val childrenMap = mutableMapOf<String, TreeNode<T>>()
 
-    val children: List<TreeNode<T>>
+    override val children: List<TreeNode<T>>
         get() = myChildren
 
-    fun getRoot(): TreeNode<T> = parent?.getRoot() ?: this
+    override fun getRoot(): TreeNode<T> = parent?.getRoot() ?: this
 
     fun contains(childName: String) = childrenMap.containsKey(childName)
 
-    operator fun get(childName: String) = childrenMap[childName]
+    override operator fun get(childName: String) = childrenMap[childName]
 
     fun pathFromRoot(): List<String> {
         val path = mutableListOf<String>()
@@ -58,27 +71,14 @@ internal class TreeNode<T>(val name: String, val depth: Int, var data: T, val pa
         return result
     }
 
-    fun <R> changeData(func: (Int, TreeNode<T>) -> R): TreeNode<R> {
-
-        fun dfs(oldNode: TreeNode<T>, newNode: TreeNode<R>) {
-            oldNode.children.forEachIndexed { index, child ->
-                val newData = func(index, child)
-                val newChild = newNode.addChild(child.name, newData)
-                dfs(child, newChild)
-            }
-        }
-        val newRoot = createRoot(func(0, this))
-        dfs(this, newRoot)
-        return newRoot
-    }
 }
 
-internal tailrec fun <T> TreeNode<T>.getAncestor(depth: Int): TreeNode<T> {
+internal tailrec fun <T> ReadonlyTreeNode<T>.getAncestor(depth: Int): ReadonlyTreeNode<T> {
 
     if(depth > this.depth) throw UnsupportedOperationException()
     if(depth == this.depth) return this
-    if(parent == null) throw UnsupportedOperationException()
-    return parent.getAncestor(depth)
+    val p = parent ?: throw UnsupportedOperationException()
+    return p.getAncestor(depth)
 }
 
 internal fun <T> TreeNode<T?>.getOrPut(path: ColumnPath) = getOrPutEmpty(path, null)

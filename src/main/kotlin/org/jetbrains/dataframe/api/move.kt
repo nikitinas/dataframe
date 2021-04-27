@@ -31,6 +31,7 @@ fun <T> DataFrame<T>.moveToRight(vararg cols: KProperty<*>) = moveToRight { cols
 fun <T, C> DataFrame<T>.move(cols: Iterable<ColumnReference<C>>) = move { cols.toColumnSet() }
 fun <T, C> DataFrame<T>.move(vararg cols: ColumnReference<C>) = move { cols.toColumns() }
 fun <T> DataFrame<T>.move(vararg cols: String) = move { cols.toColumns() }
+fun <T> DataFrame<T>.move(vararg cols: ColumnPath) = move { cols.toColumns() }
 fun <T, C> DataFrame<T>.move(vararg cols: KProperty<C>) = move { cols.toColumns() }
 fun <T, C> DataFrame<T>.move(selector: ColumnsSelector<T, C>): MoveColsClause<T, C> {
 
@@ -94,18 +95,29 @@ fun <T, C> MoveColsClause<T, C>.after(columnPath: ColumnPath) = after { columnPa
 fun <T, C> MoveColsClause<T, C>.after(column: Column) = after { column }
 fun <T, C> MoveColsClause<T, C>.after(column: KProperty<*>) = after { column.toColumnDef() }
 fun <T, C> MoveColsClause<T, C>.after(column: String) = after { column.toColumnDef() }
-fun <T, C> MoveColsClause<T, C>.after(column: ColumnSelector<T, *>): DataFrame<T> {
-    val refCol = originalDf.getColumnWithPath(column)
+fun <T, C> MoveColsClause<T, C>.after(column: ColumnSelector<T, *>) = afterOrBefore(column, true)
+
+/*
+fun <T, C> MoveColsClause<T, C>.before(columnPath: ColumnPath) = before { columnPath.toColumnDef() }
+fun <T, C> MoveColsClause<T, C>.before(column: Column) = before { column }
+fun <T, C> MoveColsClause<T, C>.before(column: KProperty<*>) = before { column.toColumnDef() }
+fun <T, C> MoveColsClause<T, C>.before(column: String) = before { column.toColumnDef() }
+fun <T, C> MoveColsClause<T, C>.before(column: ColumnSelector<T, *>) = afterOrBefore(column, false)
+*/
+
+// TODO: support 'before' mode
+fun <T, C> MoveColsClause<T, C>.afterOrBefore(column: ColumnSelector<T, *>, isAfter: Boolean): DataFrame<T> {
+    val refPath = originalDf.getColumnWithPath(column).path
     val removeRoot = removed.first().getRoot()
 
-    val refNode = removeRoot.getOrPut(refCol.path) {
-        val parent = if(it.size > 1) originalDf[it.dropLast(1)].asFrame() else originalDf
+    val refNode = removeRoot.getOrPut(refPath) {
+        val parent = originalDf.getFrame(it.dropLast(1))
         val index = parent.getColumnIndex(it.last())
-        val col = parent.column(index)
+        val col = df.column(index)
         ColumnPosition(index, false, col)
     }
 
-    val parentPath = refCol.path.dropLast(1)
+    val parentPath = refPath.dropLast(1)
 
     val toInsert = removed.map {
         val path = parentPath + it.name

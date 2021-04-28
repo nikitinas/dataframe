@@ -72,7 +72,7 @@ import org.jetbrains.dataframe.select
 import org.jetbrains.dataframe.single
 import org.jetbrains.dataframe.sortBy
 import org.jetbrains.dataframe.split
-import org.jetbrains.dataframe.splitRows
+import org.jetbrains.dataframe.explode
 import org.jetbrains.dataframe.spread
 import org.jetbrains.dataframe.subcolumn
 import org.jetbrains.dataframe.sumBy
@@ -516,7 +516,7 @@ class DataFrameTreeTests : BaseTest() {
             .update { groupCol }.at(1).withNull()
             .update { groupCol }.at(2).with { emptyDataFrame(0) }
             .update { groupCol }.at(3).with { it.filter {false} }
-        val res = plain.splitRows { groupCol }
+        val res = plain.explode { groupCol }
         val expected = plain[groupCol].sumBy { Math.max(it?.nrow() ?: 0, 1)}
         res.nrow() shouldBe expected
     }

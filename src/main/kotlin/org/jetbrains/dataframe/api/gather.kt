@@ -65,9 +65,9 @@ fun <T, C, K, R> doGather(clause: GatherClause<T, C, K, R>, namesTo: String, val
 
         df = df.split { nameAndValue }.intoRows()
 
-        val nameAndValuePairs = nameAndValue.changeType<Pair<K, C>>()
+        val nameAndValuePairs = nameAndValue.changeType<Pair<K, C>?>()
 
-        df = df.split { nameAndValuePairs }.by { listOf(it.first, it.second) }.into(namesColumn, valuesColumn)
+        df = df.split { nameAndValuePairs }.by { it?.let { listOf(it.first, it.second)} ?: listOf(null, null) }.into(namesColumn, valuesColumn)
     }
 
     df = df.cast(namesColumn.name()).to(keyColumnType)

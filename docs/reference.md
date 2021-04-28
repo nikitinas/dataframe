@@ -31,6 +31,7 @@
     * [sortBy](#sortBy)
     * [distinct](#distinct)
     * [mergeRows](#mergeRows)
+    * [explode](#explode)
     * [append](#append)
     * [groupBy](#groupBy)
     * [shuffled](#shuffled)
@@ -313,6 +314,63 @@ Output:
 | Alice | London | [15, 30]
 | Bob   | Milan  | [20, 11]
 | Alice | Moscow | [23]
+### explode
+Splits list-like values and spreads them vertically. Reverse to [mergeRows](#mergerows)
+The following types of values will be splitted:
+* List 
+* DataFrame
+* String (splits by ',')
+Scalar values will not be transformed. Empty lists will result in `null`
+Row values in other columns will be duplicated
+
+Input:
+
+| A | B 
+|---|---
+| 1 | [1, 2, 3]
+| 2 | null 
+| 3 | [4, 5] 
+| 4 | [] 
+```kotlin
+df.explode { B }
+```
+Output:
+
+| A | B 
+|---|---
+| 1 | 1 
+| 1 | 2 
+| 1 | 3 
+| 2 | null 
+| 3 | 4 
+| 3 | 5 
+| 4 | null 
+
+Note: exploded `FrameColumn` turns into `MapColumn`
+
+When several columns are exploded, lists in different columns are aligned:  
+
+Input:
+
+| A | B | C
+|---|---|---
+| 1 | [1, 2] | [1, 2]
+| 2 | [] | [3, 4]
+| 3 | [3, 4, 5] | [5, 6] 
+```kotlin
+df.explode { B and C }
+```
+Output:
+
+| A | B | C
+|---|---|---
+| 1 | 1 | 1
+| 1 | 2 | 2
+| 2 | null | 3 
+| 2 | null | 4
+| 3 | 3 | 5
+| 3 | 4 | 6
+| 3 | 5 | null
 
 ### append
 Adds one or several rows to `DataFrame`
@@ -460,7 +518,7 @@ fun digits(num: Int) = sequence {
 df.split { number }.by { digits(it) }.inward().into { "digit$it" }
 ```
 #### Split vertically
-Reverse operation to [mergeRows](#mergeRows)
+Reverse operation to [mergeRows](#mergeRows). See [explode](#explode) for details
 ```
 df.split { columns }.intoRows()
 df.split { columns }.by(delimeters).intoRows()
@@ -468,7 +526,7 @@ df.split { columns }.by { splitter }.intoRows()
 
 splitter = (T) -> List<Any>
 ```
-Row values in other columns will be duplicated
+When neither `delimeters` or `splitter` are specified, `split().intoRows()` is equivalent of [explode](#explode)
 ### merge
 Merges several columns into a single column. Reverse operation to [split](#split)
 ```

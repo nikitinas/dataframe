@@ -11,7 +11,7 @@ import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.createDataCollector
 
-fun <T> DataFrame<T>.splitRows(selector: ColumnsSelector<T, *>): DataFrame<T> {
+fun <T> DataFrame<T>.explode(selector: ColumnsSelector<T, *>): DataFrame<T> {
 
     val columns = getColumnsWithPaths(selector)
 

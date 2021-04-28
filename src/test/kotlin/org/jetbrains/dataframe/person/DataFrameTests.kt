@@ -793,7 +793,7 @@ class DataFrameTests : BaseTest() {
         val cities = typed.city.values.filterNotNull()
         val gathered =
             res.gather { colsOf<Boolean> { cities.contains(it.name().capitalize()) } }.where { it }.into("city")
-        val expected = typed.update { city }.with { it?.decapitalize() }.filterNotNull { city }.moveToRight { city }
+        val expected = typed.update { city }.with { it?.decapitalize() }.moveToRight { city }
         gathered shouldBe expected
     }
 
@@ -1284,19 +1284,20 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun splitUnequalLists() {
-        val values by columnOf(1, 2, 3)
-        val list1 by columnOf(listOf(1, 2, 3), listOf(1), listOf(1, 2))
-        val list2 by columnOf(listOf(1, 2), listOf(1, 2), listOf(1, 2))
+        val values by columnOf(1, 2, 3, 4)
+        val list1 by columnOf(listOf(1, 2, 3), listOf(), listOf(1, 2), null)
+        val list2 by columnOf(listOf(1, 2), listOf(1, 2), listOf(1, 2), listOf(1))
         val df = dataFrameOf(values, list1, list2)
-        val res = df.splitRows { list1 and list2 }
+        val res = df.explode { list1 and list2 }
         val expected = dataFrameOf(values.name(), list1.name(), list2.name())(
             1, 1, 1,
             1, 2, 2,
             1, 3, null,
-            2, 1, 1,
+            2, null, 1,
             2, null, 2,
             3, 1, 1,
-            3, 2, 2
+            3, 2, 2,
+            4, null, 1
         )
         res shouldBe expected
     }
@@ -1312,7 +1313,7 @@ class DataFrameTests : BaseTest() {
         }.toColumn()
 
         val df = dataFrameOf(values, list1, frames)
-        val res = df.splitRows { list1 and frames }.ungroup(frames)
+        val res = df.explode { list1 and frames }.ungroup(frames)
         val expected = dataFrameOf(values.name(), list1.name(), "data", "dataStr")(
             1, 1, 1, "1",
             1, 2, 2, "2",

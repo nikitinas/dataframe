@@ -113,5 +113,5 @@ fun <T, C> doSplitCols(
     return removeResult.df.insert(toInsert)
 }
 
-fun <T, C> SplitClause<T, C>.intoRows() = df.splitRows(columns)
+fun <T, C> SplitClause<T, C>.intoRows() = df.explode(columns)
 

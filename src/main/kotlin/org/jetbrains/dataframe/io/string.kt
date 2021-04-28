@@ -13,7 +13,7 @@ internal fun AnyFrame.renderToString(limit: Int = 20, truncate: Int = 40): Strin
     val outputRows = limit.coerceAtMost(nrow())
     val output = columns().map { it.values.take(limit).map { renderValue(it).truncate(truncate) } }
     val header = columns().map { "${it.name()}:${renderType(it)}"}
-    val columnLengths = output.mapIndexed { col, values -> (values + header[col]).map { it.length }.max()!! + 1 }
+    val columnLengths = output.mapIndexed { col, values -> (values + header[col]).map { it.length }.maxOrNull()!! + 1 }
 
     sb.append("|")
     for (col in header.indices) {

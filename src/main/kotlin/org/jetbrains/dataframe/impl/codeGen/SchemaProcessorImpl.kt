@@ -120,7 +120,7 @@ internal class SchemaProcessorImpl(
                 while (newColumns.size > 0) {
                     val bestMarker =
                         availableMarkers.map { marker -> marker to newColumns.count { marker.containsColumn(it) } }
-                            .maxBy { it.second }
+                            .maxByOrNull { it.second }
                     if (bestMarker != null && bestMarker.second > 0) {
                         newColumns.removeAll(bestMarker.first.columnNames)
                         baseMarkers += bestMarker.first

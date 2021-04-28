@@ -14,6 +14,7 @@ import org.jetbrains.dataframe.add
 import org.jetbrains.dataframe.after
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.asIterable
+import org.jetbrains.dataframe.at
 import org.jetbrains.dataframe.by
 import org.jetbrains.dataframe.colsDfsOf
 import org.jetbrains.dataframe.column
@@ -26,6 +27,7 @@ import org.jetbrains.dataframe.columns.definition
 import org.jetbrains.dataframe.dataFrameOf
 import org.jetbrains.dataframe.distinct
 import org.jetbrains.dataframe.duplicate
+import org.jetbrains.dataframe.emptyDataFrame
 import org.jetbrains.dataframe.execute
 import org.jetbrains.dataframe.filter
 import org.jetbrains.dataframe.forEach
@@ -70,8 +72,11 @@ import org.jetbrains.dataframe.select
 import org.jetbrains.dataframe.single
 import org.jetbrains.dataframe.sortBy
 import org.jetbrains.dataframe.split
+import org.jetbrains.dataframe.splitRows
 import org.jetbrains.dataframe.spread
 import org.jetbrains.dataframe.subcolumn
+import org.jetbrains.dataframe.sumBy
+import org.jetbrains.dataframe.toDefinition
 import org.jetbrains.dataframe.toGrouped
 import org.jetbrains.dataframe.toTop
 import org.jetbrains.dataframe.typed
@@ -80,6 +85,7 @@ import org.jetbrains.dataframe.ungroup
 import org.jetbrains.dataframe.update
 import org.jetbrains.dataframe.with
 import org.jetbrains.dataframe.with2
+import org.jetbrains.dataframe.withNull
 import org.junit.Test
 
 class DataFrameTreeTests : BaseTest() {
@@ -500,6 +506,19 @@ class DataFrameTreeTests : BaseTest() {
         val plain = grouped.plain()
         val res = plain.split(groupCol).intoRows().remove { it[groupCol]["city"] }.ungroup(groupCol).sortBy { name and age }
         res shouldBe typed.sortBy { name and age }.moveToLeft { city }
+    }
+
+    @Test
+    fun splitFrameColumnsWithNullsIntoRows() {
+        val grouped = typed.groupBy { city }
+        val groupCol = grouped.groups.toDefinition()
+        val plain = grouped.plain()
+            .update { groupCol }.at(1).withNull()
+            .update { groupCol }.at(2).with { emptyDataFrame(0) }
+            .update { groupCol }.at(3).with { it.filter {false} }
+        val res = plain.splitRows { groupCol }
+        val expected = plain[groupCol].sumBy { Math.max(it?.nrow() ?: 0, 1)}
+        res.nrow() shouldBe expected
     }
 
     @Test

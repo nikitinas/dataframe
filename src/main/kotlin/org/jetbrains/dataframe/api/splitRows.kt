@@ -17,13 +17,12 @@ fun <T> DataFrame<T>.splitRows(selector: ColumnsSelector<T, *>): DataFrame<T> {
 
     val rowExpandSizes = indices.map { row ->
         columns.maxOf {
-            val value = it.data[row]
-            when (value) {
-                null -> 0
+            val n = when (val value = it.data[row]) {
                 is AnyFrame -> value.nrow()
                 is List<*> -> value.size
                 else -> 1
             }
+            if(n == 0) 1 else n
         }
     }
 

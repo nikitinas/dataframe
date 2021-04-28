@@ -9,16 +9,16 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 
-fun <T, C> DataFrame<T>.update(selector: ColumnsSelector<T, C>) = UpdateClause(this, null, selector, null, null)
+fun <T, C> DataFrame<T>.update(selector: ColumnsSelector<T, C>) = UpdateClause(this, null, selector, null, false, null)
 fun <T, C> DataFrame<T>.update(cols: Iterable<ColumnReference<C>>) = update { cols.toColumnSet() }
 fun <T> DataFrame<T>.update(vararg cols: String) = update { cols.toColumns() }
 fun <T, C> DataFrame<T>.update(vararg cols: KProperty<C>) = update { cols.toColumns() }
 fun <T, C> DataFrame<T>.update(vararg cols: ColumnReference<C>) = update { cols.toColumns() }
 
-data class UpdateClause<T, C>(val df: DataFrame<T>, val filter: RowCellFilter<T, C>?, val selector: ColumnsSelector<T, C>, val targetType: KType?, val typeSuggestions: ((KClass<*>) -> KType)?){
-    fun <R> cast() = UpdateClause(df, filter as RowCellFilter<T, R>?, selector as ColumnsSelector<T, R>, targetType, typeSuggestions)
+data class UpdateClause<T, C>(val df: DataFrame<T>, val filter: RowCellFilter<T, C>?, val selector: ColumnsSelector<T, C>, val targetType: KType?, val toNull: Boolean = false, val typeSuggestions: ((KClass<*>) -> KType)?){
+    fun <R> cast() = UpdateClause(df, filter as RowCellFilter<T, R>?, selector as ColumnsSelector<T, R>, targetType, toNull, typeSuggestions)
 
-    inline fun <reified R> toType() = UpdateClause(df, filter, selector, getType<R>(), typeSuggestions)
+    inline fun <reified R> toType() = UpdateClause(df, filter, selector, getType<R>(), toNull, typeSuggestions)
 }
 
 fun <T, C> UpdateClause<T, C>.where(predicate: RowCellFilter<T, C>) = copy(filter = predicate)
@@ -40,9 +40,15 @@ fun <T, C> doUpdate(clause: UpdateClause<T, C>, expression: (DataRow<T>, DataCol
 
     val removeResult = clause.df.doRemove(clause.selector)
 
+    val nrow = clause.df.nrow()
     val toInsert = removeResult.removedColumns.map {
         val srcColumn = it.data.column as DataColumn<C>
-        val collector = if (clause.typeSuggestions != null) createDataCollector(clause.df.nrow(), clause.typeSuggestions) else createDataCollector(clause.df.nrow(), clause.targetType!!)
+        val collector = when {
+            clause.toNull -> createDataCollector(nrow, srcColumn.type)
+            clause.typeSuggestions != null -> createDataCollector(nrow, clause.typeSuggestions)
+            clause.targetType != null -> createDataCollector(nrow, clause.targetType)
+            else -> error("Invalid state of UpdateClause: ${clause}")
+        }
         if(clause.filter == null)
             clause.df.forEach { row ->
                 collector.add(expression(row, srcColumn))
@@ -102,5 +108,13 @@ inline fun <T, C, reified R> DataFrame<T>.update(firstCol: KProperty<C>, vararg 
 inline fun <T, reified R> DataFrame<T>.update(firstCol: String, vararg cols: String, noinline expression: RowCellSelector<T, Any?, R>) =
         update(*headPlusArray(firstCol, cols)).with(expression)
 
-fun <T, C> UpdateClause<T, C>.withNull() = with { null as Any? }
+fun <T, C> UpdateClause<T, C>.withNull() = doUpdate(copy(filter = null, targetType = null, typeSuggestions = null, toNull = true)) { row, column ->
+    if(filter != null){
+        val currentValue = column[row.index]
+        if (!filter.invoke(row, currentValue))
+            currentValue
+        else null
+    }
+    else null
+}
 inline infix fun <T, C, reified R> UpdateClause<T, C>.with(value: R) = with { value }

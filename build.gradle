@@ -24,7 +24,7 @@ repositories {
 }
 
 configurations {
-    testCompile.extendsFrom compileOnly
+    testImplementation.extendsFrom compileOnly
 }
 
 dependencies {

@@ -3,7 +3,6 @@ package org.jetbrains.dataframe.internal.codeGen
 import io.kotlintest.shouldBe
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.annotations.DataSchema
-import org.jetbrains.dataframe.api.generateCode
 import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
 import org.jetbrains.dataframe.io.readJsonStr
 import org.junit.Test

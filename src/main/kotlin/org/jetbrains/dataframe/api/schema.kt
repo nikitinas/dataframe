@@ -1,16 +1,37 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
-import org.jetbrains.dataframe.internal.schema.extractSchema
+import org.jetbrains.dataframe.columns.FrameColumn
+import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ValueColumn
+import org.jetbrains.dataframe.impl.renderType
 
-fun AnyFrame.schema(markerName: String? = null): String {
-    return CodeGenerator.create().generate(
-        extractSchema(),
-        markerName ?: "DataRecord",
-        fields = true,
-        extensionProperties = false,
-        isOpen = true
-    ).code.declarations
+fun AnyFrame.schema(): String {
+    val sb = StringBuilder()
+    val indentSequence = "    "
+    fun print(indent: Int, df: DataFrameBase<*>){
+        df.columns().forEach {
+            sb.append(indentSequence.repeat(indent))
+            sb.append(it.name + ":")
+            when(it) {
+                is MapColumn<*> -> {
+                    sb.appendLine()
+                    print(indent + 1, it.df)
+                }
+                is FrameColumn<*> -> {
+                    sb.appendLine(" *")
+                    val child = it.values.firstOrNull { it != null }
+                    if(child != null)
+                        print(indent + 1, child)
+                }
+                is ValueColumn<*> -> {
+                    sb.appendLine(" ${renderType(it.type)}")
+                }
+            }
+        }
+    }
+    print(0, this)
+
+    return sb.toString()
 }
 
-fun AnyRow.schema(markerName: String? = null) = owner.schema(markerName)
+fun AnyRow.schema() = owner.schema()

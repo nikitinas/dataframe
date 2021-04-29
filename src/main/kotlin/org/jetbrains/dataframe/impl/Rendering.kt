@@ -7,6 +7,7 @@ import org.jetbrains.dataframe.internal.schema.ColumnSchema
 import org.jetbrains.dataframe.internal.schema.DataFrameSchema
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.asTable
+import kotlin.reflect.KType
 
 internal fun String.truncate(limit: Int) = if (limit in 1 until length) {
     if (limit < 4) substring(0, limit)
@@ -38,14 +39,15 @@ internal fun renderType(column: ColumnSchema) =
         else -> throw NotImplementedError()
     }
 
+internal fun renderType(type: KType): String{
+    val result = type.toString()
+    return if (result.startsWith("kotlin.")) result.substring(7)
+    else result
+}
+
 internal fun renderType(column: AnyCol) =
     when(column.kind()) {
-        ColumnKind.Value -> {
-            val type = column.type
-            val result = type.toString()
-            if (result.startsWith("kotlin.")) result.substring(7)
-            else result
-        }
+        ColumnKind.Value -> renderType(column.type)
         ColumnKind.Frame -> {
             val table = column.asTable()
             "[${renderSchema(table.schema.value)}]"

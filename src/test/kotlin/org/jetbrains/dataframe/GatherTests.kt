@@ -4,7 +4,6 @@ import io.kotlintest.shouldBe
 import org.intellij.lang.annotations.Language
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.api.generateCode
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.io.readJsonStr

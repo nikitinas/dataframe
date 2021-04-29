@@ -42,7 +42,7 @@ internal val valueColumnName = "value"
 
 internal fun fromList(records: List<*>): AnyFrame {
 
-    fun AnyFrame.isSingleUnnamedColumn() = ncol() == 1 && column(0).name().let { it  == valueColumnName || it == arrayColumnName }
+    fun AnyFrame.isSingleUnnamedColumn() = ncol == 1 && column(0).name.let { it  == valueColumnName || it == arrayColumnName }
 
     var hasPrimitive = false
     var hasArray = false
@@ -111,7 +111,7 @@ internal fun fromList(records: List<*>): AnyFrame {
 
                 val parsed = fromList(values)
                 when {
-                    parsed.isEmpty() -> DataColumn.create(colName, arrayOfNulls<Any?>(values.size).toList(), getType<Any?>())
+                    parsed.ncol == 0 -> DataColumn.create(colName, arrayOfNulls<Any?>(values.size).toList(), getType<Any?>())
                     parsed.isSingleUnnamedColumn() -> parsed.column(0).rename(colName)
                     else -> DataColumn.create(colName, parsed)
                 }

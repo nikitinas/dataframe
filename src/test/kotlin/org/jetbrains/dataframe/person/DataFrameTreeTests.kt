@@ -354,7 +354,7 @@ class DataFrameTreeTests : BaseTest() {
                         null -> {
                         }
                         is AnyRow -> value.isEmpty() shouldBe true
-                        is AnyFrame -> value.isEmpty() shouldBe true
+                        is AnyFrame -> value.ncol shouldBe 0
                     }
                     expValues.size == 1 -> {
                         value shouldNotBe null

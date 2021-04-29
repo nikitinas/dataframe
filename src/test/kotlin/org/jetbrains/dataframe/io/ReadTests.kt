@@ -2,10 +2,14 @@ package org.jetbrains.dataframe.io
 
 import io.kotlintest.shouldBe
 import org.jetbrains.dataframe.AnyFrame
+import org.jetbrains.dataframe.ColumnKind
 import org.jetbrains.dataframe.DataFrame
+import org.jetbrains.dataframe.asFrame
 import org.jetbrains.dataframe.columns.allNulls
 import org.jetbrains.dataframe.emptyDataFrame
 import org.jetbrains.dataframe.getType
+import org.jetbrains.dataframe.impl.columns.asTable
+import org.jetbrains.dataframe.internal.schema.ColumnSchema
 import org.jetbrains.dataframe.ncol
 import org.jetbrains.dataframe.nrow
 import org.jetbrains.dataframe.print
@@ -32,6 +36,24 @@ class ReadTests {
         df.all { it["a"] == null } shouldBe true
         df["a"].type shouldBe getType<Any?>()
         df["b"].hasNulls shouldBe false
+    }
+
+    @Test
+    fun readFrameColumn() {
+        val data = """
+            [{"a":[{"b":[]}]},{"a":[]},{"a":[{"b":[{"c":1}]}]}]
+        """.trimIndent()
+        val df = DataFrame.readJsonStr(data)
+        df.nrow() shouldBe 3
+        val a = df["a"].asTable()
+        a[1]!!.nrow shouldBe 0
+        a[0]!!.nrow shouldBe 1
+        a[2]!!.nrow shouldBe 1
+        val schema = a.schema.value
+        schema.columns.size shouldBe 1
+        val schema2 = schema.columns["b"] as ColumnSchema.Frame
+        schema2.schema.columns.size shouldBe 1
+        schema2.schema.columns["c"]!!.kind shouldBe ColumnKind.Value
     }
 
     @Test

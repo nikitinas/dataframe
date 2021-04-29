@@ -24,6 +24,8 @@ interface DataFrameBase<out T>: SingleColumn<DataRow<T>> {
     operator fun <R> get(column: ColumnReference<DataRow<R>>): MapColumn<R>
     operator fun <R> get(column: ColumnReference<DataFrame<R>>): FrameColumn<R>
 
+    fun hasColumn(columnName: String) = tryGetColumn(columnName) != null
+
     operator fun get(columnPath: ColumnPath): AnyCol {
 
         var res: AnyCol? = null

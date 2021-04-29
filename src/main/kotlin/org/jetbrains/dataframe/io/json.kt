@@ -13,6 +13,7 @@ import java.lang.StringBuilder
 import java.net.URL
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
+import kotlin.reflect.full.withNullability
 
 fun DataFrame.Companion.readJSON(file: File) = readJSON(file.toURI().toURL())
 
@@ -91,10 +92,11 @@ internal fun fromList(records: List<*>): AnyFrame {
                     parsed.isSingleUnnamedColumn() -> {
                         val col = parsed.column(0)
                         val elementType = col.type
-                        val values = col.values.asList().splitByIndices(startIndices.asSequence()).toList()
-                        DataColumn.create(colName, values, List::class.createType(listOf(KTypeProjection.invariant(elementType))))
+                        val values = col.values.asList().splitByIndices(startIndices.asSequence(), false).toList()
+                        val hasNulls = values.any { it == null }
+                        DataColumn.create(colName, values, List::class.createType(listOf(KTypeProjection.invariant(elementType))).withNullability(hasNulls))
                     }
-                    else -> DataColumn.create(colName, parsed, startIndices)
+                    else -> DataColumn.create(colName, parsed, startIndices, false)
                 }
             }
             else -> {

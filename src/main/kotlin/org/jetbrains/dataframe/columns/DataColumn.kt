@@ -22,10 +22,10 @@ interface DataColumn<out T> : ColumnReference<T>, ColumnProvider<T> {
 
         fun <T> create(name: String, df: DataFrame<T>): MapColumn<T> = MapColumnImpl(df, name)
 
-        fun <T> create(name: String, df: DataFrame<T>, startIndices: Sequence<Int>): FrameColumn<T> = FrameColumnImpl(name, df, startIndices)
+        fun <T> create(name: String, df: DataFrame<T>, startIndices: Sequence<Int>, emptyToNull: Boolean): FrameColumn<T> = FrameColumnImpl(name, df, startIndices, emptyToNull)
 
-        fun <T> create(name: String, df: DataFrame<T>, startIndices: Iterable<Int>): FrameColumn<T> =
-            create(name, df, startIndices.asSequence())
+        fun <T> create(name: String, df: DataFrame<T>, startIndices: Iterable<Int>, emptyToNull: Boolean): FrameColumn<T> =
+            create(name, df, startIndices.asSequence(), emptyToNull)
 
         fun <T> frames(name: String, groups: List<DataFrame<T>?>) = create(name, groups, null)
 

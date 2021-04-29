@@ -16,7 +16,7 @@ internal class FrameColumnImpl<T> constructor(name: String, values: List<DataFra
     : DataColumnImpl<DataFrame<T>?>(values, name, createType<AnyFrame>().withNullability(hasNulls ?: values.any { it == null })),
     FrameColumnInternal<T> {
 
-    constructor(name: String, df: DataFrame<T>, startIndices: Sequence<Int>) : this(name, df.splitByIndices(startIndices).toList(), false)
+    constructor(name: String, df: DataFrame<T>, startIndices: Sequence<Int>, emptyToNull: Boolean) : this(name, df.splitByIndices(startIndices, emptyToNull).toList(), hasNulls = if(emptyToNull) null else false)
 
     override fun rename(newName: String) = FrameColumnImpl(newName, values, hasNulls, schema)
 
@@ -35,6 +35,6 @@ internal class FrameColumnImpl<T> constructor(name: String, values: List<DataFra
     }
 
     override val schema = columnSchema ?: lazy {
-        values.mapNotNull { it?.extractSchema() }.intersectSchemas()
+        values.mapNotNull { it?.takeIf { it.nrow > 0 }?.extractSchema() }.intersectSchemas()
     }
 }

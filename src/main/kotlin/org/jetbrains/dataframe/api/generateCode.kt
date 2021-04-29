@@ -21,3 +21,7 @@ fun <T> DataFrame<T>.generateCode(markerName: String, fields: Boolean = true, ex
         isOpen = true,
     ).code.declarations
 }
+
+inline fun <reified T> DataFrame<T>.generateInterfaces() = generateCode(true, false)
+
+fun <T> DataFrame<T>.generateInterfaces(markerName: String) = generateCode(markerName, true, false)

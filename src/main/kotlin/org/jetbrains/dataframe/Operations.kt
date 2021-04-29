@@ -216,15 +216,17 @@ internal fun <T> DataFrame<T>.collectTree(selector: ColumnsSelector<T, *>): Tree
     return root
 }
 
-internal fun <T> DataFrame<T>.splitByIndices(startIndices: Sequence<Int>): Sequence<DataFrame<T>> {
-    return (startIndices + nrow()).zipWithNext { start, endExclusive ->
-        get(start until endExclusive)
+internal fun <T> DataFrame<T>.splitByIndices(startIndices: Sequence<Int>, emptyToNull: Boolean): Sequence<DataFrame<T>?> {
+    return (startIndices + nrow).zipWithNext { start, endExclusive ->
+        if(emptyToNull && start == endExclusive) null
+        else get(start until endExclusive)
     }
 }
 
-internal fun <T> List<T>.splitByIndices(startIndices: Sequence<Int>): Sequence<List<T>> {
+internal fun <T> List<T>.splitByIndices(startIndices: Sequence<Int>, emptyToNull: Boolean): Sequence<List<T>?> {
     return (startIndices + size).zipWithNext { start, endExclusive ->
-        subList(start, endExclusive)
+        if(emptyToNull && start == endExclusive) null
+        else subList(start, endExclusive)
     }
 }
 

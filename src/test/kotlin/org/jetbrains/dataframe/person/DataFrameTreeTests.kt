@@ -13,6 +13,7 @@ import org.jetbrains.dataframe.DataRowBase
 import org.jetbrains.dataframe.add
 import org.jetbrains.dataframe.after
 import org.jetbrains.dataframe.annotations.DataSchema
+import org.jetbrains.dataframe.append
 import org.jetbrains.dataframe.asIterable
 import org.jetbrains.dataframe.at
 import org.jetbrains.dataframe.by
@@ -585,5 +586,22 @@ class DataFrameTreeTests : BaseTest() {
         }
 
         typed2.insert(colName) { nameAndCity.name.reversed() }.after { nameAndCity.name }.check()
+    }
+
+    @Test
+    fun append() {
+        val res = typed2.append(listOf("Bill", "San Francisco"), null, 66)
+        res.nrow() shouldBe typed2.nrow() + 1
+        res.nameAndCity.last().values shouldBe listOf("Bill", "San Francisco")
+        res.age.hasNulls shouldBe true
+    }
+
+    @Test
+    fun `append nulls`() {
+        val res = typed2.append(null, null, null)
+        res.nrow() shouldBe typed2.nrow() + 1
+        res.nameAndCity.last().values shouldBe listOf(null, null)
+        res.age.hasNulls shouldBe true
+        res.nameAndCity.name.hasNulls shouldBe true
     }
 }

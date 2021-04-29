@@ -51,17 +51,6 @@ internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T> {
 
     override fun toString() = renderToString()
 
-    override fun append(vararg values: Any?): DataFrame<T> {
-        assert(values.size % ncol() == 0) { "Invalid number of arguments. Multiple of ${ncol()} is expected, but actual was: ${values.size}" }
-        return values.mapIndexed { i, v ->
-            val col = columns()[i]
-            if (v != null)
-            // Note: type arguments for a new value are not validated here because they are erased
-                assert(v.javaClass.kotlin.isSubclassOf(col.type.jvmErasure))
-            col.withValues(col.values + listOf(v), col.hasNulls || v == null)
-        }.asDataFrame<T>()
-    }
-
     override fun resolveSingle(context: ColumnResolutionContext): ColumnWithPath<DataRow<T>>? {
         return DataColumn.create("", this).addPath(emptyList(), this)
     }

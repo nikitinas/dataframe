@@ -11,13 +11,16 @@ import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.SingleColumn
 import org.jetbrains.dataframe.columns.ValueColumn
+import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.columns.ConvertedColumnDef
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.full.withNullability
+import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.typeOf
 
 enum class UnresolvedColumnsPolicy { Fail, Skip, Create }
@@ -29,20 +32,23 @@ class ColumnResolutionContext(val df: DataFrameBase<*>, val unresolvedColumnsPol
 
 internal val ColumnReference<*>.name get() = name()
 
-fun <TD, T: DataFrameBase<TD>, C> Selector<T, ColumnSet<C>>.toColumns(createReceiver: (ColumnResolutionContext) -> T) = createColumnSet {
-    val receiver = createReceiver(it)
-    val columnSet = this(receiver, receiver)
-    columnSet.resolve(ColumnResolutionContext(receiver, it.unresolvedColumnsPolicy))
-}
+fun <TD, T : DataFrameBase<TD>, C> Selector<T, ColumnSet<C>>.toColumns(createReceiver: (ColumnResolutionContext) -> T) =
+    createColumnSet {
+        val receiver = createReceiver(it)
+        val columnSet = this(receiver, receiver)
+        columnSet.resolve(ColumnResolutionContext(receiver, it.unresolvedColumnsPolicy))
+    }
 
 fun <C> createColumnSet(resolver: (ColumnResolutionContext) -> List<ColumnWithPath<C>>): ColumnSet<C> =
-    object: ColumnSet<C> {
+    object : ColumnSet<C> {
         override fun resolve(context: ColumnResolutionContext) = resolver(context)
     }
 
-inline fun <C, reified R> ColumnReference<C>.map(noinline transform: (C) -> R): SingleColumn<R> = map(getType<R>(), transform)
+inline fun <C, reified R> ColumnReference<C>.map(noinline transform: (C) -> R): SingleColumn<R> =
+    map(getType<R>(), transform)
 
-fun <C, R> ColumnReference<C>.map(targetType: KType?, transform: (C) -> R): SingleColumn<R> = ConvertedColumnDef(this, transform, targetType)
+fun <C, R> ColumnReference<C>.map(targetType: KType?, transform: (C) -> R): SingleColumn<R> =
+    ConvertedColumnDef(this, transform, targetType)
 
 typealias Column = ColumnReference<*>
 
@@ -62,7 +68,8 @@ internal fun KProperty<*>.getColumnName() = this.findAnnotation<ColumnName>()?.n
 
 fun <T> KProperty<T>.toColumnDef(): ColumnDefinition<T> = ColumnDefinitionImpl<T>(name)
 
-fun <T> ColumnDefinition<DataRow<*>>.subcolumn(childName: String): ColumnDefinition<T> = ColumnDefinitionImpl(path() + childName)
+fun <T> ColumnDefinition<DataRow<*>>.subcolumn(childName: String): ColumnDefinition<T> =
+    ColumnDefinitionImpl(path() + childName)
 
 inline fun <reified T> ColumnDefinition<T>.nullable() = changeType<T?>()
 
@@ -75,38 +82,32 @@ enum class ColumnKind {
 @OptIn(ExperimentalStdlibApi::class)
 inline fun <reified T> getType() = typeOf<T>()
 
-fun KClass<*>.createStarProjectedType(nullable: Boolean) = this.starProjectedType.let { if (nullable) it.withNullability(true) else it }
+fun KClass<*>.createStarProjectedType(nullable: Boolean) =
+    this.starProjectedType.let { if (nullable) it.withNullability(true) else it }
 
 inline fun <reified T> ColumnReference<T>.withValues(values: List<T>, hasNulls: Boolean) =
     column(name(), values, hasNulls)
-
-fun <T> DataColumn<T>.withValues(values: List<T>, hasNulls: Boolean) = when (this) {
-    is FrameColumn<*> -> {
-        val dfs = (values as List<AnyFrame>)
-        DataColumn.create(name, dfs) as DataColumn<T>
-    }
-    else -> DataColumn.create(name, values, type.withNullability(hasNulls))
-}
 
 fun AnyCol.toDataFrame() = dataFrameOf(listOf(this))
 
 inline fun <T, reified R> DataFrame<T>.newColumn(name: String, noinline expression: RowSelector<T, R>): DataColumn<R> {
     var nullable = false
     val values = (0 until nrow()).map { get(it).let { expression(it, it) }.also { if (it == null) nullable = true } }
-    if(R::class == DataFrame::class) return DataColumn.frames(name, values as List<AnyFrame?>) as DataColumn<R>
+    if (R::class == DataFrame::class) return DataColumn.frames(name, values as List<AnyFrame?>) as DataColumn<R>
     return column(name, values, nullable)
 }
 
 class ColumnDelegate<T>(private val parent: MapColumnReference? = null) {
     operator fun getValue(thisRef: Any?, property: KProperty<*>): ColumnDefinition<T> = named(property.name)
 
-    infix fun named(name: String): ColumnDefinition<T> = parent?.let { ColumnDefinitionImpl(it.path() + name) } ?: ColumnDefinitionImpl(name)
+    infix fun named(name: String): ColumnDefinition<T> =
+        parent?.let { ColumnDefinitionImpl(it.path() + name) } ?: ColumnDefinitionImpl(name)
 }
 
 fun AnyCol.asFrame(): AnyFrame = when (this) {
     is MapColumn<*> -> df
     is ColumnWithPath<*> -> data.asFrame()
-    else -> throw Exception()
+    else -> error("Can not extract DataFrame from ${javaClass.kotlin}")
 }
 
 fun AnyCol.isGroup(): Boolean = kind() == ColumnKind.Map
@@ -131,30 +132,37 @@ fun <T> column(name: String): ColumnDefinition<T> = ColumnDefinitionImpl(name)
 
 fun <T> column(parent: MapColumnReference): ColumnDelegate<T> = ColumnDelegate(parent)
 
-fun <T> column(parent: MapColumnReference, name: String): ColumnDefinition<T> = ColumnDefinitionImpl(parent.path() + name)
+fun <T> column(parent: MapColumnReference, name: String): ColumnDefinition<T> =
+    ColumnDefinitionImpl(parent.path() + name)
 
-interface ColumnProvider<out T>{
+interface ColumnProvider<out T> {
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = named(property.name)
 
     infix fun named(name: String): DataColumn<T>
 }
 
-class DataColumnDelegate<T>(val values: List<T>, val type: KType): ColumnProvider<T> {
+class DataColumnDelegate<T>(val values: List<T>, val type: KType) : ColumnProvider<T> {
     override fun named(name: String): DataColumn<T> = DataColumn.create(name, values, type)
 }
 
-class MapColumnDelegate(val columns: List<AnyCol>): ColumnProvider<AnyRow> {
+class MapColumnDelegate(val columns: List<AnyCol>) : ColumnProvider<AnyRow> {
     override fun named(name: String): DataColumn<AnyRow> = DataColumn.create(name, columns.toDataFrame())
 }
 
-class FrameColumnDelegate(val frames: List<AnyFrame?>): ColumnProvider<AnyFrame?> {
+class FrameColumnDelegate(val frames: List<AnyFrame?>) : ColumnProvider<AnyFrame?> {
     override fun named(name: String): DataColumn<AnyFrame?> = DataColumn.create(name, frames)
 }
 
 inline fun <reified T> column(values: Iterable<T>): ColumnProvider<T> = when {
-    values.all { it is AnyCol } -> MapColumnDelegate(values.toList() as List<AnyCol>)  as ColumnProvider<T>
+    values.all { it is AnyCol } -> MapColumnDelegate(values.toList() as List<AnyCol>) as ColumnProvider<T>
     else -> DataColumnDelegate(values.toList(), getType<T>())
 }
+
+fun <T> Iterable<DataFrame<T>?>.toFrameColumn(name: String): FrameColumn<T> =
+    DataColumn.create(name, asList())
+
+inline fun <reified T> Iterable<T>.toColumn(name: String): ValueColumn<T> =
+    asList().let { DataColumn.create(name, it, getType<T>().withNullability(it.any { it == null })) }
 
 inline fun <reified T> columnOf(vararg values: T) = column(values.asIterable())
 
@@ -164,16 +172,20 @@ fun columnOf(vararg frames: AnyFrame?) = columnOf(frames.asIterable())
 
 fun columnOf(frames: Iterable<AnyFrame?>) = FrameColumnDelegate(frames.toList())
 
-fun Iterable<AnyFrame>.toColumn() = columnOf(this)
+fun Iterable<AnyFrame?>.toColumn() = columnOf(this)
 
-fun Iterable<AnyFrame>.toColumn(name: String) = DataColumn.create(name, toList())
+fun Iterable<AnyFrame?>.toColumn(name: String) = DataColumn.create(name, toList())
 
 inline fun <reified T> column(name: String, values: List<T>): DataColumn<T> = when {
-    values.size > 0 && values.all {it is AnyCol} -> DataColumn.create(name, values.map {it as AnyCol}.toDataFrame()) as DataColumn<T>
+    values.size > 0 && values.all { it is AnyCol } -> DataColumn.create(
+        name,
+        values.map { it as AnyCol }.toDataFrame()
+    ) as DataColumn<T>
     else -> column(name, values, values.any { it == null })
 }
 
-inline fun <reified T> column(name: String, values: List<T>, hasNulls: Boolean): DataColumn<T> = DataColumn.create(name, values, getType<T>().withNullability(hasNulls))
+inline fun <reified T> column(name: String, values: List<T>, hasNulls: Boolean): DataColumn<T> =
+    DataColumn.create(name, values, getType<T>().withNullability(hasNulls))
 
 fun columnGroup(vararg columns: AnyCol) = MapColumnDelegate(columns.toList())
 

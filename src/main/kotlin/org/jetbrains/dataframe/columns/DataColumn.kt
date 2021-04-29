@@ -27,9 +27,9 @@ interface DataColumn<out T> : ColumnReference<T>, ColumnProvider<T> {
         fun <T> create(name: String, df: DataFrame<T>, startIndices: Iterable<Int>): FrameColumn<T> =
             create(name, df, startIndices.asSequence())
 
-        fun <T> frames(name: String, groups: List<DataFrame<T>?>) = create(name, groups)
+        fun <T> frames(name: String, groups: List<DataFrame<T>?>) = create(name, groups, null)
 
-        internal fun <T> create(name: String, groups: List<DataFrame<T>?>, schema: Lazy<DataFrameSchema>? = null): FrameColumn<T> = FrameColumnImpl(name, groups, schema)
+        internal fun <T> create(name: String, groups: List<DataFrame<T>?>, hasNulls: Boolean? = null, schema: Lazy<DataFrameSchema>? = null): FrameColumn<T> = FrameColumnImpl(name, groups, hasNulls, schema)
 
         internal fun <T> createGuess(name: String, values: List<T>, type:KType, defaultValue: T? = null): DataColumn<T> {
             val kClass = type.classifier!! as KClass<*>
@@ -38,8 +38,7 @@ interface DataColumn<out T> : ColumnReference<T>, ColumnProvider<T> {
                 return create(name, df) as DataColumn<T>
             }
             if(kClass.isSubclassOf(DataFrame::class)){
-                // TODO: support nulls in values
-                return create(name, values as List<DataFrame<T>>) as DataColumn<T>
+                return create(name, values as List<DataFrame<T>?>, null) as DataColumn<T>
             }
             return create(name, values, type, defaultValue)
         }

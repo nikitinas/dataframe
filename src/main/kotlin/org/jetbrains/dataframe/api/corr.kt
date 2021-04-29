@@ -20,7 +20,7 @@ fun <T, C: Number> DataFrame<T>.corr(selector: ColumnsSelector<T, C>): AnyFrame 
             val cov = (0 until len).map { (v1[it] - m1) * (v2[it] - m2) }.sum()
             cov / (d1 * d2)
         }
-        c1.withValues(values, false)
+        values.toColumn(c1.name)
     }
 
     return dataFrameOf(listOf(index) + newColumns)

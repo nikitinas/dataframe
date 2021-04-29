@@ -39,8 +39,6 @@ internal class MissingMapColumn<T> : MissingDataColumn<DataRow<T>>(), MapColumn<
 
     override fun getColumnIndex(name: String) = -1
 
-    override fun append(vararg values: Any?) = throw UnsupportedOperationException()
-
     override fun kind() = super.kind()
 
     override fun set(columnName: String, value: AnyCol) = throw UnsupportedOperationException()

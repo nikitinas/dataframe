@@ -162,8 +162,6 @@ interface DataFrame<out T> : DataFrameBase<T> {
     operator fun get(col1: Column, col2: Column, vararg other: Column) = select(listOf(col1, col2) + other)
     operator fun get(col1: String, col2: String, vararg other: String) = select(getColumns(listOf(col1, col2) + other))
 
-    fun append(vararg values: Any?): DataFrame<T>
-
     fun all(predicate: RowFilter<T>): Boolean = rows().all { predicate(it, it) }
     fun any(predicate: RowFilter<T>): Boolean = rows().any { predicate(it, it) }
 

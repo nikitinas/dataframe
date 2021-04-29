@@ -1356,4 +1356,11 @@ class DataFrameTests : BaseTest() {
         valueCol.kind() shouldBe ColumnKind.Value
         valueCol.name() shouldBe "person"
     }
+
+    @Test
+    fun `append many`() {
+        val res = typed.append("John", 22, "New York", 46,
+                    "Philip", 25, "Chelyabinsk", 36)
+        res.nrow shouldBe typed.nrow + 2
+    }
 }

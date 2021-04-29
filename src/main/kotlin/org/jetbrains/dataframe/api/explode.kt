@@ -1,7 +1,5 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.api.appendNulls
-import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.MapColumn
@@ -85,6 +83,7 @@ fun <T> DataFrame<T>.explode(selector: ColumnsSelector<T, *>): DataFrame<T> {
                 if (col.isTable()) DataColumn.create(
                     col.name,
                     collector.values as List<AnyFrame?>,
+                    collector.hasNulls,
                     col.asTable().schema // keep original schema
                 )
                 else collector.toColumn(col.name)

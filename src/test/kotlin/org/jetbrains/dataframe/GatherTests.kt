@@ -8,7 +8,6 @@ import org.jetbrains.dataframe.api.generateCode
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.io.readJsonStr
-import org.junit.Ignore
 import org.junit.Test
 
 class GatherTests {
@@ -121,7 +120,7 @@ class GatherTests {
             val dataRows = cols.map { it[0] }
 
             val newDf = listOf(
-                    name.withValues(MutableList(cols.size){ name[0] }, false),
+                    name.replaceAll(MutableList(cols.size){ name[0] }),
                     mode.withValues(cols.map { it.name() }, false),
                 column("c1", dataRows.map { it.tryGet("c1") as? String}),
                 column("c2", dataRows.map { it.tryGet("c2") as? String}),

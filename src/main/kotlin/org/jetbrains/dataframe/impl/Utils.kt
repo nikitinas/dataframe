@@ -71,7 +71,7 @@ internal fun <T> Iterable<T>.rollingHash(): Int {
     return hash
 }
 
-internal fun <T> Iterable<T>.asList() = when (this) {
+fun <T> Iterable<T>.asList() = when (this) {
     is List<T> -> this
     else -> this.toList()
 }

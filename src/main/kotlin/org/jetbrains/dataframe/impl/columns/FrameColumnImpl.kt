@@ -12,26 +12,26 @@ import java.lang.UnsupportedOperationException
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
 
-internal class FrameColumnImpl<T> constructor(name: String, values: List<DataFrame<T>?>, columnSchema: Lazy<DataFrameSchema>? = null)
-    : DataColumnImpl<DataFrame<T>?>(values, name, createType<AnyFrame>().withNullability(values.any { it == null })),
+internal class FrameColumnImpl<T> constructor(name: String, values: List<DataFrame<T>?>, hasNulls: Boolean?, columnSchema: Lazy<DataFrameSchema>? = null)
+    : DataColumnImpl<DataFrame<T>?>(values, name, createType<AnyFrame>().withNullability(hasNulls ?: values.any { it == null })),
     FrameColumnInternal<T> {
 
-    constructor(name: String, df: DataFrame<T>, startIndices: Sequence<Int>) : this(name, df.splitByIndices(startIndices).toList())
+    constructor(name: String, df: DataFrame<T>, startIndices: Sequence<Int>) : this(name, df.splitByIndices(startIndices).toList(), false)
 
-    override fun rename(newName: String) = FrameColumnImpl(newName, values, schema)
+    override fun rename(newName: String) = FrameColumnImpl(newName, values, hasNulls, schema)
 
     override fun defaultValue() = null
 
     override fun addParent(parent: MapColumn<*>) = FrameColumnWithParent(parent, this)
 
     override fun createWithValues(values: List<DataFrame<T>?>, hasNulls: Boolean?): DataColumn<DataFrame<T>?> {
-        return DataColumn.create(name, values)
+        return DataColumn.create(name, values, hasNulls)
     }
 
     override fun changeType(type: KType) = throw UnsupportedOperationException()
 
     override fun distinct(): FrameColumn<T> {
-        return DataColumn.create(name, values.distinct())
+        return DataColumn.create(name, values.distinct(), hasNulls)
     }
 
     override val schema = columnSchema ?: lazy {

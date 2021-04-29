@@ -7,9 +7,9 @@ import org.jetbrains.dataframe.io.valueColumnName
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
 
-fun Iterable<AnyFrame?>.union() = merge(filterNotNull())
+fun <T> Iterable<DataFrame<T>?>.union() = merge(filterNotNull()).typed<T>()
 
-fun DataColumn<AnyFrame>.union() = values.union()
+fun <T> DataColumn<DataFrame<T>>.union() = values.union().typed<T>()
 
 internal fun merge(dataFrames: List<AnyFrame>): AnyFrame {
     if (dataFrames.size == 1) return dataFrames[0]

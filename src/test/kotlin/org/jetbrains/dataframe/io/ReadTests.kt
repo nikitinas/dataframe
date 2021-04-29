@@ -1,18 +1,9 @@
 package org.jetbrains.dataframe.io
 
 import io.kotlintest.shouldBe
-import org.jetbrains.dataframe.AnyFrame
-import org.jetbrains.dataframe.ColumnKind
-import org.jetbrains.dataframe.DataFrame
-import org.jetbrains.dataframe.asFrame
-import org.jetbrains.dataframe.columns.allNulls
-import org.jetbrains.dataframe.emptyDataFrame
-import org.jetbrains.dataframe.getType
+import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.internal.schema.ColumnSchema
-import org.jetbrains.dataframe.ncol
-import org.jetbrains.dataframe.nrow
-import org.jetbrains.dataframe.print
 import org.junit.Test
 
 class ReadTests {

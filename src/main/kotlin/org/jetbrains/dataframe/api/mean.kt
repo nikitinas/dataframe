@@ -2,8 +2,6 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.isNumber
-import org.jetbrains.dataframe.columns.isSubtypeOf
 import org.jetbrains.dataframe.impl.createDataCollector
 import java.math.BigDecimal
 import kotlin.reflect.KClass

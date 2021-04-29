@@ -2,7 +2,6 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.isNumber
 import kotlin.reflect.KType
 
 fun <T> DataFrame<T>.describe(columns: ColumnsSelector<T, *> = { numberCols() }) = describe(this[columns])

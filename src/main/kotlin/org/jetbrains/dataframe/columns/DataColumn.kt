@@ -79,20 +79,5 @@ interface DataColumn<out T> : ColumnReference<T>, ColumnProvider<T> {
     override operator fun getValue(thisRef: Any?, property: KProperty<*>) = rename(property.name)
 }
 
-fun <T> DataColumn<T>.first() = get(0)
-fun <T> DataColumn<T>.firstOrNull() = if(size > 0) first() else null
-fun <T> DataColumn<T>.first(predicate: (T)->Boolean) = values.first(predicate)
-fun <T> DataColumn<T>.firstOrNull(predicate: (T)->Boolean) = values.firstOrNull(predicate)
-fun <T> DataColumn<T>.last() = get(size-1)
-fun <T> DataColumn<T>.lastOrNull() = if(size > 0) last() else null
-
 val AnyCol.valueClass get() = type.classifier as KClass<*>
 
-fun <C> DataColumn<C>.allNulls() = size == 0 || (hasNulls && ndistinct == 1)
-
-fun <T> DataColumn<T>.isSubtypeOf(type: KType) = this.type.isSubtypeOf(type) && (!this.type.isMarkedNullable || type.isMarkedNullable)
-
-inline fun <reified T> AnyCol.isSubtypeOf() = isSubtypeOf(getType<T>())
-
-inline fun <reified T> AnyCol.isType() = type == getType<T>()
-fun AnyCol.isNumber() = type.withNullability(false).isSubtypeOf(getType<Number>())

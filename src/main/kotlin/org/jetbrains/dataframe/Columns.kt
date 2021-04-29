@@ -19,6 +19,7 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.full.withNullability
 import kotlin.reflect.jvm.jvmErasure
@@ -227,3 +228,18 @@ infix fun DataColumn<String>.lt(value: String): BooleanArray = isMatching { it <
 infix fun <T> DataColumn<T>.isMatching(predicate: Predicate<T>): BooleanArray = BooleanArray(size) {
     predicate(this[it])
 }
+
+fun <T> DataColumn<T>.first() = get(0)
+fun <T> DataColumn<T>.firstOrNull() = if(size > 0) first() else null
+fun <T> DataColumn<T>.first(predicate: (T)->Boolean) = values.first(predicate)
+fun <T> DataColumn<T>.firstOrNull(predicate: (T)->Boolean) = values.firstOrNull(predicate)
+fun <T> DataColumn<T>.last() = get(size-1)
+fun <T> DataColumn<T>.lastOrNull() = if(size > 0) last() else null
+
+fun <C> DataColumn<C>.allNulls() = size == 0 || (hasNulls && ndistinct == 1)
+
+fun AnyCol.isSubtypeOf(type: KType) = this.type.isSubtypeOf(type) && (!this.type.isMarkedNullable || type.isMarkedNullable)
+inline fun <reified T> AnyCol.isSubtypeOf() = isSubtypeOf(getType<T>())
+inline fun <reified T> AnyCol.isType() = type == getType<T>()
+
+fun AnyCol.isNumber() = type.withNullability(false).isSubtypeOf(getType<Number>())

@@ -1363,4 +1363,12 @@ class DataFrameTests : BaseTest() {
                     "Philip", 25, "Chelyabinsk", 36)
         res.nrow shouldBe typed.nrow + 2
     }
+
+    @Test
+    fun `first last`(){
+        typed.first() shouldBe typed[0]
+        typed.last() shouldBe typed[typed.nrow-1]
+        typed.city.first() shouldBe typed[0].city
+        typed.city.last() shouldBe typed[typed.nrow-1].city
+    }
 }

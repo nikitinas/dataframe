@@ -13,6 +13,7 @@ import org.jetbrains.dataframe.columns.SingleColumn
 import org.jetbrains.dataframe.columns.ValueColumn
 import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.columns.ConvertedColumnDef
+import org.jetbrains.dataframe.impl.toIterable
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -32,7 +33,7 @@ class ColumnResolutionContext(val df: DataFrameBase<*>, val unresolvedColumnsPol
 
 internal val ColumnReference<*>.name get() = name()
 
-fun <TD, T : DataFrameBase<TD>, C> Selector<T, ColumnSet<C>>.toColumns(createReceiver: (ColumnResolutionContext) -> T) =
+fun <TD, T : DataFrameBase<TD>, C> Selector<T, ColumnSet<C>>.toColumns(createReceiver: (ColumnResolutionContext) -> T): ColumnSet<C> =
     createColumnSet {
         val receiver = createReceiver(it)
         val columnSet = this(receiver, receiver)
@@ -130,10 +131,20 @@ fun <T> columnList(name: String) = column<List<T>>(name)
 
 fun <T> column(name: String): ColumnDefinition<T> = ColumnDefinitionImpl(name)
 
+inline fun <reified T> column(name: String, vararg values: T): DataColumn<T> = values.asIterable().toColumn(name)
+
 fun <T> column(parent: MapColumnReference): ColumnDelegate<T> = ColumnDelegate(parent)
 
 fun <T> column(parent: MapColumnReference, name: String): ColumnDefinition<T> =
     ColumnDefinitionImpl(parent.path() + name)
+
+inline fun <reified T> columnOf(vararg values: T) = column(values.asIterable())
+
+fun columnOf(vararg values: AnyCol) = MapColumnDelegate(values.toList())
+
+fun columnOf(vararg frames: AnyFrame?) = columnOf(frames.asIterable())
+
+fun columnOf(frames: Iterable<AnyFrame?>) = FrameColumnDelegate(frames.toList())
 
 interface ColumnProvider<out T> {
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = named(property.name)
@@ -163,14 +174,6 @@ fun <T> Iterable<DataFrame<T>?>.toFrameColumn(name: String): FrameColumn<T> =
 
 inline fun <reified T> Iterable<T>.toColumn(name: String): ValueColumn<T> =
     asList().let { DataColumn.create(name, it, getType<T>().withNullability(it.any { it == null })) }
-
-inline fun <reified T> columnOf(vararg values: T) = column(values.asIterable())
-
-fun columnOf(vararg values: AnyCol) = MapColumnDelegate(values.toList())
-
-fun columnOf(vararg frames: AnyFrame?) = columnOf(frames.asIterable())
-
-fun columnOf(frames: Iterable<AnyFrame?>) = FrameColumnDelegate(frames.toList())
 
 fun Iterable<AnyFrame?>.toColumn() = columnOf(this)
 

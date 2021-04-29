@@ -53,13 +53,20 @@ class MoveTests {
     fun `flatten one`(){
 
         val flattened = grouped.flatten { it["a"] }
-        flattened.columnNames() shouldBe listOf("q", "a.b", "a.c.d", "b", "w", "e", "r")
+        flattened.columnNames() shouldBe listOf("q", "a_b", "a_c_d", "b", "w", "e", "r")
+    }
+
+    @Test
+    fun `flatten several`(){
+
+        val flattened = grouped.flatten { it["a"]["c"] and it["a"] and it["b"] }
+        flattened.columnNames() shouldBe listOf("q", "a_b", "a_c_d", "b_c", "b_d", "w", "e", "r")
     }
 
     @Test
     fun `flatten all`(){
 
-        val flattened = grouped.flatten()
+        val flattened = grouped.flatten(".")
         flattened.columnNames() shouldBe listOf("q", "a.b", "a.c.d", "b.c", "b.d", "w", "e.f", "r")
     }
 

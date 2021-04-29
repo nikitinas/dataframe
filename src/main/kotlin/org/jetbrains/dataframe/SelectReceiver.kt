@@ -70,6 +70,7 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
     fun <C> ColumnSet<C>.take(n: Int) = transform { it.take(n) }
     fun <C> ColumnSet<C>.dropLast(n: Int) = transform { it.dropLast(n) }
     fun <C> ColumnSet<C>.takeLast(n: Int) = transform { it.takeLast(n) }
+    fun <C> ColumnSet<C>.top() = transform { it.top() }
     fun <C> ColumnSet<C>.takeWhile(predicate: Predicate<ColumnWithPath<C>>) = transform { it.takeWhile(predicate) }
     fun <C> ColumnSet<C>.takeLastWhile(predicate: Predicate<ColumnWithPath<C>>) = transform { it.takeLastWhile(predicate) }
     fun <C> ColumnSet<C>.filter(predicate: Predicate<ColumnWithPath<C>>) = transform { it.filter(predicate) }

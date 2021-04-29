@@ -1,22 +1,31 @@
 package org.jetbrains.dataframe
 
+import org.jetbrains.dataframe.impl.ColumnNameGenerator
 import org.jetbrains.dataframe.impl.columns.toColumnSet
+import org.jetbrains.dataframe.impl.columns.toColumns
 
-fun <T> DataFrame<T>.flatten() = flatten { all() }
+internal val defaultSeparator: CharSequence = "_"
 
-fun <T, C> DataFrame<T>.flatten(selector: ColumnsSelector<T, C>): DataFrame<T> {
+fun <T> DataFrame<T>.flatten(separator: CharSequence = defaultSeparator) = flatten(separator) { all() }
 
-    val columns = getColumnsWithPaths(selector).filter { it.isGroup() }
-    val prefixes = columns.map { it.path }.toSet()
-    val result = move { columns.toColumnSet().colsDfs { !it.isGroup() } }
-            .into {
-                var first = it.path.size - 1
-                while (first > 0 && !prefixes.contains(it.path.subList(0, first)))
-                    first--
-                if (first == 0)
-                    throw Exception()
-                val collapsedPath = it.path.drop(first - 1).joinToString(".")
-                it.path.subList(0, first - 1) + collapsedPath
-            }
+fun <T, C> DataFrame<T>.flatten(
+    separator: CharSequence = defaultSeparator,
+    selector: ColumnsSelector<T, C>
+): DataFrame<T> {
+
+    val rootColumns = getColumnsWithPaths { selector.toColumns().filter { it.isGroup() }.top() }
+    val rootPrefixes = rootColumns.map { it.path }.toSet()
+    val nameGenerator = ColumnNameGenerator()
+
+    fun getRootPrefix(path: ColumnPath) =
+        (1 until path.size).asSequence().map { path.subList(0, it) }.first { rootPrefixes.contains(it) }
+
+    val result = move { rootColumns.toColumnSet().colsDfs { !it.isGroup() } }
+        .into {
+            val prefix = getRootPrefix(it.path).dropLast(1)
+            val desiredName = it.path.drop(prefix.size).joinToString(separator)
+            val name = nameGenerator.addUnique(desiredName)
+            prefix + name
+        }
     return result
 }

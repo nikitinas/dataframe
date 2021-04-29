@@ -11,9 +11,11 @@ import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.impl.TreeNode
 import org.jetbrains.dataframe.impl.columns.addPath
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.toColumns
+import org.jetbrains.dataframe.impl.put
 import org.jetbrains.dataframe.impl.toIndices
 import kotlin.reflect.KProperty
 
@@ -37,11 +39,17 @@ typealias ColumnSelector<T, C> = SelectReceiver<T>.(SelectReceiver<T>) -> Column
 
 fun <T, C> DataFrame<T>.createSelector(selector: ColumnsSelector<T, C>) = selector
 
+internal fun <T> List<ColumnWithPath<T>>.top(): List<ColumnWithPath<T>> {
+    val root = TreeNode.createRoot<ColumnWithPath<T>?>(null)
+    forEach { root.put(it.path, it) }
+    return root.topDfs { it.data != null }.map { it.data!! }
+}
+
 internal fun List<ColumnWithPath<*>>.allColumnsExcept(columns: Iterable<ColumnWithPath<*>>): List<ColumnWithPath<*>> {
     if(isEmpty()) return emptyList()
     val df = this[0].df
     require(all { it.df === df })
-    val fullTree = collectTree(null) { it }
+    val fullTree = collectTree()
     columns.forEach {
         var node = fullTree.getOrPut(it.path).asNullable()
         node?.dfs()?.forEach { it.data = null }

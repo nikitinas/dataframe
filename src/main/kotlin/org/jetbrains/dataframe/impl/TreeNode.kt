@@ -85,6 +85,8 @@ internal fun <T> TreeNode<T?>.getOrPut(path: ColumnPath) = getOrPutEmpty(path, n
 
 internal fun <T> TreeNode<T>.getOrPutEmpty(path: ColumnPath, emptyData: T): TreeNode<T> = getOrPut(path) { emptyData }
 
+internal fun <T> TreeNode<T?>.put(path: ColumnPath, data: T): TreeNode<T?> = getOrPut(path).also { it.data = data }
+
 internal fun <T> TreeNode<T>.getOrPut(path: ColumnPath, createData: (ColumnPath)->T): TreeNode<T> {
     var node = this
     path.indices.forEach {
@@ -93,7 +95,8 @@ internal fun <T> TreeNode<T>.getOrPut(path: ColumnPath, createData: (ColumnPath)
     return node
 }
 
-internal fun <T> TreeNode<T>.topDfs(yieldCondition: (TreeNode<T>) -> Boolean) = dfs(enterCondition = { !yieldCondition(it) }, yieldCondition = yieldCondition)
+internal fun <T> TreeNode<T>.topDfs(yieldCondition: (TreeNode<T>) -> Boolean): List<TreeNode<T>> = dfs(enterCondition = { !yieldCondition(it) }, yieldCondition = yieldCondition)
+
 internal fun <T> TreeNode<T>.topDfsExcluding(excludeRoot: TreeNode<*>): List<TreeNode<T>> {
 
     val result = mutableListOf<TreeNode<T>>()

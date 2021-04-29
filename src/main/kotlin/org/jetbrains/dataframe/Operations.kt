@@ -137,9 +137,9 @@ internal fun Iterable<ColumnWithPath<*>>.colsDfs(): List<ColumnWithPath<*>> {
     return result
 }
 
-internal fun AnyFrame.collectTree() = columns().map { it.addPath(this) }.collectTree()
+internal fun AnyFrame.collectTree() = columns().map { it.addPath(this) }.collectTree(DataColumn.empty()) { it }
 
-internal fun List<ColumnWithPath<*>>.collectTree() = collectTree(DataColumn.empty()) { it }
+internal fun List<ColumnWithPath<*>>.collectTree() = collectTree(null) { it }
 
 internal fun <D> AnyFrame.collectTree(emptyData: D, createData: (AnyCol) -> D) =
     columns().map { it.addPath(this) }.collectTree(emptyData, createData)

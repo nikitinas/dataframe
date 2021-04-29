@@ -117,7 +117,7 @@ interface DataFrame<out T> : DataFrameBase<T> {
 
     override fun ncol(): Int = columns().size
 
-    fun rows(): Iterable<DataRow<T>>
+    fun rows(): Iterable<DataRow<T>> = forwardIterable()
     fun columnNames() = columns().map { it.name() }
 
     override fun columns(): List<AnyCol>
@@ -173,10 +173,14 @@ interface DataFrame<out T> : DataFrameBase<T> {
     fun all(predicate: RowFilter<T>): Boolean = rows().all { predicate(it, it) }
     fun any(predicate: RowFilter<T>): Boolean = rows().any { predicate(it, it) }
 
-    fun first() = rows().first()
-    fun firstOrNull() = rows().firstOrNull()
-    fun last() = rows().last() // TODO: optimize (don't iterate through the whole data frame)
-    fun lastOrNull() = rows().lastOrNull()
+    fun first() = get(0)
+    fun firstOrNull() = if(nrow > 0) first() else null
+    fun first(predicate: RowFilter<T>) = rows().first { predicate(it, it) }
+    fun firstOrNull(predicate: RowFilter<T>) = rows().firstOrNull { predicate(it, it) }
+    fun last() = get(nrow-1)
+    fun lastOrNull() = if(nrow > 0) last() else null
+    fun last(predicate: RowFilter<T>) = backwardIterable().first { predicate(it, it) }
+    fun lastOrNull(predicate: RowFilter<T>) = backwardIterable().firstOrNull { predicate(it, it) }
     fun take(numRows: Int) = getRows(0 until numRows)
     fun drop(numRows: Int) = getRows(numRows until nrow())
     fun takeLast(numRows: Int) = getRows(nrow() - numRows until nrow())
@@ -208,6 +212,36 @@ fun <T> AnyFrame.typed(): DataFrame<T> = this as DataFrame<T>
 fun <T> DataFrameBase<*>.typed(): DataFrameBase<T> = this as DataFrameBase<T>
 
 fun <T> DataRow<T>.toDataFrame(): DataFrame<T> = owner[index..index]
+
+fun <T> DataFrame<T>.forwardIterable() = object : Iterable<DataRow<T>> {
+    override fun iterator() =
+
+        object : Iterator<DataRow<T>> {
+            var nextRow = 0
+
+            override fun hasNext(): Boolean = nextRow < nrow
+
+            override fun next(): DataRow<T> {
+                require(nextRow < nrow)
+                return get(nextRow++)
+            }
+        }
+}
+
+fun <T> DataFrame<T>.backwardIterable() = object : Iterable<DataRow<T>> {
+    override fun iterator() =
+
+        object : Iterator<DataRow<T>> {
+            var nextRow = nrow - 1
+
+            override fun hasNext(): Boolean = nextRow >= 0
+
+            override fun next(): DataRow<T> {
+                require(nextRow >= 0)
+                return get(nextRow--)
+            }
+        }
+}
 
 fun <T, C> DataFrame<T>.forEachIn(selector: ColumnsSelector<T, C>, action: (DataRow<T>, DataColumn<C>) -> Unit) =
     getColumnsWithPaths(selector).let { cols ->

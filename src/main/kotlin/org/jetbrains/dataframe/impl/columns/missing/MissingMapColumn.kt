@@ -35,8 +35,6 @@ internal class MissingMapColumn<T> : MissingDataColumn<DataRow<T>>(), MapColumn<
 
     override fun columns(): List<AnyCol> = emptyList()
 
-    override fun rows(): Iterable<DataRow<T>> = emptyList()
-
     override fun getColumnIndex(name: String) = -1
 
     override fun kind() = super.kind()

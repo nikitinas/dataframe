@@ -27,19 +27,6 @@ internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T> {
 
     private val columnsMap by lazy { columns.withIndex().associateBy({ it.value.name() }, { it.index }).toMutableMap() }
 
-    override fun rows() = object : Iterable<DataRow<T>> {
-        override fun iterator() =
-
-                object : Iterator<DataRow<T>> {
-                    var curRow = 0
-
-                    override fun hasNext(): Boolean = curRow < nrow()
-
-                    override fun next() = get(curRow++)!!
-                }
-    }
-
-
     override fun getColumnIndex(columnName: String) = columnsMap[columnName] ?: -1
 
     override fun equals(other: Any?): Boolean {

@@ -21,8 +21,14 @@ internal class Integration : JupyterIntegration(){
     override fun Builder.onLoaded() {
 
         val codeGen = ReplCodeGenerator.create()
+        val config = JupyterConfiguration()
 
-        render<AnyFrame> { HTML(it.toHTML()) }
+        onLoaded {
+            declareProperties("dataFrameConfig" to config)
+        }
+
+        render<AnyFrame> { HTML(it.toHTML(config.display)) }
+        render<FormattedFrame<*>> { HTML(it.toHTML(config.display)) }
         render<AnyRow> { it.toDataFrame() }
         render<MapColumn<*>> { it.df }
         render<AnyCol> { dataFrameOf(listOf(it)) }

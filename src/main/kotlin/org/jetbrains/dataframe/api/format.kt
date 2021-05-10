@@ -1,9 +1,7 @@
 package org.jetbrains.dataframe
 
-import kotlinx.serialization.json.JsonObject
+import org.jetbrains.dataframe.io.DisplayConfiguration
 import org.jetbrains.dataframe.io.toHTML
-import org.jetbrains.kotlinx.jupyter.api.DisplayResult
-import org.jetbrains.kotlinx.jupyter.api.HTML
 
 data class RGBColor(val r: Short, val g: Short, val b: Short)
 
@@ -96,9 +94,8 @@ typealias RowColFormatter<T> = (DataRow<T>, AnyCol) -> CellAttributes?
 class FormattedFrame<T>(
     internal val df: DataFrame<T>,
     internal val formatter: RowColFormatter<T>? = null,
-) : DisplayResult {
-
-    override fun toJson(additionalMetadata: JsonObject) = HTML(df.toHTML(formatter = formatter)).toJson()
+) {
+    fun toHTML(configuration: DisplayConfiguration) = df.toHTML(configuration.copy(cellFormatter = formatter as RowColFormatter<*>?))
 }
 
 data class ColorClause<T, C>(

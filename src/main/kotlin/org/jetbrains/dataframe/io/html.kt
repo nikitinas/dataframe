@@ -4,13 +4,14 @@ import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.images.Image
 import org.jetbrains.dataframe.impl.truncate
 
-fun <T> DataFrame<T>.toHTML(limit: Int = 20, truncate: Int = 40, formatter: RowColFormatter<T>? = null) = buildString {
+fun <T> DataFrame<T>.toHTML(configuration: DisplayConfiguration = DisplayConfiguration.DEFAULT) = buildString {
     append("<html><body>")
     append("<table><tr>")
     columns().forEach {
         append("<th style=\"text-align:left\">${it.name()}</th>")
     }
     append("</tr>")
+    val limit = configuration.rowsLimit
     rows().take(limit).forEach { row ->
         append("<tr>")
         columns().forEach { col ->
@@ -24,10 +25,10 @@ fun <T> DataFrame<T>.toHTML(limit: Int = 20, truncate: Int = 40, formatter: RowC
                 }
                 else -> {
                     tooltip = renderValue(cellVal)
-                    content = tooltip.truncate(truncate)
+                    content = tooltip.truncate(configuration.cellContentLimit)
                 }
             }
-            val attributes = formatter?.invoke(row, col)?.attributes()?.joinToString(";") { "${it.first}:${it.second}" }.orEmpty()
+            val attributes = configuration.cellFormatter?.invoke(row, col)?.attributes()?.joinToString(";") { "${it.first}:${it.second}" }.orEmpty()
             append("<td style=\"text-align:left;$attributes\" title=\"$tooltip\">$content</td>")
         }
         append("</tr>")
@@ -36,4 +37,14 @@ fun <T> DataFrame<T>.toHTML(limit: Int = 20, truncate: Int = 40, formatter: RowC
     if (limit < nrow())
         append("<p>... only showing top $limit of ${nrow()} rows</p>")
     append("</body></html>")
+}
+
+data class DisplayConfiguration(
+    var rowsLimit: Int = 20,
+    var cellContentLimit: Int = 40,
+    var cellFormatter: RowColFormatter<*>? = null,
+) {
+    companion object {
+        val DEFAULT = DisplayConfiguration()
+    }
 }

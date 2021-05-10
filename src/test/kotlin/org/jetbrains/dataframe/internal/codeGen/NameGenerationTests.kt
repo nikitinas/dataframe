@@ -1,6 +1,6 @@
 package org.jetbrains.dataframe.internal.codeGen
 
-import io.kotlintest.shouldBe
+import io.kotest.matchers.shouldBe
 import org.jetbrains.dataframe.annotations.ColumnName
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.dataFrameOf

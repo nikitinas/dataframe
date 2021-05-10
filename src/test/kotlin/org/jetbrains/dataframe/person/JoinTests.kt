@@ -1,6 +1,6 @@
 package org.jetbrains.dataframe.person
 
-import io.kotlintest.shouldBe
+import io.kotest.matchers.shouldBe
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.impl.columns.typed

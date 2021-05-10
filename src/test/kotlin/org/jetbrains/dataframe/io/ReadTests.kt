@@ -1,6 +1,6 @@
 package org.jetbrains.dataframe.io
 
-import io.kotlintest.shouldBe
+import io.kotest.matchers.shouldBe
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.internal.schema.ColumnSchema

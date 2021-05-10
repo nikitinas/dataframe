@@ -1,6 +1,6 @@
 package org.jetbrains.dataframe.io
 
-import io.kotlintest.shouldBe
+import io.kotest.matchers.shouldBe
 import org.jetbrains.dataframe.dataFrameOf
 import org.jetbrains.dataframe.getType
 import org.junit.Test

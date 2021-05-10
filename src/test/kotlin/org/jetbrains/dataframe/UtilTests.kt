@@ -1,6 +1,6 @@
 package org.jetbrains.dataframe
 
-import io.kotlintest.shouldBe
+import io.kotest.matchers.shouldBe
 import org.junit.Test
 import java.io.Serializable
 

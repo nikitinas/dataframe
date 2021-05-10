@@ -1,6 +1,6 @@
 package org.jetbrains.dataframe.person
 
-import io.kotlintest.shouldBe
+import io.kotest.matchers.shouldBe
 import org.jetbrains.dataframe.index
 import org.jetbrains.dataframe.io.toHTML
 import org.jetbrains.dataframe.*

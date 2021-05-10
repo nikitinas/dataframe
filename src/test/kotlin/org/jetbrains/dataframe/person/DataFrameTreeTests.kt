@@ -1,8 +1,8 @@
 package org.jetbrains.dataframe.person
 
-import io.kotlintest.fail
-import io.kotlintest.shouldBe
-import io.kotlintest.shouldNotBe
+import io.kotest.assertions.fail
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import org.jetbrains.dataframe.AnyFrame
 import org.jetbrains.dataframe.AnyRow
 import org.jetbrains.dataframe.ColumnKind

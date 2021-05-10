@@ -35,7 +35,7 @@ dependencies {
     implementation "com.beust:klaxon:5.5"
 
     testImplementation "junit:junit:4.12"
-    testImplementation "io.kotlintest:kotlintest-assertions:3.1.6"
+    testImplementation "io.kotest:kotest-assertions-core:4.5.0"
 
     // needed to work around https://youtrack.jetbrains.com/issue/KT-15064
     compileOnly "org.jetbrains.kotlin:kotlin-script-runtime:$kotlin_version"

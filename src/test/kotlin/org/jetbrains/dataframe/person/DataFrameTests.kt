@@ -1,10 +1,10 @@
 package org.jetbrains.dataframe.person
 
-import io.kotlintest.matchers.ToleranceMatcher
-import io.kotlintest.should
-import io.kotlintest.shouldBe
-import io.kotlintest.shouldNotBe
-import io.kotlintest.shouldThrow
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.doubles.ToleranceMatcher
+import io.kotest.matchers.should
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.valueClass
 import org.jetbrains.dataframe.impl.columns.isTable

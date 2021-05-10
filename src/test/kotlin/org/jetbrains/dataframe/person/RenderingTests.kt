@@ -1,12 +1,14 @@
 package org.jetbrains.dataframe.person
 
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import org.jetbrains.dataframe.index
 import org.jetbrains.dataframe.io.toHTML
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.FormattingDSL.gray
 import org.jetbrains.dataframe.FormattingDSL.green
 import org.jetbrains.dataframe.FormattingDSL.red
+import org.jetbrains.dataframe.io.DisplayConfiguration
 import org.junit.Test
 
 class RenderingTests: BaseTest() {
@@ -38,13 +40,16 @@ class RenderingTests: BaseTest() {
 
     @Test
     fun `conditional formatting`(){
-        val formatter = typed.format { intCols().withoutNulls() }.with {
+        val formattedFrame = typed.format { intCols().withoutNulls() }.with {
             if(it > 10) background(white) and bold and italic
             else textColor(linear(it, 30.5 to red, 50 to green)) and underline
-        }.formatter!!
+        }
 
+        val formatter = formattedFrame.formatter!!
         for(row in 0 until typed.nrow())
             formatter(typed[row], typed.age)!!.attributes().size shouldBe if(typed[row].age > 10) 3 else 2
+
+        formattedFrame.toHTML(DisplayConfiguration.DEFAULT) shouldContain "font-style:italic"
     }
 
     @Test

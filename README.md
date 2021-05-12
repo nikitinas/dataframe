@@ -1,5 +1,6 @@
 # Kotlin DataFrame: data manipulation library
 [![Kotlin](https://img.shields.io/badge/kotlin-1.4.20-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Maven Central](https://img.shields.io/maven-central/v/org.jetbrains.kotlinx/dataframe?color=blue&label=Maven%20Central)](https://search.maven.org/artifact/org.jetbrains.kotlinx/dataframe)
 [![GitHub License](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
 
 Kotlin DataFrame is a library for in-memory data manipulation
@@ -17,17 +18,17 @@ See [API reference](docs/reference.md) for a list of  supported operations
 ## Setup
 
 ### Gradle
-```
+```groovy
 repositories {
-    maven { url 'https://kotlin.bintray.com/kotlin-datascience' }
+    mavenCentral()
 }
 dependencies {
-    compile 'org.jetbrains.kotlin:dataframe:0.7.2'
+    implementation 'org.jetbrains.kotlin:dataframe:0.7.3'
 }
 ```
 ### Jupyter Notebook
 
-Install [Kotlin kernel](https://github.com/Kotlin/kotlin-jupyter) for [Jupyter](#https://jupyter.org/)
+Install [Kotlin kernel](https://github.com/Kotlin/kotlin-jupyter) for [Jupyter](https://jupyter.org/)
 
 Import latest stable `dataframe` version into notebook: 
 ```

@@ -24,7 +24,7 @@ internal class Integration : JupyterIntegration(){
         val config = JupyterConfiguration()
 
         onLoaded {
-            declareProperties("dataFrameConfig" to config)
+            declare("dataFrameConfig" to config)
         }
 
         render<AnyFrame> { HTML(it.toHTML(config.display)) }

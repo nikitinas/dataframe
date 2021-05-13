@@ -132,8 +132,6 @@ fun <T> columnList(name: String) = column<List<T>>(name)
 
 fun <T> column(name: String): ColumnDefinition<T> = ColumnDefinitionImpl(name)
 
-inline fun <reified T> column(name: String, vararg values: T): DataColumn<T> = values.asIterable().toColumn(name)
-
 fun <T> column(parent: MapColumnReference): ColumnDelegate<T> = ColumnDelegate(parent)
 
 fun <T> column(parent: MapColumnReference, name: String): ColumnDefinition<T> =
@@ -141,11 +139,11 @@ fun <T> column(parent: MapColumnReference, name: String): ColumnDefinition<T> =
 
 inline fun <reified T> columnOf(vararg values: T) = column(values.asIterable())
 
-fun columnOf(vararg values: AnyCol) = MapColumnDelegate(values.toList())
+fun columnOf(vararg values: AnyCol) = DataColumn.create("", dataFrameOf(values.asIterable()))
 
 fun columnOf(vararg frames: AnyFrame?) = columnOf(frames.asIterable())
 
-fun columnOf(frames: Iterable<AnyFrame?>) = FrameColumnDelegate(frames.toList())
+fun <T> columnOf(frames: Iterable<DataFrame<T>?>) = DataColumn.create("", frames.toList())
 
 interface ColumnProvider<out T> {
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = named(property.name)
@@ -153,27 +151,15 @@ interface ColumnProvider<out T> {
     infix fun named(name: String): DataColumn<T>
 }
 
-class DataColumnDelegate<T>(val values: List<T>, val type: KType) : ColumnProvider<T> {
-    override fun named(name: String): DataColumn<T> = DataColumn.create(name, values, type)
-}
-
-class MapColumnDelegate(val columns: List<AnyCol>) : ColumnProvider<AnyRow> {
-    override fun named(name: String): DataColumn<AnyRow> = DataColumn.create(name, columns.toDataFrame())
-}
-
-class FrameColumnDelegate(val frames: List<AnyFrame?>) : ColumnProvider<AnyFrame?> {
-    override fun named(name: String): DataColumn<AnyFrame?> = DataColumn.create(name, frames)
-}
-
-inline fun <reified T> column(values: Iterable<T>): ColumnProvider<T> = when {
-    values.all { it is AnyCol } -> MapColumnDelegate(values.toList() as List<AnyCol>) as ColumnProvider<T>
-    else -> DataColumnDelegate(values.toList(), getType<T>())
+inline fun <reified T> column(values: Iterable<T>): DataColumn<T> = when {
+    values.all { it is AnyCol } -> DataColumn.create("", (values as Iterable<AnyCol>).toDataFrame()) as DataColumn<T>
+    else -> DataColumn.create("", values.toList(), getType<T>())
 }
 
 fun <T> Iterable<DataFrame<T>?>.toFrameColumn(name: String): FrameColumn<T> =
     DataColumn.create(name, asList())
 
-inline fun <reified T> Iterable<T>.toColumn(name: String): ValueColumn<T> =
+inline fun <reified T> Iterable<T>.toColumn(name: String = ""): ValueColumn<T> =
     asList().let { DataColumn.create(name, it, getType<T>().withNullability(it.any { it == null })) }
 
 fun Iterable<AnyFrame?>.toColumn() = columnOf(this)
@@ -190,8 +176,6 @@ inline fun <reified T> column(name: String, values: List<T>): DataColumn<T> = wh
 
 inline fun <reified T> column(name: String, values: List<T>, hasNulls: Boolean): DataColumn<T> =
     DataColumn.create(name, values, getType<T>().withNullability(hasNulls))
-
-fun columnGroup(vararg columns: AnyCol) = MapColumnDelegate(columns.toList())
 
 fun <C> DataColumn<C>.single() = values.single()
 

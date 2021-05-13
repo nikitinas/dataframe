@@ -36,7 +36,7 @@ internal class DataFrameSchema(val columns: Map<String, ColumnSchema>) {
     }
 }
 
-internal fun AnyFrame.extractSchema() = DataFrameSchema(columns().map { it.name() to it.getColumnType() }.toMap())
+internal fun AnyFrame.extractSchema() = DataFrameSchema(columns().filter { it.name().isNotEmpty() }.map { it.name() to it.getColumnType() }.toMap())
 
 internal fun Iterable<DataFrameSchema>.intersectSchemas(): DataFrameSchema {
     val collectedTypes = mutableMapOf<String, MutableSet<ColumnSchema>>()

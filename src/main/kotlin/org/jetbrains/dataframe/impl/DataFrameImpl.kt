@@ -15,17 +15,24 @@ internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T> {
 
     override fun nrow() = nrow
 
+    private val columnsMap : MutableMap<String, Int>
+
     init {
 
         val invalidSizeColumns = columns.filter { it.size != nrow() }
         require(invalidSizeColumns.isEmpty()) { "Unequal column sizes:\n${columns.joinToString("\n") { it.name + " (" + it.size + ")" }}" }
 
-        val columnNames = columns.groupBy { it.name() }.filter { it.value.size > 1 }.map { it.key }
-        require(columnNames.isEmpty()) { "Duplicate column names: ${columnNames}. All columns: ${columnNames()}" }
+        columnsMap = mutableMapOf()
+        columns.forEachIndexed { i, col ->
+            val name = col.name
+            if(columnsMap.containsKey(name)){
+                if(name != "") {
+                    val names = columns.groupBy { it.name }.filter { it.key != "" && it.value.size > 1 }.map { it.key }
+                    throw IllegalArgumentException("Duplicate column names: $names. All columns: ${columnNames()}")
+                }
+            } else columnsMap[name] = i
+        }
     }
-
-
-    private val columnsMap by lazy { columns.withIndex().associateBy({ it.value.name() }, { it.index }).toMutableMap() }
 
     override fun getColumnIndex(columnName: String) = columnsMap[columnName] ?: -1
 

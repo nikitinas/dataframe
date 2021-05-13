@@ -15,9 +15,54 @@ import org.junit.Test
 import java.math.BigDecimal
 import java.time.LocalDate
 import kotlin.IllegalArgumentException
+import kotlin.jvm.Throws
 import kotlin.reflect.jvm.jvmErasure
 
 class DataFrameTests : BaseTest() {
+
+    @Test
+    fun `create with columns`() {
+
+        dataFrameOf("name", "age", "city", "weight")(df.columns()) shouldBe df
+
+        dataFrameOf("name", "age", "city", "weight")(typed.name named "bla", typed.age  named "", typed.city.rename("qq"), typed.weight.named("asda")) shouldBe df
+
+        val c1 = typed.name.values.toColumn()
+        val c2 = typed.age.values.toColumn()
+        val c3 = typed.city.values.toColumn()
+        val c4 = typed.weight.values.toColumn()
+
+        dataFrameOf("name", "age", "city", "weight")(c1,c2,c3,c4) shouldBe df
+    }
+
+    @Test
+    fun `create with columnOf`() {
+
+        val col = columnOf("Alice", "Bob")
+        val d = dataFrameOf("name")(col)
+        d.nrow shouldBe 2
+        d.columnNames() shouldBe listOf("name")
+    }
+
+    @Test
+    fun `create with unnamed columns`() {
+
+        val a = columnOf("Alice", "Bob")
+        val b = columnOf(1, 2)
+        val d = dataFrameOf(a, b)
+        d.nrow shouldBe 2
+        d.ncol shouldBe 2
+        d.columnNames() shouldBe listOf("", "")
+        d[""] shouldBe d.column(0)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `create with duplicate columns`() {
+
+        val a = columnOf("Alice", "Bob") named "col"
+        val b = columnOf(1, 2) named "col"
+        val d = dataFrameOf(a, b)
+    }
 
     @Test
     fun `size`() {

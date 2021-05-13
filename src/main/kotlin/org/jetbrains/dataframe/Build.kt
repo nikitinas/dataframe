@@ -6,6 +6,7 @@ import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.impl.ColumnNameGenerator
 import org.jetbrains.dataframe.impl.DataFrameImpl
 import org.jetbrains.dataframe.impl.TreeNode
+import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.columns.DataColumnWithParentImpl
 import org.jetbrains.dataframe.impl.columns.MapColumnWithParent
 import org.jetbrains.dataframe.impl.getOrPut
@@ -144,10 +145,25 @@ fun Iterable<AnyCol>.toDataFrame() = asDataFrame<Unit>()
 
 class DataFrameBuilder(private val columnNames: List<String>) {
 
-    operator fun invoke(vararg values: Any?): AnyFrame {
+    operator fun invoke(vararg columns: AnyCol) = invoke(columns.asIterable())
+
+    operator fun invoke(columns: Iterable<AnyCol>): AnyFrame {
+        val cols = columns.asList()
+        require(cols.size == columnNames.size) { "Number of columns differs from number of column names" }
+        return cols.mapIndexed { i, col ->
+            col.rename(columnNames[i])
+        }.asDataFrame<Unit>()
+    }
+
+    operator fun invoke(vararg values: Any?) = invoke(values.asIterable())
+
+    @JvmName("invoke1")
+    operator fun invoke(args: Iterable<Any?>): AnyFrame {
+
+        val values = args.asList()
 
         require(columnNames.size > 0 && values.size.rem(columnNames.size) == 0) {
-            "data dimension ${columnNames.size} is not compatible with length of data vector ${values.size}"
+            "Data dimension ${columnNames.size} is not compatible with length of data vector ${values.size}"
         }
 
         val columnValues = values
@@ -162,8 +178,6 @@ class DataFrameBuilder(private val columnNames: List<String>) {
 
         return dataFrameOf(columns)
     }
-
-    operator fun invoke(args: Iterable<Any?>) = invoke(*args.toList().toTypedArray())
     operator fun invoke(args: Sequence<Any?>) = invoke(*args.toList().toTypedArray())
 }
 

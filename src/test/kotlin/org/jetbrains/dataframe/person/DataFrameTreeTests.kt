@@ -19,8 +19,8 @@ import org.jetbrains.dataframe.at
 import org.jetbrains.dataframe.by
 import org.jetbrains.dataframe.colsDfsOf
 import org.jetbrains.dataframe.column
-import org.jetbrains.dataframe.columnOf
 import org.jetbrains.dataframe.columnGroup
+import org.jetbrains.dataframe.columnOf
 import org.jetbrains.dataframe.columnList
 import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.DataColumn

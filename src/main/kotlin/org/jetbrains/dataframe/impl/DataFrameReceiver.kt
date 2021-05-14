@@ -2,18 +2,18 @@ package org.jetbrains.dataframe.impl
 
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.AnyCol
-import org.jetbrains.dataframe.impl.columns.missing.MissingMapColumn
+import org.jetbrains.dataframe.impl.columns.missing.MissingColumnGroup
 import org.jetbrains.dataframe.impl.columns.missing.MissingFrameColumn
 import org.jetbrains.dataframe.impl.columns.missing.MissingValueColumn
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.impl.columns.MapColumnWithParent
+import org.jetbrains.dataframe.impl.columns.ColumnGroupWithParent
 import org.jetbrains.dataframe.impl.columns.asGroup
 import java.lang.Exception
 
-internal fun <T> prepareForReceiver(df: DataFrameBase<T>) = DataFrameImpl<T>(df.columns().map { if(it.isGroup()) MapColumnWithParent(null, it.asGroup()) else it })
+internal fun <T> prepareForReceiver(df: DataFrameBase<T>) = DataFrameImpl<T>(df.columns().map { if(it.isGroup()) ColumnGroupWithParent(null, it.asGroup()) else it })
 
 internal abstract class DataFrameReceiverBase<T>(protected val source: DataFrameBase<T>): DataFrameBase<T> by source
 
@@ -36,6 +36,6 @@ internal abstract class DataFrameReceiver<T>(source: DataFrameBase<T>, private v
     }
 
     override operator fun <R> get(column: ColumnReference<R>): DataColumn<R> = getColumnChecked(column.name()) ?: MissingValueColumn()
-    override operator fun <R> get(column: ColumnReference<DataRow<R>>): MapColumn<R> = (getColumnChecked(column.name()) ?: MissingMapColumn<R>()) as MapColumn<R>
+    override operator fun <R> get(column: ColumnReference<DataRow<R>>): ColumnGroup<R> = (getColumnChecked(column.name()) ?: MissingColumnGroup<R>()) as ColumnGroup<R>
     override operator fun <R> get(column: ColumnReference<DataFrame<R>>): FrameColumn<R> = (getColumnChecked(column.name()) ?: MissingFrameColumn<R>()) as FrameColumn<R>
 }

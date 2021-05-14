@@ -4,12 +4,8 @@ import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.ColumnSet
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.ValueColumn
 import org.jetbrains.dataframe.impl.DataFrameReceiver
 import org.jetbrains.dataframe.impl.columns.ColumnsList
-import org.jetbrains.dataframe.impl.columns.FrameColumnInternal
-import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.impl.columns.toColumnSet
 import org.jetbrains.dataframe.impl.prepareForReceiver
 import kotlin.reflect.full.withNullability
@@ -264,7 +260,7 @@ fun <A, B> DataFrame<A>.join(
                 srcColumn.name,
                 columnValues.asList() as List<AnyFrame?>
             )
-            ColumnKind.Map -> error("Unexpected MapColumn at path ${srcColumn.path}")
+            ColumnKind.Group -> error("Unexpected MapColumn at path ${srcColumn.path}")
         }
         srcColumn.path to newColumn
     }

@@ -10,7 +10,7 @@ import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.DoubleCol
 import org.jetbrains.dataframe.columns.IntCol
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.NumberCol
 import org.jetbrains.dataframe.columns.StringCol
 import org.jetbrains.dataframe.columns.name
@@ -30,7 +30,7 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
 
     fun DataFrameBase<*>.last(numCols: Int) = cols().takeLast(numCols)
 
-    fun DataFrameBase<*>.group(name: String) = this.get(name) as MapColumn<*>
+    fun DataFrameBase<*>.group(name: String) = this.get(name) as ColumnGroup<*>
 
     fun <C> ColumnSet<*>.cols(firstCol: ColumnReference<C>, vararg otherCols: ColumnReference<C>) = (listOf(firstCol) + otherCols).let { refs ->
         transform { it.flatMap { col -> refs.mapNotNull { col.getChild(it) } } }
@@ -50,7 +50,7 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
 
     fun ColumnSet<*>.allDfs() = colsDfs { !it.isGroup() }
 
-    fun DataFrameBase<*>.colGroups(filter: (MapColumn<*>) -> Boolean = { true }): ColumnSet<AnyRow> = this.columns().filter { it.isGroup() && filter(it.asGroup()) }.map { it.asGroup() }.toColumnSet()
+    fun DataFrameBase<*>.colGroups(filter: (ColumnGroup<*>) -> Boolean = { true }): ColumnSet<AnyRow> = this.columns().filter { it.isGroup() && filter(it.asGroup()) }.map { it.asGroup() }.toColumnSet()
 
     fun <C> ColumnSet<C>.children(predicate: (AnyCol) -> Boolean = {true} ) = transform { it.flatMap { it.children().filter { predicate(it.data) } } }
 

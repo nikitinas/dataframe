@@ -4,13 +4,13 @@ import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.MapDataColumn
+import org.jetbrains.dataframe.columns.DataColumnGroup
 
-internal class MissingMapColumn<T> : MissingDataColumn<DataRow<T>>(), MapDataColumn<T> {
+internal class MissingColumnGroup<T> : MissingDataColumn<DataRow<T>>(), DataColumnGroup<T> {
 
     override fun <R> get(column: ColumnReference<R>) = MissingValueColumn<R>()
 
-    override fun <R> get(column: ColumnReference<DataRow<R>>) = MissingMapColumn<R>()
+    override fun <R> get(column: ColumnReference<DataRow<R>>) = MissingColumnGroup<R>()
 
     override fun <R> get(column: ColumnReference<DataFrame<R>>) = MissingFrameColumn<R>()
 

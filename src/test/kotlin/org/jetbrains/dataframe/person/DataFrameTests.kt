@@ -1444,7 +1444,7 @@ class DataFrameTests : BaseTest() {
         frameCol.name shouldBe "frameCol"
 
         val mapCol by columnOf(typed.name, typed.city)
-        mapCol.kind() shouldBe ColumnKind.Map
+        mapCol.kind() shouldBe ColumnKind.Group
         mapCol.name shouldBe "mapCol"
 
         val valueCol = columnOf("Alice") named "person"

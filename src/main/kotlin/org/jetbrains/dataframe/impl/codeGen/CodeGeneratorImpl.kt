@@ -7,7 +7,7 @@ import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.DataRowBase
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.internal.codeGen.CodeWithConverter
 import org.jetbrains.dataframe.internal.codeGen.GeneratedField
 import org.jetbrains.dataframe.internal.codeGen.Marker
@@ -23,7 +23,7 @@ private fun renderNullability(nullable: Boolean) = if(nullable) "?" else ""
 internal fun GeneratedField.renderFieldType(): Code =
     when (columnKind) {
         ColumnKind.Value -> (columnSchema as ColumnSchema.Value).type.toString()
-        ColumnKind.Map -> "${DataRow::class.qualifiedName}<${markerName}>"
+        ColumnKind.Group -> "${DataRow::class.qualifiedName}<${markerName}>"
         ColumnKind.Frame -> "${DataFrame::class.qualifiedName}<${markerName}>${renderNullability(columnSchema.nullable)}"
     }
 
@@ -47,7 +47,7 @@ internal class CodeGeneratorImpl : CodeGenerator {
     private fun GeneratedField.renderColumnType() : Code =
         when (columnKind) {
             ColumnKind.Value -> "${DataColumn::class.qualifiedName}<${(columnSchema as ColumnSchema.Value).type}>"
-            ColumnKind.Map -> "${MapColumn::class.qualifiedName}<${markerName}>"
+            ColumnKind.Group -> "${ColumnGroup::class.qualifiedName}<${markerName}>"
             ColumnKind.Frame -> "${DataColumn::class.qualifiedName}<${DataFrame::class.qualifiedName}<${markerName}>${renderNullability(columnSchema.nullable)}>"
         }
 

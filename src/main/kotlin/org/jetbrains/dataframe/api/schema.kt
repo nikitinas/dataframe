@@ -1,7 +1,7 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.ValueColumn
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.type
@@ -16,7 +16,7 @@ fun AnyFrame.schema(): String {
             sb.append(indentSequence.repeat(indent))
             sb.append(it.name + ":")
             when(it) {
-                is MapColumn<*> -> {
+                is ColumnGroup<*> -> {
                     sb.appendLine()
                     print(indent + 1, it.df)
                 }

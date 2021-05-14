@@ -4,7 +4,7 @@ import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.AnyColumn
 import org.jetbrains.dataframe.columns.ColumnAccessor
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.impl.ReadonlyTreeNode
 import org.jetbrains.dataframe.impl.columns.withDf
@@ -69,7 +69,7 @@ internal fun <T> insertColumns(
             // assert that new columns go directly under current column so they have longer paths
             val invalidPath = subTree.firstOrNull { it.insertionPath.size == childDepth }
             assert(invalidPath == null) { "Can't insert column `" + invalidPath!!.insertionPath.joinToString(".") + "`. Column with this path already exists" }
-            val group = it as? MapColumn<*>
+            val group = it as? ColumnGroup<*>
             assert(group != null) { "Can not insert columns under a column '${it.name()}', because it is not a column group" }
             val newDf = insertColumns(group!!.df, subTree, treeNode?.get(it.name()), childDepth)
             val newCol = group.withDf(newDf)
@@ -124,7 +124,7 @@ internal fun <T> insertColumns(
             val column = nodeToInsert.column
             if (columns.size > 1) {
                 assert(columns.count { it.insertionPath.size == childDepth } == 1) { "Can not insert more than one column into the path ${nodeToInsert.insertionPath}" }
-                val group = column as MapColumn<*>
+                val group = column as ColumnGroup<*>
                 val newDf = insertColumns(
                     group.df,
                     columns.filter { it.insertionPath.size > childDepth },

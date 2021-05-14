@@ -4,7 +4,7 @@ import io.kotest.matchers.shouldBe
 import org.intellij.lang.annotations.Language
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.io.readJsonStr
@@ -95,13 +95,13 @@ class GatherTests {
         val reversed: DataRow<Marker2>
         val first: DataRow<Marker3>
     }
-    val DataFrameBase<Marker>.first: MapColumn<*> @JvmName("Marker_first") get() = this["first"] as MapColumn<*>
+    val DataFrameBase<Marker>.first: ColumnGroup<*> @JvmName("Marker_first") get() = this["first"] as ColumnGroup<*>
     val DataRowBase<Marker>.first: org.jetbrains.dataframe.AnyRow @JvmName("Marker_first") get() = this["first"] as org.jetbrains.dataframe.AnyRow
     val DataFrameBase<Marker>.name: DataColumn<String> @JvmName("Marker_name") get() = this["name"] as DataColumn<String>
     val DataRowBase<Marker>.name: String @JvmName("Marker_name") get() = this["name"] as String
-    val DataFrameBase<Marker>.normal: MapColumn<*> @JvmName("Marker_normal") get() = this["normal"] as MapColumn<*>
+    val DataFrameBase<Marker>.normal: ColumnGroup<*> @JvmName("Marker_normal") get() = this["normal"] as ColumnGroup<*>
     val DataRowBase<Marker>.normal: org.jetbrains.dataframe.AnyRow @JvmName("Marker_normal") get() = this["normal"] as org.jetbrains.dataframe.AnyRow
-    val DataFrameBase<Marker>.reversed: MapColumn<*> @JvmName("Marker_reversed") get() = this["reversed"] as MapColumn<*>
+    val DataFrameBase<Marker>.reversed: ColumnGroup<*> @JvmName("Marker_reversed") get() = this["reversed"] as ColumnGroup<*>
     val DataRowBase<Marker>.reversed: org.jetbrains.dataframe.AnyRow @JvmName("Marker_reversed") get() = this["reversed"] as org.jetbrains.dataframe.AnyRow
 
     //endregion

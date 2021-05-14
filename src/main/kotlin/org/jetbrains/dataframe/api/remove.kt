@@ -2,7 +2,7 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.AnyColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.impl.TreeNode
 import org.jetbrains.dataframe.impl.columns.toColumnSet
@@ -50,7 +50,7 @@ internal fun <T> DataFrame<T>.doRemove(selector: ColumnsSelector<T, *>): RemoveR
             if (childPaths != null) {
                 val node = node.addChild(column.name, ColumnPosition(index, true, null))
                 if (childPaths.all { it.size > depth + 1 }) {
-                    val groupCol = (column as MapColumn<*>)
+                    val groupCol = (column as ColumnGroup<*>)
                     val newDf = dfs(groupCol.df.columns(), childPaths, node)
                     if (newDf != null) {
                         val newCol = groupCol.withDf(newDf)

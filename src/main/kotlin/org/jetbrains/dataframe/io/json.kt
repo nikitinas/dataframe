@@ -7,7 +7,7 @@ import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.AnyColumn
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.impl.ColumnNameGenerator
 import org.jetbrains.dataframe.impl.asList
@@ -128,3 +128,68 @@ internal fun fromList(records: List<*>): AnyFrame {
     return columns.toDataFrame()
 }
 
+internal fun KlaxonJson.encodeRow(frame: DataFrameBase<*>, index: Int): JsonObject? {
+    val values = frame.columns().mapNotNull { col ->
+        when (col) {
+            is ColumnGroup<*> -> encodeRow(col, index)
+            is FrameColumn<*> -> col[index]?.let { encodeFrame(it) }
+            else -> col[index]?.toString()
+        }?.let { col.name to it }
+    }
+    if(values.isEmpty()) return null
+    return obj(values)
+}
+
+internal fun KlaxonJson.encodeFrame(frame: AnyFrame) : JsonArray<*> {
+
+    val allColumns = frame.columns()
+
+    val valueColumn = allColumns.filter { it.name.startsWith(valueColumnName) }
+        .maxByOrNull { it.name }?.let { valueCol ->
+            if(valueCol.kind() != ColumnKind.Value) null
+            else {
+                // check that value in this column is not null only when other values are null
+                val isValidValueColumn = frame.rows().all { row ->
+                    if (valueCol[row] != null)
+                        allColumns.all { col ->
+                            if (col.name != valueCol.name) col[row] == null
+                            else true
+                        }
+                    else true
+                }
+                if (isValidValueColumn) valueCol
+                else null
+            }
+        }
+
+    val arrayColumn = frame.columns().filter { it.name.startsWith(arrayColumnName) }
+        .maxByOrNull { it.name }?.let { arrayCol ->
+            if(arrayCol.kind() == ColumnKind.Group) null
+            else {
+                // check that value in this column is not null only when other values are null
+                val isValidArrayColumn = frame.rows().all { row ->
+                    if (arrayCol[row] != null)
+                        allColumns.all { col ->
+                            if (col.name != arrayCol.name) col[row] == null
+                            else true
+                        }
+                    else true
+                }
+                if (isValidArrayColumn) arrayCol
+                else null
+            }
+        }
+
+    val arraysAreFrames = arrayColumn?.kind() == ColumnKind.Frame
+
+    val data = frame.indices().map { rowIndex ->
+        valueColumn?.get(rowIndex) ?: arrayColumn?.get(rowIndex)?.let { if(arraysAreFrames) encodeFrame(it as AnyFrame) else null } ?: encodeRow(frame, rowIndex)
+    }
+    return array(data)
+}
+
+fun AnyFrame.writeJsonStr(prettyPrint: Boolean = false, canonical: Boolean = false): String {
+    return json {
+        encodeFrame(this@writeJsonStr)
+    }.toJsonString(prettyPrint, canonical)
+}

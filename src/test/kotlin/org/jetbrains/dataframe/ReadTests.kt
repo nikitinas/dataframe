@@ -2,7 +2,7 @@ package org.jetbrains.dataframe
 
 import io.kotest.matchers.shouldBe
 import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.io.readJsonStr
 import org.junit.Test
 
@@ -33,7 +33,7 @@ class ReadTests {
         println(df)
         df.ncol() shouldBe 1
         df.nrow() shouldBe 3
-        val group = df["a"] as MapColumn<*>
+        val group = df["a"] as ColumnGroup<*>
         group.ncol() shouldBe 3
         group["b"].type() shouldBe getType<Int?>()
         group["value"].type() shouldBe getType<String?>()

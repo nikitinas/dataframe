@@ -8,7 +8,7 @@ import kotlin.reflect.KProperty
 
 /**
  * Column with type, name/path and values
- * Base interface for all three kinds of columns: [ValueColumn], [MapColumn] and [FrameColumn]
+ * Base interface for all three kinds of columns: [ValueColumn], [ColumnGroup] and [FrameColumn]
  */
 interface Column<out T> : ColumnReference<T> {
 

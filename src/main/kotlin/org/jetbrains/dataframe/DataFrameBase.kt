@@ -3,7 +3,7 @@ package org.jetbrains.dataframe
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.SingleColumn
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.impl.columns.asGroup
@@ -16,13 +16,13 @@ interface DataFrameBase<out T>: SingleColumn<DataRow<T>> {
     fun tryGetColumn(columnName: String): AnyCol?
 
     fun getGroup(columnName: String) = get(columnName).asGroup()
-    fun getGroup(columnPath: ColumnPath): MapColumn<*> = get(columnPath).asGroup()
+    fun getGroup(columnPath: ColumnPath): ColumnGroup<*> = get(columnPath).asGroup()
 
     fun frameColumn(columnName: String): FrameColumn<*> = get(columnName).asTable()
     fun frameColumn(columnPath: ColumnPath): FrameColumn<*> = get(columnPath).asTable()
 
     operator fun <R> get(column: ColumnReference<R>): DataColumn<R>
-    operator fun <R> get(column: ColumnReference<DataRow<R>>): MapColumn<R>
+    operator fun <R> get(column: ColumnReference<DataRow<R>>): ColumnGroup<R>
     operator fun <R> get(column: ColumnReference<DataFrame<R>>): FrameColumn<R>
 
     fun hasColumn(columnName: String) = tryGetColumn(columnName) != null

@@ -3,7 +3,7 @@ package org.jetbrains.dataframe.internal.schema
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.ColumnKind
 import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.ValueColumn
 import org.jetbrains.dataframe.columns.hasNulls
 import org.jetbrains.dataframe.columns.type
@@ -31,7 +31,7 @@ internal abstract class ColumnSchema {
     }
 
     class Map(val schema: DataFrameSchema) : ColumnSchema() {
-        override val kind = ColumnKind.Map
+        override val kind = ColumnKind.Group
         override val nullable = false
 
         fun compare(other: Map): CompareResult = schema.compare(other.schema)
@@ -70,7 +70,7 @@ internal abstract class ColumnSchema {
 
 internal fun AnyCol.getColumnType(): ColumnSchema = when (this) {
     is ValueColumn<*> -> ColumnSchema.Value(type)
-    is MapColumn<*> -> ColumnSchema.Map(df.extractSchema())
+    is ColumnGroup<*> -> ColumnSchema.Map(df.extractSchema())
     is FrameColumn<*> -> ColumnSchema.Frame(internal().schema.value, hasNulls)
     else -> throw RuntimeException()
 }

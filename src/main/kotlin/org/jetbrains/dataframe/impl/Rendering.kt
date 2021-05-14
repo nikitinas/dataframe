@@ -53,7 +53,7 @@ internal fun renderType(column: AnyCol) =
             val table = column.asTable()
             "[${renderSchema(table.schema.value)}]"
         }
-        ColumnKind.Map -> {
+        ColumnKind.Group -> {
             val group = column.asGroup()
             "{${renderSchema(group.df)}}"
         }

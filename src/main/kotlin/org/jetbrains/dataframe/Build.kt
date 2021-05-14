@@ -9,7 +9,7 @@ import org.jetbrains.dataframe.impl.ColumnNameGenerator
 import org.jetbrains.dataframe.impl.DataFrameImpl
 import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.columns.DataColumnWithParentImpl
-import org.jetbrains.dataframe.impl.columns.MapColumnWithParent
+import org.jetbrains.dataframe.impl.columns.ColumnGroupWithParent
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -83,7 +83,7 @@ fun emptyDataFrame(nrow: Int) = DataFrame.empty(nrow)
 internal fun AnyColumn.unbox(): AnyCol = when (this) {
     is ColumnWithPath<*> -> data.unbox()
     is DataColumnWithParentImpl<*> -> source.unbox()
-    is MapColumnWithParent<*> -> source.unbox()
+    is ColumnGroupWithParent<*> -> source.unbox()
     else -> this as AnyCol
 }
 

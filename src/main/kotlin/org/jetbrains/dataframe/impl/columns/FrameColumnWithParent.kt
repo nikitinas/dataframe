@@ -2,9 +2,9 @@ package org.jetbrains.dataframe.impl.columns
 
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.ColumnWithPath
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 
-internal class FrameColumnWithParent<T>(parent: MapColumn<*>, source: FrameColumnInternal<T>) : DataColumnWithParentImpl<DataFrame<T>?>(parent, source), FrameColumnInternal<T> by source {
+internal class FrameColumnWithParent<T>(parent: ColumnGroup<*>, source: FrameColumnInternal<T>) : DataColumnWithParentImpl<DataFrame<T>?>(parent, source), FrameColumnInternal<T> by source {
 
     override fun kind() = super<FrameColumnInternal>.kind()
 

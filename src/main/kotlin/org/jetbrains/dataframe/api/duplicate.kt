@@ -1,14 +1,14 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.type
 import kotlin.reflect.full.withNullability
 
 fun <T> DataRowBase<T>.duplicate(n: Int): DataFrame<T> = (this as DataRow<T>).owner.columns().mapIndexed { colIndex, col ->
     when(col) {
-        is MapColumn<*> -> DataColumn.create(col.name, col[index].duplicate(n))
+        is ColumnGroup<*> -> DataColumn.create(col.name, col[index].duplicate(n))
         else -> {
             val value = col[index]
             if (value is AnyFrame)

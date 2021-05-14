@@ -15,7 +15,7 @@ fun <T, C> mergeRows(df: DataFrame<T>, selector: ColumnsSelector<T, C>, type: KT
             if(row.index > 0) null
             else when(column.kind()) {
                 ColumnKind.Value -> column.toList()
-                ColumnKind.Map -> column.asGroup().df
+                ColumnKind.Group -> column.asGroup().df
                 ColumnKind.Frame -> column.asTable().values.union()
             }
         }

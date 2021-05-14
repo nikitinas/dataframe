@@ -4,7 +4,7 @@ import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.type
 import org.jetbrains.dataframe.impl.columns.toColumnSet
@@ -55,7 +55,7 @@ fun <T> DataColumn<T>.replaceAll(values: List<T>): DataColumn<T> = when (this) {
         val groups = (values as List<AnyFrame?>)
         DataColumn.create(name, groups, nulls) as DataColumn<T>
     }
-    is MapColumn<*> -> {
+    is ColumnGroup<*> -> {
         this.columns().mapIndexed { colIndex, col ->
             val newValues = values.map {
                 when (it) {

@@ -3,7 +3,7 @@ package org.jetbrains.dataframe
 import org.jetbrains.dataframe.columns.AnyColumn
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.ValueColumn
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.size
@@ -36,7 +36,7 @@ fun <T> DataFrame<T>.explode(selector: ColumnsSelector<T, *>): DataFrame<T> {
         val newColumns: List<AnyColumn> = df.columns().map { col ->
 
             val isTargetColumn = data.contains(listOf(col.name))
-            if (col is MapColumn<*>) { // go to nested columns recursively
+            if (col is ColumnGroup<*>) { // go to nested columns recursively
                 val group = col.asGroup()
                 val newData = data.mapNotNull {
                     if (it.isNotEmpty() && it[0] == col.name) it.drop(1) else null

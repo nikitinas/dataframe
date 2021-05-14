@@ -11,7 +11,7 @@ import org.jetbrains.dataframe.columns.ColumnSet
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.impl.TreeNode
 import org.jetbrains.dataframe.impl.columns.addPath
 import org.jetbrains.dataframe.impl.columns.asGroup
@@ -130,8 +130,8 @@ interface DataFrame<out T> : DataFrameBase<T> {
         tryGetColumn(columnName) ?: throw Exception("Column not found: '$columnName'")
 
     override operator fun <R> get(column: ColumnReference<R>): DataColumn<R> = tryGetColumn(column) ?: error("Column not found: ${column.path().joinToString("/")}")
-    override operator fun <R> get(column: ColumnReference<DataRow<R>>): MapColumn<R> =
-        get<DataRow<R>>(column) as MapColumn<R>
+    override operator fun <R> get(column: ColumnReference<DataRow<R>>): ColumnGroup<R> =
+        get<DataRow<R>>(column) as ColumnGroup<R>
 
     override operator fun <R> get(column: ColumnReference<DataFrame<R>>): FrameColumn<R> =
         get<DataFrame<R>>(column) as FrameColumn<R>
@@ -165,7 +165,7 @@ interface DataFrame<out T> : DataFrameBase<T> {
         else path.dropLast(1).fold(this as AnyFrame?) { df, name -> df?.tryGetColumn(name) as? AnyFrame? }
             ?.tryGetColumn(path.last())
 
-    fun tryGetColumnGroup(name: String) = tryGetColumn(name) as? MapColumn<*>
+    fun tryGetColumnGroup(name: String) = tryGetColumn(name) as? ColumnGroup<*>
     fun getColumnGroup(name: String) = tryGetColumnGroup(name)!!
 
     operator fun get(col1: Column, col2: Column, vararg other: Column) = select(listOf(col1, col2) + other)

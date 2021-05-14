@@ -19,7 +19,7 @@ import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.Column
 import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.ValueColumn
 import org.jetbrains.dataframe.columns.toAccessor
 import org.jetbrains.dataframe.columns.type
@@ -78,13 +78,13 @@ internal fun <T> ColumnWithPath<*>.typed() = this as ColumnWithPath<T>
 internal fun <T> AnyCol.asValues() = this as ValueColumn<T>
 internal fun <T> ValueColumn<*>.typed() = this as ValueColumn<T>
 internal fun <T> FrameColumn<*>.typed() = this as FrameColumn<T>
-internal fun <T> MapColumn<*>.typed() = this as MapColumn<T>
-internal fun <T> AnyCol.grouped() = this as MapColumn<T>
-internal fun <T> MapColumn<*>.withDf(newDf: DataFrame<T>) = DataColumn.create(name, newDf)
-internal fun AnyCol.asGroup(): MapColumn<*> = this as MapColumn<*>
+internal fun <T> ColumnGroup<*>.typed() = this as ColumnGroup<T>
+internal fun <T> AnyCol.grouped() = this as ColumnGroup<T>
+internal fun <T> ColumnGroup<*>.withDf(newDf: DataFrame<T>) = DataColumn.create(name, newDf)
+internal fun AnyCol.asGroup(): ColumnGroup<*> = this as ColumnGroup<*>
 
 @JvmName("asGroupedT")
-internal fun <T> DataColumn<DataRow<T>>.asGroup(): MapColumn<T> = this as MapColumn<T>
+internal fun <T> DataColumn<DataRow<T>>.asGroup(): ColumnGroup<T> = this as ColumnGroup<T>
 internal fun AnyCol.asTable(): FrameColumnInternal<*> = this as FrameColumnInternal<*>
 
 @JvmName("asTableT")

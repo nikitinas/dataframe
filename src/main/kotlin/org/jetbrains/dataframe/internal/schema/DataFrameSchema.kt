@@ -68,7 +68,7 @@ internal fun Iterable<DataFrameSchema>.intersectSchemas(): DataFrameSchema {
             kind == ColumnKind.Frame -> ColumnSchema.Frame( // intersect only not empty schemas
                 it.value.mapNotNull { (it as ColumnSchema.Frame).schema.takeIf { it.columns.isNotEmpty() } }.intersectSchemas(),
                 it.value.any { it.nullable })
-            kind == ColumnKind.Map -> ColumnSchema.Map(it.value.map { (it as ColumnSchema.Map).schema }.intersectSchemas())
+            kind == ColumnKind.Group -> ColumnSchema.Map(it.value.map { (it as ColumnSchema.Map).schema }.intersectSchemas())
             else -> throw RuntimeException()
         }
     }

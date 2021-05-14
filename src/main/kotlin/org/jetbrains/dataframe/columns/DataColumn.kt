@@ -7,7 +7,7 @@ import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.getType
 import org.jetbrains.dataframe.union
 import org.jetbrains.dataframe.impl.columns.FrameColumnImpl
-import org.jetbrains.dataframe.impl.columns.MapColumnImpl
+import org.jetbrains.dataframe.impl.columns.ColumnGroupImpl
 import org.jetbrains.dataframe.impl.columns.ValueImplColumn
 import org.jetbrains.dataframe.impl.columns.addPath
 import org.jetbrains.dataframe.internal.schema.DataFrameSchema
@@ -22,7 +22,7 @@ import kotlin.reflect.full.isSubclassOf
  * Base interface only for [ValueColumn] and [FrameColumn]
  *
  * All column extension functions that clash with [DataFrame] API (such as filter, forEach, map etc.) are defined for this interface,
- * because [MapColumn] doesn't inherit from it
+ * because [ColumnGroup] doesn't inherit from it
  */
 interface DataColumn<out T> : Column<T> {
 
@@ -30,7 +30,7 @@ interface DataColumn<out T> : Column<T> {
 
         fun <T> create(name: String, values: List<T>, type: KType, defaultValue: T? = null): ValueColumn<T> = ValueImplColumn(values, name, type, defaultValue)
 
-        fun <T> create(name: String, df: DataFrame<T>): MapColumn<T> = MapColumnImpl(df, name)
+        fun <T> create(name: String, df: DataFrame<T>): ColumnGroup<T> = ColumnGroupImpl(df, name)
 
         fun <T> create(name: String, df: DataFrame<T>, startIndices: Sequence<Int>, emptyToNull: Boolean): FrameColumn<T> = FrameColumnImpl(name, df, startIndices, emptyToNull)
 

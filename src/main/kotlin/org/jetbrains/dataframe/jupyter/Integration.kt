@@ -3,7 +3,7 @@ package org.jetbrains.dataframe.jupyter
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.columns.AnyCol
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
 import org.jetbrains.dataframe.io.toHTML
 import org.jetbrains.dataframe.stubs.DataFrameToListNamedStub
@@ -30,7 +30,7 @@ internal class Integration : JupyterIntegration(){
         render<AnyFrame> { HTML(it.toHTML(config.display)) }
         render<FormattedFrame<*>> { HTML(it.toHTML(config.display)) }
         render<AnyRow> { it.toDataFrame() }
-        render<MapColumn<*>> { it.df }
+        render<ColumnGroup<*>> { it.df }
         render<AnyCol> { dataFrameOf(listOf(it)) }
         render<GroupedDataFrame<*, *>> { it.plain() }
 

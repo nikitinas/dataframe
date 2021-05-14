@@ -23,7 +23,7 @@ import org.jetbrains.dataframe.columnGroup
 import org.jetbrains.dataframe.columnList
 import org.jetbrains.dataframe.columnOf
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.toAccessor
 import org.jetbrains.dataframe.count
 import org.jetbrains.dataframe.dataFrameOf
@@ -118,7 +118,7 @@ class DataFrameTreeTests : BaseTest() {
     val DataRowBase<GroupedPerson>.nameAndCity get() = this["nameAndCity"] as DataRowBase<NameAndCity>
     val DataFrameBase<GroupedPerson>.age @JvmName("get-age") get() = this["age"].typed<Int>()
     val DataFrameBase<GroupedPerson>.weight @JvmName("get-weight") get() = this["weight"].typed<Int?>()
-    val DataFrameBase<GroupedPerson>.nameAndCity get() = this["nameAndCity"] as MapColumn<NameAndCity>
+    val DataFrameBase<GroupedPerson>.nameAndCity get() = this["nameAndCity"] as ColumnGroup<NameAndCity>
 
     val nameAndCity by columnGroup()
     val nameInGroup = nameAndCity.subcolumn<String>("name")
@@ -446,7 +446,7 @@ class DataFrameTreeTests : BaseTest() {
         val className = GroupedPerson::class.qualifiedName
         val shortName = GroupedPerson::class.simpleName!!
         val nameAndCity = NameAndCity::class.qualifiedName
-        val groupedColumn = MapColumn::class.qualifiedName
+        val groupedColumn = ColumnGroup::class.qualifiedName
         val columnData = DataColumn::class.qualifiedName
         val expected = """
             val $dataFrameBase<$className>.age: $columnData<kotlin.Int> @JvmName("${shortName}_age") get() = this["age"] as $columnData<kotlin.Int>

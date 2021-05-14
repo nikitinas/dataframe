@@ -401,7 +401,7 @@ Output:
 | 3 | 5 
 | 4 | null 
 
-Note: exploded `FrameColumn` turns into `MapColumn`
+Note: exploded `FrameColumn` turns into `ColumnGroup`
 
 When several columns are exploded, lists in different columns are aligned:  
 
@@ -695,7 +695,7 @@ df.group { firstName and lastName }.into("name")
 df.group { nameContains(":") }.into { name.substringBefore(":") }
 ```
 ### ungroup
-Replaces `MapColumn` with its nested columns. Reverse operation to [group](#group)
+Replaces `ColumnGroup` with its nested columns. Reverse operation to [group](#group)
 ```kotlin
 // fullName.firstName -> firstName
 // fullName.lastName -> lastName
@@ -1131,16 +1131,15 @@ df.toMap()
 ```
 ## Column kinds
 There are three kinds of `DataColumn`:
-* `MapColumn`: every element is `DataRow`
+* `ColumnGroup`: every element is `DataRow`, implements 'DataFrame' interface
 * `FrameColumn`: every element is `DataFrame`
 * `ValueColumn`: all other types of elements
 
 ### ValueColumn
 `ValueColumn` stores one dimensional array of elements
 
-### MapColumn
-Every element of `MapColumn` is `DataRow`, so `MapColumn` can be interpreted as a group of columns. 
-Most `DataFrame` operations, such as [select](#select), [filter](#filter), indexing etc. are also available for `MapColumn`.
+### ColumnGroup
+`ColumnGroup` is a named column that stores a list of columns. It supports both 'Column' and 'DataFrame' operations 
 
 ### FrameColumn
 Every element of `FrameColumn` is `DataFrame`, so `FrameColumn` can be interpreted as groups of rows. 
@@ -1207,7 +1206,7 @@ columnSet.filter { condition } // filter columns set by condition
 columnSet.except { otherColumnSet }
 columnSet.except ( otherColumnSet )
 ```
-Column selectors can be used to select subcolumns of a `MapColumn`
+Column selectors can be used to select subcolumns of a `ColumnGroup`
 ```kotlin
 val firstName by column("Alice", "Bob")
 val middleName by column("Jr", null)

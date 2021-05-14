@@ -11,7 +11,7 @@ import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.Column
 import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.SingleColumn
 import org.jetbrains.dataframe.columns.StringCol
 import org.jetbrains.dataframe.columns.ValueColumn
@@ -82,7 +82,7 @@ inline fun <reified T> ColumnAccessor<T>.nullable() = changeType<T?>()
 
 enum class ColumnKind {
     Value,
-    Map,
+    Group,
     Frame
 }
 
@@ -114,12 +114,12 @@ class ColumnDelegate<T>(private val parent: MapColumnReference? = null) {
 }
 
 fun AnyColumn.asFrame(): AnyFrame = when (this) {
-    is MapColumn<*> -> df
+    is ColumnGroup<*> -> df
     is ColumnWithPath<*> -> data.asFrame()
     else -> error("Can not extract DataFrame from ${javaClass.kotlin}")
 }
 
-fun AnyColumn.isGroup(): Boolean = kind() == ColumnKind.Map
+fun AnyColumn.isGroup(): Boolean = kind() == ColumnKind.Group
 
 fun <T> column() = ColumnDelegate<T>()
 
@@ -184,7 +184,7 @@ inline fun <reified T> column(name: String, values: List<T>, hasNulls: Boolean):
 fun <C> Column<C>.single() = values.single()
 
 fun <T> FrameColumn<T>.toDefinition() = frameColumn<T>(name)
-fun <T> MapColumn<T>.toDefinition() = columnGroup<T>(name)
+fun <T> ColumnGroup<T>.toDefinition() = columnGroup<T>(name)
 fun <T> ValueColumn<T>.toDefinition() = column<T>(name)
 
 operator fun AnyColumn.plus(other: AnyColumn) = dataFrameOf(listOf(this, other))

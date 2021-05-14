@@ -52,6 +52,11 @@ interface DataColumn<out T> : ColumnReference<T>, ColumnProvider<T> {
     val hasNulls: Boolean get() = type.isMarkedNullable
     val size: Int
 
+    fun type() = type
+    fun size() = size
+    fun hasNulls() = hasNulls
+    fun ndistinct() = ndistinct
+
     fun kind(): ColumnKind
 
     operator fun get(index: Int): T

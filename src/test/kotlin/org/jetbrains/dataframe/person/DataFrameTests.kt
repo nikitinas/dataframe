@@ -85,6 +85,35 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
+    fun `guess column type`(){
+        val col by columnOf("Alice", 1, 3.5)
+        col.type shouldBe getType<Any>()
+        val filtered = col.filter { it is String }
+        filtered.type shouldBe getType<Any>()
+        filtered.guessType().type shouldBe getType<String>()
+    }
+
+    @Test
+    fun `create from map`(){
+        val data = mapOf("name" to listOf("Alice", "Bob"), "age" to listOf(15,null))
+        val df = data.toDataFrame()
+        df.ncol() shouldBe 2
+        df.nrow() shouldBe 2
+        df.columnNames() shouldBe listOf("name", "age")
+        df["name"].type shouldBe getType<String>()
+        df["age"].type shouldBe getType<Int?>()
+    }
+
+    @Test
+    fun `toMap`(){
+        val map = df.toMap()
+        map.size shouldBe 4
+        map.forEach {
+            it.value.size shouldBe df.nrow()
+        }
+    }
+
+    @Test
     fun `size`() {
         df.size() shouldBe DataFrameSize(df.ncol(), df.nrow())
     }

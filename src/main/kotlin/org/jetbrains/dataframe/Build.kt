@@ -194,6 +194,10 @@ internal fun guessValueType(values: List<Any?>): KType {
     return types.commonType(nullable)
 }
 
-internal fun guessColumnType(name: String, values: List<Any?>) = guessValueType(values).let {
+internal fun guessColumnType(name: String, values: List<Any?>): AnyCol = guessValueType(values).let {
     DataColumn.create(name, values, it)
+}
+
+fun Map<String, Iterable<Any?>>.toDataFrame(): AnyFrame {
+    return map { guessColumnType(it.key, it.value.toList()) }.toDataFrame()
 }

@@ -174,7 +174,11 @@ interface ReferenceData {
     val wasRemoved: Boolean
 }
 
-internal data class ColumnPosition(override val originalIndex: Int, override var wasRemoved: Boolean, var column: AnyCol?): ReferenceData
+internal data class ColumnPosition(
+    override val originalIndex: Int,
+    override var wasRemoved: Boolean,
+    var column: AnyCol?
+) : ReferenceData
 
 fun Column.getParent(): MapColumnReference? = when (this) {
     is ColumnWithParent<*> -> parent
@@ -216,16 +220,19 @@ internal fun <T> DataFrame<T>.collectTree(selector: ColumnsSelector<T, *>): Tree
     return root
 }
 
-internal fun <T> DataFrame<T>.splitByIndices(startIndices: Sequence<Int>, emptyToNull: Boolean): Sequence<DataFrame<T>?> {
+internal fun <T> DataFrame<T>.splitByIndices(
+    startIndices: Sequence<Int>,
+    emptyToNull: Boolean
+): Sequence<DataFrame<T>?> {
     return (startIndices + nrow).zipWithNext { start, endExclusive ->
-        if(emptyToNull && start == endExclusive) null
+        if (emptyToNull && start == endExclusive) null
         else get(start until endExclusive)
     }
 }
 
 internal fun <T> List<T>.splitByIndices(startIndices: Sequence<Int>, emptyToNull: Boolean): Sequence<List<T>?> {
     return (startIndices + size).zipWithNext { start, endExclusive ->
-        if(emptyToNull && start == endExclusive) null
+        if (emptyToNull && start == endExclusive) null
         else subList(start, endExclusive)
     }
 }
@@ -280,3 +287,5 @@ internal fun <C> List<ColumnWithPath<C>>.shortenPaths(): List<ColumnWithPath<C>>
 
     return map { it.changePath(pathRemapping[it.path]!!) }
 }
+
+fun AnyFrame.toMap(): Map<String, List<Any?>> = columns().associateBy({ it.name }, { it.toList() })

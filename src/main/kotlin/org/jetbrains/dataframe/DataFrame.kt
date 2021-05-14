@@ -202,8 +202,9 @@ interface DataFrame<out T> : DataFrameBase<T> {
 
     fun <R> mapIndexedNotNull(action: (Int, DataRow<T>) -> R?) = rows().mapIndexedNotNull(action)
 
-    fun size() = DataFrameSize(ncol(), nrow())
 }
+
+fun AnyFrame.size() = DataFrameSize(ncol(), nrow())
 
 fun AnyFrame.getFrame(path: ColumnPath): AnyFrame = if(path.isNotEmpty()) this[path].asFrame() else this
 

@@ -14,6 +14,7 @@ import org.jetbrains.dataframe.columns.ValueColumn
 import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.columns.ConvertedColumnDef
 import org.jetbrains.dataframe.impl.toIterable
+import java.util.Arrays.asList
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -232,3 +233,5 @@ inline fun <reified T> AnyCol.isSubtypeOf() = isSubtypeOf(getType<T>())
 inline fun <reified T> AnyCol.isType() = type == getType<T>()
 
 fun AnyCol.isNumber() = type.withNullability(false).isSubtypeOf(getType<Number>())
+
+fun AnyCol.guessType() = guessColumnType(name, toList())

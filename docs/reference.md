@@ -10,6 +10,7 @@
 * [Create `DataFrame`](#create-dataframe)
     * [from values](#from-values)
     * [from columns](#from-columns)
+    * [from map](#from-map)
     * [from objects](#from-objects)
 * [Read `DataFrame`](#read-dataframe)
     * [from CSV](#read-csv)
@@ -62,6 +63,7 @@
     * [join](#join)
 * [Column operations](#column-operations)
     * [distinct](#distinct)
+    * [guessType](#guessType)
     * [rename](#rename-1)
     * [digitize](#digitize)
     * [Arithmetic operations](#arithmetic-operations)
@@ -73,6 +75,7 @@
 * [Export `DataFrame`](#export-dataframe)
     * [writeCSV](#writecsv)
     * [writeClass](#writeclass)
+    * [toMap](#toMap)
 * [`DataFrame` Presentation](#dataframe-presentation)
     * [format](#format)
 * [Column kinds](#column-kinds)
@@ -143,7 +146,12 @@ val df1 = dataFrameOf(name, age)
 val df2 = listOf(name, age).toDataFrame()
 val df3 = name + age
 ```
-
+### from map
+`Map<String, Iterable<Any?>>` can be converted to `DataFrame`:
+```kotlin
+val data = mapOf("name" to listOf("Alice", "Bob"), "age" to listOf(15, 20))
+val df = data.toDataFrame()
+```
 ### from objects
 
 DataFrame can be created from a list of any objects.
@@ -924,6 +932,20 @@ Return `DataColumn` with unique values
 ```
 column.distinct()
 ``` 
+### guessType
+Changes type of `DataColumn` based on its actual values
+```kotlin
+val mixed by columnOf("Alice", 3, true)
+mixed.type() // Any
+```
+```kotlin
+val filtered = mixed.filter { it is String}
+filtered.type() // Any
+```
+```kotlin
+val guessed = filtered.guessType()
+guessed.type() // String
+```
 ### digitize
 Return `DataColumn` with indices of the bins to which each value in original `DataColumn` belongs
 ```
@@ -1097,6 +1119,11 @@ df.writeCSV("output.csv")
 Exports `DataFrame` to `List` of auto-generated data classes. Only for `Jupyter` environment.
 ```kotlin
 val list = df.writeClass("Person")
+```
+### toMap
+Converts `DataFrame` to `Map<String, List<Any?>>`
+```kotlin
+df.toMap()
 ```
 ## Column kinds
 There are three kinds of `DataColumn`:

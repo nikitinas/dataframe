@@ -141,6 +141,7 @@ interface DataFrame<out T> : DataFrameBase<T> {
     operator fun get(indices: Iterable<Int>) = getRows(indices)
     operator fun get(mask: BooleanArray) = getRows(mask)
     operator fun get(range: IntRange) = getRows(range)
+    operator fun get(firstIndex: Int, vararg otherIndices: Int) = get(headPlusIterable(firstIndex, otherIndices.asIterable()))
 
     operator fun plus(col: AnyCol) = dataFrameOf(columns() + col).typed<T>()
     operator fun plus(col: Iterable<AnyCol>) = new(columns() + col)
@@ -202,6 +203,7 @@ interface DataFrame<out T> : DataFrameBase<T> {
 
     fun <R> mapIndexedNotNull(action: (Int, DataRow<T>) -> R?) = rows().mapIndexedNotNull(action)
 
+    fun distinct() = distinctBy { it.values }
 }
 
 fun AnyFrame.size() = DataFrameSize(ncol(), nrow())

@@ -4,10 +4,9 @@ import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.dataFrameOf
 import kotlin.reflect.KType
 
-internal abstract class DataColumnImpl<T>(protected val values: List<T>, val name: String, val type: KType, set: Set<T>? = null) : DataColumn<T>, DataColumnInternal<T> {
+internal abstract class DataColumnImpl<T>(protected val values: List<T>, val name: String, val type: KType, distinct: Lazy<Set<T>>? = null) : DataColumn<T>, DataColumnInternal<T> {
 
-    protected var valuesSet: Set<T>? = set
-        private set
+    protected val distinct = distinct ?: lazy { values.toSet() }
 
     override fun name() = name
 
@@ -15,7 +14,7 @@ internal abstract class DataColumnImpl<T>(protected val values: List<T>, val nam
 
     override fun type() = type
 
-    override fun toSet() = valuesSet ?: values.toSet().also { valuesSet = it }
+    override fun toSet() = distinct.value
 
     fun contains(value: T) = toSet().contains(value)
 

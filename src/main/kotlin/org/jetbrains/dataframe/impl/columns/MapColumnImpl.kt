@@ -1,7 +1,10 @@
 package org.jetbrains.dataframe.impl.columns
 
 import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.columns.ColumnGroup
+import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.createType
 import org.jetbrains.dataframe.impl.renderSchema
 import java.lang.UnsupportedOperationException
@@ -26,6 +29,8 @@ internal class MapColumnImpl<T>(override val df: DataFrame<T>, val name: String)
     override fun size() = df.nrow()
 
     override fun get(index: Int) = df[index]
+
+    override fun get(firstIndex: Int, vararg otherIndices: Int): MapColumn<T> = DataColumn.create(name, df.get(firstIndex, *otherIndices))
 
     override fun slice(range: IntRange) = MapColumnImpl(df[range], name)
 
@@ -56,4 +61,6 @@ internal class MapColumnImpl<T>(override val df: DataFrame<T>, val name: String)
     override fun changeType(type: KType) = throw UnsupportedOperationException()
 
     override fun name() = name
+
+    override fun distinct() = DataColumn.create(name, distinct)
 }

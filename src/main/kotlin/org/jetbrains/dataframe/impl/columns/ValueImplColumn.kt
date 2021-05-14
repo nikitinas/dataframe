@@ -6,12 +6,14 @@ import org.jetbrains.dataframe.columns.ValueColumn
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
 
-internal class ValueImplColumn<T>(values: List<T>, name: String, type: KType, val defaultValue: T? = null, set: Set<T>? = null)
-    : DataColumnImpl<T>(values, name, type, set), ValueColumn<T> {
+internal open class ValueImplColumn<T>(values: List<T>, name: String, type: KType, val defaultValue: T? = null, distinct: Lazy<Set<T>>? = null)
+    : DataColumnImpl<T>(values, name, type, distinct), ValueColumn<T> {
 
-    override fun distinct() = ValueImplColumn(toSet().toList(), name, type, defaultValue, valuesSet)
+    override fun distinct() = ValueImplColumn(toSet().toList(), name, type, defaultValue, distinct)
 
-    override fun rename(newName: String) = ValueImplColumn(values, newName, type, defaultValue, valuesSet)
+    override fun rename(newName: String) = ValueImplColumn(values, newName, type, defaultValue, distinct)
+
+    override fun changeType(type: KType) = ValueImplColumn(values, name, type, defaultValue, distinct)
 
     override fun addParent(parent: MapColumn<*>): DataColumn<T> = ValueWithParentImplColumn(parent, this)
 
@@ -21,6 +23,4 @@ internal class ValueImplColumn<T>(values: List<T>, name: String, type: KType, va
     }
 
     override fun defaultValue() = defaultValue
-
-    override fun changeType(type: KType) = DataColumn.create(name, values, type, defaultValue)
 }

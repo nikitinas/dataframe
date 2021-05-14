@@ -115,6 +115,8 @@ fun AnyCol.addRowNumber(columnName: String = "id") = dataFrameOf(listOf(indexCol
 
 inline fun <reified C> headPlusArray(head: C, cols: Array<out C>) = (listOf(head) + cols.toList()).toTypedArray()
 
+inline fun <reified C> headPlusIterable(head: C, cols: Iterable<C>): Iterable<C> = (listOf(head) + cols.asIterable())
+
 // column grouping
 
 internal fun TreeNode<ColumnPosition>.allRemovedColumns() = dfs { it.data.wasRemoved && it.data.column != null }

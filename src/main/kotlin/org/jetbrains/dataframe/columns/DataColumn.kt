@@ -7,6 +7,7 @@ import org.jetbrains.dataframe.impl.columns.MapColumnImpl
 import org.jetbrains.dataframe.impl.columns.FrameColumnImpl
 import org.jetbrains.dataframe.impl.columns.ValueImplColumn
 import org.jetbrains.dataframe.impl.columns.addPath
+import org.jetbrains.dataframe.impl.toIterable
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -53,6 +54,8 @@ interface DataColumn<out T> : ColumnReference<T>, ColumnProvider<T> {
 
     operator fun get(index: Int): T
 
+    operator fun get(firstIndex: Int, vararg otherIndices: Int) = slice(headPlusIterable(firstIndex, otherIndices.asIterable()))
+
     operator fun get(row: AnyRow) = get(row.getIndex())
 
     fun values(): Iterable<T>
@@ -70,6 +73,10 @@ interface DataColumn<out T> : ColumnReference<T>, ColumnProvider<T> {
     fun slice(mask: BooleanArray): DataColumn<T>
 
     fun toSet(): Set<T>
+
+    fun distinct(): DataColumn<T>
+
+    operator fun set(predicate: Predicate<T>, value: Any) = {}
 
     override fun resolveSingle(context: ColumnResolutionContext): ColumnWithPath<T>? = this.addPath(context.df)
 

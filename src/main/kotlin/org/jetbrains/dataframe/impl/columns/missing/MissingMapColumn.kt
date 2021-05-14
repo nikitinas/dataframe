@@ -40,4 +40,8 @@ internal class MissingMapColumn<T> : MissingDataColumn<DataRow<T>>(), MapColumn<
     override fun kind() = super.kind()
 
     override fun set(columnName: String, value: AnyCol) = throw UnsupportedOperationException()
+
+    override fun get(firstIndex: Int, vararg otherIndices: Int) = throw UnsupportedOperationException()
+
+    override fun distinct() = throw UnsupportedOperationException()
 }

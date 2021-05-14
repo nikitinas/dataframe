@@ -205,10 +205,14 @@ DataFrame.readJSON("https://covid.ourworldindata.org/data/owid-covid-data.json")
 ### by column
 ```kotlin
 df["name"][0]
+df["name", "age"][3,5,7]
+df["name"][2..4]
 ```
 ### by row
 ```kotlin
 df[0]["name"]
+df[3,5,7]["name", "age"]
+df[3..5]["name", "age"]
 ```
 ### as iterable
 `DataFrame` can be interpreted as an `Iterable` of `DataRow`. Although `DataFrame` doesn't implement `Iterable` interface, it defines most extension functions available for `Iterable`

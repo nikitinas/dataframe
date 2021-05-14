@@ -1459,10 +1459,22 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun `first last`(){
+    fun `first last`() {
         typed.first() shouldBe typed[0]
         typed.last() shouldBe typed[typed.nrow-1]
         typed.city.first() shouldBe typed[0].city
         typed.city.last() shouldBe typed[typed.nrow-1].city
+    }
+
+    @Test
+    fun `select several rows`() {
+        df[2, 5].nrow() shouldBe 2
+        df[0,3,5] shouldBe df[listOf(0,3,5)]
+        df[3,5][name, age] shouldBe df[name, age][3,5]
+    }
+
+    @Test
+    fun `select several column values`() {
+        typed.name[2,5,6] shouldBe typed.name.slice(listOf(2, 5, 6))
     }
 }

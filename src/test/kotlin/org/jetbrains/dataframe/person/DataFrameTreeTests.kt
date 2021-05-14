@@ -24,9 +24,9 @@ import org.jetbrains.dataframe.columnOf
 import org.jetbrains.dataframe.columnList
 import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.definition
 import org.jetbrains.dataframe.dataFrameOf
-import org.jetbrains.dataframe.distinct
 import org.jetbrains.dataframe.duplicate
 import org.jetbrains.dataframe.emptyDataFrame
 import org.jetbrains.dataframe.execute

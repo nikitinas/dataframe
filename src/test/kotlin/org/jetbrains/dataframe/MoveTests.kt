@@ -1,6 +1,7 @@
 package org.jetbrains.dataframe
 
 import io.kotest.matchers.shouldBe
+import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.impl.columns.toColumnSet
 import org.junit.Test
 

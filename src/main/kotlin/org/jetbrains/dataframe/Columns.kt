@@ -14,6 +14,7 @@ import org.jetbrains.dataframe.columns.ValueColumn
 import org.jetbrains.dataframe.columns.size
 import org.jetbrains.dataframe.columns.type
 import org.jetbrains.dataframe.columns.hasNulls
+import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.ndistinct
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.asList
@@ -33,8 +34,6 @@ class ColumnResolutionContext(val df: DataFrameBase<*>, val unresolvedColumnsPol
 
     val allowMissingColumns = unresolvedColumnsPolicy == UnresolvedColumnsPolicy.Skip
 }
-
-internal val ColumnReference<*>.name get() = name()
 
 fun <TD, T : DataFrameBase<TD>, C> Selector<T, ColumnSet<C>>.toColumns(createReceiver: (ColumnResolutionContext) -> T): ColumnSet<C> =
     createColumnSet {

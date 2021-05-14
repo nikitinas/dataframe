@@ -30,7 +30,7 @@ import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.equalsByElement
 import org.jetbrains.dataframe.impl.rollingHash
 import org.jetbrains.dataframe.isGroup
-import org.jetbrains.dataframe.name
+import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.toColumnDef
 import org.jetbrains.dataframe.toColumns
 import org.jetbrains.dataframe.typed

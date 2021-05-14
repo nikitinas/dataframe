@@ -1,6 +1,7 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.impl.TreeNode
 import org.jetbrains.dataframe.impl.columns.toColumnSet
 import org.jetbrains.dataframe.impl.columns.toColumns

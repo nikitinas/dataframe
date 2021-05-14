@@ -2,6 +2,7 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.createDataCollector
 import kotlin.reflect.KProperty

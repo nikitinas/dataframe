@@ -5,6 +5,9 @@ import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.FrameColumn
+import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.impl.ColumnNameGenerator
 import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.createDataCollector

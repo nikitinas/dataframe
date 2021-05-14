@@ -3,6 +3,7 @@ package org.jetbrains.dataframe
 import org.jetbrains.dataframe.columns.ColumnDefinition
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.impl.ReadonlyTreeNode
 import org.jetbrains.dataframe.impl.columns.withDf
 import org.jetbrains.dataframe.impl.getAncestor

@@ -5,7 +5,6 @@ import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.ColumnResolutionContext
 import org.jetbrains.dataframe.impl.columns.getColumn
 import org.jetbrains.dataframe.impl.columns.addPath
-import org.jetbrains.dataframe.name
 
 interface ColumnReference<out C> : SingleColumn<C> {
 
@@ -20,3 +19,5 @@ interface ColumnReference<out C> : SingleColumn<C> {
     }
 
 }
+
+internal val ColumnReference<*>.name get() = name()

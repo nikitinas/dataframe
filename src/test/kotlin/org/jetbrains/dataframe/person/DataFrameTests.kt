@@ -6,6 +6,7 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.valueClass
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.typed
@@ -15,7 +16,6 @@ import org.junit.Test
 import java.math.BigDecimal
 import java.time.LocalDate
 import kotlin.IllegalArgumentException
-import kotlin.jvm.Throws
 import kotlin.reflect.jvm.jvmErasure
 
 class DataFrameTests : BaseTest() {

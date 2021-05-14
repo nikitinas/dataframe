@@ -1,5 +1,6 @@
 package org.jetbrains.dataframe
 
+import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.values
 
 fun <T> DataFrame<T>.corr() = corr { numberCols().withoutNulls() }

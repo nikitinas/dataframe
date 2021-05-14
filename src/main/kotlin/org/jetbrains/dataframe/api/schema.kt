@@ -3,6 +3,7 @@ package org.jetbrains.dataframe
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.ValueColumn
+import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.type
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.renderType

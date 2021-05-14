@@ -2,6 +2,7 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.type
 import kotlin.reflect.full.withNullability
 

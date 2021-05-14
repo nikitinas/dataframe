@@ -8,6 +8,8 @@ import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.impl.ColumnNameGenerator
 import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.createDataCollector
+import org.jetbrains.dataframe.columns.type
+import org.jetbrains.dataframe.columns.values
 import java.io.File
 import java.lang.StringBuilder
 import java.net.URL

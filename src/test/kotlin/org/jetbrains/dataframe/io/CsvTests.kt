@@ -2,6 +2,7 @@ package org.jetbrains.dataframe.io
 
 import io.kotest.matchers.shouldBe
 import org.jetbrains.dataframe.DataFrame
+import org.jetbrains.dataframe.allNulls
 import org.jetbrains.dataframe.cast
 import org.jetbrains.dataframe.dataFrameOf
 import org.jetbrains.dataframe.getType
@@ -23,9 +24,9 @@ class CsvTests {
         val df = DataFrame.readDelimStr(src)
         df.nrow() shouldBe 2
         df.ncol() shouldBe 2
-        df["first"].type shouldBe getType<Int>()
-        df["second"].values.all { it == null } shouldBe true
-        df["second"].type shouldBe getType<String?>()
+        df["first"].type() shouldBe getType<Int>()
+        df["second"].allNulls() shouldBe true
+        df["second"].type() shouldBe getType<String?>()
     }
 
     @Test
@@ -52,9 +53,9 @@ class CsvTests {
         df.nrow() shouldBe 5
         df.columnNames()[5] shouldBe "duplicate_1"
         df.columnNames()[6] shouldBe "duplicate_1_1"
-        df["duplicate_1"].type shouldBe getType<String?>()
-        df["double"].type shouldBe getType<Double?>()
-        df["time"].type shouldBe getType<java.time.LocalDateTime>()
+        df["duplicate_1"].type() shouldBe getType<String?>()
+        df["double"].type() shouldBe getType<Double?>()
+        df["time"].type() shouldBe getType<java.time.LocalDateTime>()
 
 
         println(df)
@@ -65,7 +66,7 @@ class CsvTests {
         val header = ('A'..'K').map { it.toString() }
         val df = DataFrame.readCSV(PATH_TO_DATA, headers = header, skipLines = 1)
         df.columnNames() shouldBe header
-        df["B"].type shouldBe getType<Int>()
+        df["B"].type() shouldBe getType<Int>()
 
         val headerShort = ('A'..'E').map { it.toString() }
         val dfShort = DataFrame.readCSV(PATH_TO_DATA, headers = headerShort, skipLines = 1)

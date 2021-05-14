@@ -48,8 +48,8 @@ class SpreadTests {
     fun `spread exists`() {
 
         val res = typed.select { name and key }.spread { key }.into { it }
-        res.ncol() shouldBe 1 + typed.key.ndistinct
-        res.nrow() shouldBe typed.name.ndistinct
+        res.ncol() shouldBe 1 + typed.key.ndistinct()
+        res.nrow() shouldBe typed.name.ndistinct()
 
         val expected = typed.map { (name to key) }.toSet()
         val actual = res.columns().subList(1, res.ncol()).flatMap {
@@ -63,9 +63,9 @@ class SpreadTests {
         }.toSet()
 
         actual shouldBe expected
-        res["age"].type shouldBe getType<Boolean>()
-        res["city"].type shouldBe getType<Boolean>()
-        res["weight"].type shouldBe getType<Boolean>()
+        res["age"].type() shouldBe getType<Boolean>()
+        res["city"].type() shouldBe getType<Boolean>()
+        res["weight"].type() shouldBe getType<Boolean>()
     }
 
     @Test
@@ -73,8 +73,8 @@ class SpreadTests {
 
         val res = typed.spread { key }.by { value }.into { it }
 
-        res.ncol() shouldBe 1 + typed.key.ndistinct
-        res.nrow() shouldBe typed.name.ndistinct
+        res.ncol() shouldBe 1 + typed.key.ndistinct()
+        res.nrow() shouldBe typed.name.ndistinct()
 
         val expected = typed.map { (name to key) to value }.toMap()
         val actual = res.columns().subList(1, res.ncol()).flatMap {
@@ -83,9 +83,9 @@ class SpreadTests {
         }.toMap()
 
         actual shouldBe expected
-        res["age"].type shouldBe getType<Int>()
-        res["city"].type shouldBe getType<String>()
-        res["weight"].type shouldBe getType<Int?>()
+        res["age"].type() shouldBe getType<Int>()
+        res["city"].type() shouldBe getType<String>()
+        res["weight"].type() shouldBe getType<Int?>()
     }
 
     @Test
@@ -93,8 +93,8 @@ class SpreadTests {
 
         val res = typed.spread { key }.by { value }.map { it.toString() }.into { it }
 
-        res.ncol() shouldBe 1 + typed.key.ndistinct
-        res.nrow() shouldBe typed.name.ndistinct
+        res.ncol() shouldBe 1 + typed.key.ndistinct()
+        res.nrow() shouldBe typed.name.ndistinct()
 
         val expected = typed.map { (name to key) to value.toString() }.toMap()
         val actual = res.columns().subList(1, res.ncol()).flatMap {
@@ -113,11 +113,11 @@ class SpreadTests {
         values[2] = 30
         val modified = typed.append(*values)
         val spread = modified.spread { key }.by { value }.into { it }
-        spread.ncol() shouldBe 1 + typed.key.ndistinct
+        spread.ncol() shouldBe 1 + typed.key.ndistinct()
 
-        spread["age"].type shouldBe getType<List<Int>>()
-        spread["city"].type shouldBe getType<String>()
-        spread["weight"].type shouldBe getType<Int?>()
+        spread["age"].type() shouldBe getType<List<Int>>()
+        spread["city"].type() shouldBe getType<String>()
+        spread["weight"].type() shouldBe getType<Int?>()
 
         val expected = modified.filter { key == "age" }.remove { key }.groupBy { name }.aggregate {
             value.cast<Int>().toList() into "age"

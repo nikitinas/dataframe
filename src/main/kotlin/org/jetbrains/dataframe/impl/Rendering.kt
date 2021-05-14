@@ -7,6 +7,7 @@ import org.jetbrains.dataframe.internal.schema.ColumnSchema
 import org.jetbrains.dataframe.internal.schema.DataFrameSchema
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.asTable
+import org.jetbrains.dataframe.columns.type
 import kotlin.reflect.KType
 
 internal fun String.truncate(limit: Int) = if (limit in 1 until length) {

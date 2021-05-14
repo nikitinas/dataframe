@@ -11,19 +11,20 @@ import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.SingleColumn
 import org.jetbrains.dataframe.columns.ValueColumn
+import org.jetbrains.dataframe.columns.size
+import org.jetbrains.dataframe.columns.type
+import org.jetbrains.dataframe.columns.hasNulls
+import org.jetbrains.dataframe.columns.ndistinct
+import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.columns.ConvertedColumnDef
-import org.jetbrains.dataframe.impl.toIterable
-import java.util.Arrays.asList
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.full.withNullability
-import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.typeOf
 
 enum class UnresolvedColumnsPolicy { Fail, Skip, Create }
@@ -230,7 +231,7 @@ fun <C> DataColumn<C>.allNulls() = size == 0 || (hasNulls && ndistinct == 1)
 
 fun AnyCol.isSubtypeOf(type: KType) = this.type.isSubtypeOf(type) && (!this.type.isMarkedNullable || type.isMarkedNullable)
 inline fun <reified T> AnyCol.isSubtypeOf() = isSubtypeOf(getType<T>())
-inline fun <reified T> AnyCol.isType() = type == getType<T>()
+inline fun <reified T> AnyCol.isType() = type() == getType<T>()
 
 fun AnyCol.isNumber() = type.withNullability(false).isSubtypeOf(getType<Number>())
 

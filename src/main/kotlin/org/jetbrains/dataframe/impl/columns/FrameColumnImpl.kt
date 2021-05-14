@@ -4,6 +4,7 @@ import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.FrameColumn
+import org.jetbrains.dataframe.columns.hasNulls
 import org.jetbrains.dataframe.createType
 import org.jetbrains.dataframe.internal.schema.DataFrameSchema
 import org.jetbrains.dataframe.internal.schema.extractSchema

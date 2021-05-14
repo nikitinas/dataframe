@@ -1,5 +1,7 @@
 package org.jetbrains.dataframe
 
+import org.jetbrains.dataframe.columns.values
+
 fun <T> DataFrame<T>.corr() = corr { numberCols().withoutNulls() }
 
 fun <T, C: Number> DataFrame<T>.corr(selector: ColumnsSelector<T, C>): AnyFrame {

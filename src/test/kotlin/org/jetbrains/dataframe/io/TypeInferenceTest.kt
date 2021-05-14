@@ -14,6 +14,6 @@ class TypeInferenceTest {
     @Test
     fun `private subtypes`(){
         val df = dataFrameOf("col")(B(), B())
-        df["col"].type shouldBe getType<A>()
+        df["col"].type() shouldBe getType<A>()
     }
 }

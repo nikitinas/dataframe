@@ -22,11 +22,11 @@ class ReadTests {
         val df = DataFrame.readJsonStr(data)
         df.ncol shouldBe 2
         df.nrow shouldBe 2
-        df["a"].hasNulls shouldBe true
+        df["a"].hasNulls() shouldBe true
         df["a"].allNulls() shouldBe true
         df.all { it["a"] == null } shouldBe true
-        df["a"].type shouldBe getType<Any?>()
-        df["b"].hasNulls shouldBe false
+        df["a"].type() shouldBe getType<Any?>()
+        df["b"].hasNulls() shouldBe false
     }
 
     @Test

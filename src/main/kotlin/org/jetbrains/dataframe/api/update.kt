@@ -4,6 +4,7 @@ import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.impl.columns.toColumnSet
 import org.jetbrains.dataframe.impl.columns.toColumns
+import org.jetbrains.dataframe.columns.type
 import org.jetbrains.dataframe.impl.createDataCollector
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty

@@ -1,6 +1,7 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.values
 import java.math.BigDecimal
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.jvmErasure
@@ -22,7 +23,7 @@ fun Iterable<BigDecimal>.sum(): BigDecimal {
     return sum
 }
 
-fun <T : Number> DataColumn<T>.sum() = values.sum(type.jvmErasure as KClass<T>)
+fun <T : Number> DataColumn<T>.sum() = values.sum(type().jvmErasure as KClass<T>)
 
 inline fun <T, reified R : Number> DataFrame<T>.sumBy(crossinline selector: RowSelector<T, R>) = asSequence().map { selector(it, it)}.asIterable().sum(R::class)
 

@@ -22,6 +22,8 @@ import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.ValueColumn
 import org.jetbrains.dataframe.columns.definition
+import org.jetbrains.dataframe.columns.type
+import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.getType
 import org.jetbrains.dataframe.impl.TreeNode
 import org.jetbrains.dataframe.impl.asList

@@ -4,7 +4,7 @@ import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
 import kotlin.reflect.KProperty
 
-inline fun <reified T : Comparable<T>> DataColumn<T?>.median() = values.asSequence().filterNotNull().asIterable().median()
+inline fun <reified T : Comparable<T>> DataColumn<T?>.median() = asSequence().filterNotNull().asIterable().median()
 
 inline fun <T, reified D : Comparable<D>> DataFrame<T>.median(col: ColumnReference<D?>): Double = get(col).median()
 inline fun <T, reified D : Comparable<D>> DataFrame<T>.median(crossinline selector: RowSelector<T, D?>): Double =

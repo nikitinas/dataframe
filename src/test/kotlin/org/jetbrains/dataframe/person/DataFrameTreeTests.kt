@@ -158,7 +158,7 @@ class DataFrameTreeTests : BaseTest() {
     @Test
     fun `selects`() {
         df2.select { nameAndCity.cols() } shouldBe typed2.nameAndCity.select { all() }
-        df2.select { nameAndCity.cols { !it.hasNulls } } shouldBe typed2.select { nameAndCity.name }
+        df2.select { nameAndCity.cols { !it.hasNulls() } } shouldBe typed2.select { nameAndCity.name }
         df2.select { nameAndCity.cols(0..1) } shouldBe typed2.nameAndCity.select { all() }
         df2.select { nameAndCity.col(1) } shouldBe typed2.select { nameAndCity.city }
         df2.select { nameAndCity.col("city") } shouldBe typed2.select { nameAndCity.city }
@@ -168,7 +168,7 @@ class DataFrameTreeTests : BaseTest() {
         df2.select { nameAndCity.cols().drop(1) } shouldBe typed2.nameAndCity.select { city }
 
         typed2.select { nameAndCity.cols() } shouldBe typed2.nameAndCity.select { all() }
-        typed2.select { nameAndCity.cols { !it.hasNulls } } shouldBe typed2.select { nameAndCity.name }
+        typed2.select { nameAndCity.cols { !it.hasNulls() } } shouldBe typed2.select { nameAndCity.name }
         typed2.select { nameAndCity.cols(0..1) } shouldBe typed2.nameAndCity.select { all() }
         typed2.select { nameAndCity.col(1) } shouldBe typed2.select { nameAndCity.city }
         typed2.select { nameAndCity.col("city") } shouldBe typed2.select { nameAndCity.city }
@@ -310,10 +310,10 @@ class DataFrameTreeTests : BaseTest() {
             columnNames() shouldBe listOf("name", "cities")
             this[name] shouldBe typed.name.distinct()
             val group = this[cities]
-            group.ncol() shouldBe typed.city.ndistinct
+            group.ncol() shouldBe typed.city.ndistinct()
             group.columns().forEach {
-                if (it.name() == "Moscow") it.type shouldBe getType<List<Int>?>()
-                else it.type shouldBe getType<Int?>()
+                if (it.name() == "Moscow") it.type() shouldBe getType<List<Int>?>()
+                else it.type() shouldBe getType<Int?>()
             }
 
             val actual = group.columns().sortedBy { it.name() }.flatMap { col ->
@@ -334,7 +334,7 @@ class DataFrameTreeTests : BaseTest() {
     fun `spread grouped column`() {
         val grouped = typed.group { age and weight }.into("info")
         val spread = grouped.spread { city }.by("info").execute()
-        spread.ncol() shouldBe typed.city.ndistinct + 1
+        spread.ncol() shouldBe typed.city.ndistinct() + 1
 
         val expected =
             typed.rows().groupBy { it.name to (it.city ?: "null") }.mapValues { it.value.map { it.age to it.weight } }
@@ -411,7 +411,7 @@ class DataFrameTreeTests : BaseTest() {
         val info by columnGroup()
         val moved = typed.group { except(name) }.into(info)
         val grouped = moved.groupBy { except(info) }.plain()
-        grouped.nrow() shouldBe typed.name.ndistinct
+        grouped.nrow() shouldBe typed.name.ndistinct()
     }
 
     @Test
@@ -593,7 +593,7 @@ class DataFrameTreeTests : BaseTest() {
         val res = typed2.append(listOf("Bill", "San Francisco"), null, 66)
         res.nrow() shouldBe typed2.nrow() + 1
         res.nameAndCity.last().values shouldBe listOf("Bill", "San Francisco")
-        res.age.hasNulls shouldBe true
+        res.age.hasNulls() shouldBe true
     }
 
     @Test
@@ -601,7 +601,7 @@ class DataFrameTreeTests : BaseTest() {
         val res = typed2.append(null, null, null)
         res.nrow() shouldBe typed2.nrow() + 1
         res.nameAndCity.last().values shouldBe listOf(null, null)
-        res.age.hasNulls shouldBe true
-        res.nameAndCity.name.hasNulls shouldBe true
+        res.age.hasNulls() shouldBe true
+        res.nameAndCity.name.hasNulls() shouldBe true
     }
 }

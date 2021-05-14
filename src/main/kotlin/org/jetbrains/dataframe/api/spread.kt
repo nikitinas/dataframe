@@ -2,6 +2,9 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.size
+import org.jetbrains.dataframe.columns.hasNulls
+import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.columns.asGroup
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty

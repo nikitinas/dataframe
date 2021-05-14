@@ -211,33 +211,33 @@ class PlaylistJsonTest {
     fun `deep update`() {
 
         val updated = item.update { snippet.thumbnails.default.url }.with {Image(it)}
-        updated.snippet.thumbnails.default.url.type shouldBe getType<Image>()
+        updated.snippet.thumbnails.default.url.type() shouldBe getType<Image>()
     }
 
     @Test
     fun `deep update group`() {
 
         val updated = item.update { snippet.thumbnails.default }.with { it.url }
-        updated.snippet.thumbnails["default"].type shouldBe getType<String>()
+        updated.snippet.thumbnails["default"].type() shouldBe getType<String>()
     }
 
     @Test
     fun `deep batch update`() {
 
         val updated = item.update { snippet.thumbnails.default.url and snippet.thumbnails.high.url }.with { Image(it) }
-        updated.snippet.thumbnails.default.url.type shouldBe getType<Image>()
-        updated.snippet.thumbnails.high.url.type shouldBe getType<Image>()
+        updated.snippet.thumbnails.default.url.type() shouldBe getType<Image>()
+        updated.snippet.thumbnails.high.url.type() shouldBe getType<Image>()
     }
 
     @Test
     fun `deep batch update all`() {
 
         val updated = item.update { colsDfs { it.name == "url" } }.with { (it as? String)?.let{ Image(it) } }
-        updated.snippet.thumbnails.default.url.type shouldBe getType<Image>()
-        updated.snippet.thumbnails.maxres.url.type shouldBe getType<Image?>()
-        updated.snippet.thumbnails.standard.url.type shouldBe getType<Image?>()
-        updated.snippet.thumbnails.medium.url.type shouldBe getType<Image>()
-        updated.snippet.thumbnails.high.url.type shouldBe getType<Image>()
+        updated.snippet.thumbnails.default.url.type() shouldBe getType<Image>()
+        updated.snippet.thumbnails.maxres.url.type() shouldBe getType<Image?>()
+        updated.snippet.thumbnails.standard.url.type() shouldBe getType<Image?>()
+        updated.snippet.thumbnails.medium.url.type() shouldBe getType<Image>()
+        updated.snippet.thumbnails.high.url.type() shouldBe getType<Image>()
     }
 
     @Test

@@ -12,9 +12,7 @@ internal class MissingFrameColumn<T>: MissingDataColumn<DataFrame<T>?>(), FrameC
 
     override fun kind() = super.kind()
 
-    override fun distinct(): FrameColumn<T> {
-        throw UnsupportedOperationException()
-    }
+    override fun distinct() = throw UnsupportedOperationException()
 
     override val schema: Lazy<DataFrameSchema>
         get() = throw UnsupportedOperationException()

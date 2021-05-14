@@ -7,15 +7,15 @@ import org.jetbrains.dataframe.impl.renderSchema
 import java.lang.UnsupportedOperationException
 import kotlin.reflect.KType
 
+internal val mapColumnType = createType<AnyRow>()
+
 internal class MapColumnImpl<T>(override val df: DataFrame<T>, val name: String) : MapColumn<T>, DataColumnInternal<DataRow<T>>, DataFrame<T> by df {
 
-    override val values: Iterable<DataRow<T>>
-        get() = df.rows()
+    override fun values() = df.rows()
 
-    override val ndistinct: Int
-        get() = distinct.nrow()
+    override fun ndistinct() = distinct.nrow()
 
-    override val type by lazy { createType<AnyRow>() }
+    override fun type() = mapColumnType
 
     private val distinct by lazy { df.distinct() }
 
@@ -23,8 +23,7 @@ internal class MapColumnImpl<T>(override val df: DataFrame<T>, val name: String)
 
     override fun toSet() = set
 
-    override val size: Int
-        get() = df.nrow()
+    override fun size() = df.nrow()
 
     override fun get(index: Int) = df[index]
 

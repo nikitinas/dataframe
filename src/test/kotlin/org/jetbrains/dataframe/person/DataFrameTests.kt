@@ -27,10 +27,10 @@ class DataFrameTests : BaseTest() {
 
         dataFrameOf("name", "age", "city", "weight")(typed.name named "bla", typed.age  named "", typed.city.rename("qq"), typed.weight.named("asda")) shouldBe df
 
-        val c1 = typed.name.values.toColumn()
-        val c2 = typed.age.values.toColumn()
-        val c3 = typed.city.values.toColumn()
-        val c4 = typed.weight.values.toColumn()
+        val c1 = typed.name.toList().toColumn()
+        val c2 = typed.age.toList().toColumn()
+        val c3 = typed.city.toList().toColumn()
+        val c4 = typed.weight.toList().toColumn()
 
         dataFrameOf("name", "age", "city", "weight")(c1,c2,c3,c4) shouldBe df
     }
@@ -87,10 +87,10 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `guess column type`(){
         val col by columnOf("Alice", 1, 3.5)
-        col.type shouldBe getType<Any>()
+        col.type() shouldBe getType<Any>()
         val filtered = col.filter { it is String }
-        filtered.type shouldBe getType<Any>()
-        filtered.guessType().type shouldBe getType<String>()
+        filtered.type() shouldBe getType<Any>()
+        filtered.guessType().type() shouldBe getType<String>()
     }
 
     @Test
@@ -100,8 +100,8 @@ class DataFrameTests : BaseTest() {
         df.ncol() shouldBe 2
         df.nrow() shouldBe 2
         df.columnNames() shouldBe listOf("name", "age")
-        df["name"].type shouldBe getType<String>()
-        df["age"].type shouldBe getType<Int?>()
+        df["name"].type() shouldBe getType<String>()
+        df["age"].type() shouldBe getType<Int?>()
     }
 
     @Test
@@ -191,7 +191,7 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `chunked`() {
         val res = df.chunked(2)
-        res.size shouldBe 4
+        res.size() shouldBe 4
         res.toList().dropLast(1).forEach {
             it!!.nrow() shouldBe 2
         }
@@ -203,7 +203,7 @@ class DataFrameTests : BaseTest() {
         fun AnyFrame.check() {
             column(1).name() shouldBe "age"
             ncol() shouldBe typed.ncol()
-            this["age"].values shouldBe typed.map { age * 2 }
+            this["age"].toList() shouldBe typed.map { age * 2 }
         }
 
         typed.update { age }.with { it * 2 }.check()
@@ -226,7 +226,7 @@ class DataFrameTests : BaseTest() {
         fun AnyFrame.check() {
             column(1).name() shouldBe "age"
             ncol() shouldBe typed.ncol()
-            this["age"].values shouldBe typed.map { if (age > 25) null else age }
+            this["age"].toList() shouldBe typed.map { if (age > 25) null else age }
         }
 
         typed.update { age }.where { it > 25 }.withNull().check()
@@ -248,7 +248,7 @@ class DataFrameTests : BaseTest() {
 
         val res = typed.update { age }.at(2, 4).with(100)
         val expected = typed.map { if (index == 2 || index == 4) 100 else age }
-        res.age.values shouldBe expected
+        res.age.toList() shouldBe expected
     }
 
     @Test
@@ -256,14 +256,14 @@ class DataFrameTests : BaseTest() {
 
         val res = typed.update { age }.at(2..4).with(100)
         val expected = typed.map { if (index in 2..4) 100 else age }
-        res.age.values shouldBe expected
+        res.age.toList() shouldBe expected
     }
 
     @Test
     fun `null to zero`() {
-        val expected = typed.weight.values.map { it ?: 0 }
+        val expected = typed.weight.toList().map { it ?: 0 }
         fun AnyFrame.check() {
-            this["weight"].values shouldBe expected
+            this["weight"].toList() shouldBe expected
         }
 
         typed.fillNulls { it.weight }.with(0).check()
@@ -291,7 +291,7 @@ class DataFrameTests : BaseTest() {
         val updated = typed.update { all() }.withNull()
 
         updated.columns().forEach {
-            it.values.forEach { it shouldBe null }
+            it.forEach { it shouldBe null }
         }
     }
 
@@ -300,7 +300,7 @@ class DataFrameTests : BaseTest() {
 
         val expected = listOf(null, "London", "Dubai", "Tokyo", "Milan", "Moscow", "Moscow")
 
-        fun AnyFrame.check() = this[city].values shouldBe expected
+        fun AnyFrame.check() = this[city].toList() shouldBe expected
 
         typed.sortBy { name and age.desc }.check()
         typed.sortBy { it.name and it.age.desc }.check()
@@ -315,9 +315,9 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `sort nulls first`() {
 
-        val expected = typed.city.values.sortedBy { it }
+        val expected = typed.city.toList().sortedBy { it }
 
-        fun AnyFrame.check() = this[city].values shouldBe expected
+        fun AnyFrame.check() = this[city].toList() shouldBe expected
 
         typed.sortBy { city }.check()
         df.sortBy { city }.check()
@@ -328,9 +328,9 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `sort nulls last`() {
 
-        val expected = typed.city.values.filterNotNull().sortedBy { it } + listOf(null)
+        val expected = typed.city.toList().filterNotNull().sortedBy { it } + listOf(null)
 
-        fun AnyFrame.check() = this[city].values shouldBe expected
+        fun AnyFrame.check() = this[city].toList() shouldBe expected
 
         typed.sortBy { city.nullsLast }.check()
         df.sortBy { city.nullsLast }.check()
@@ -369,7 +369,7 @@ class DataFrameTests : BaseTest() {
     fun `filter`() {
 
         val expected = listOf("Bob", "Bob", "Mark")
-        fun AnyFrame.check() = this[name].values shouldBe expected
+        fun AnyFrame.check() = this[name].toList() shouldBe expected
 
         val limit = 20
 
@@ -478,7 +478,7 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `select by type not nullable`() {
-        val selected = typed.select { colsOf<String> { !it.hasNulls } }
+        val selected = typed.select { colsOf<String> { !it.hasNulls() } }
         selected shouldBe typed.select { name }
     }
 
@@ -515,21 +515,21 @@ class DataFrameTests : BaseTest() {
 
         fun AnyFrame.check() {
             nrow() shouldBe 3
-            this["name"].values shouldBe listOf("Alice", "Bob", "Mark")
-            this["n"].values shouldBe listOf(2, 2, 3)
-            this["old count"].values shouldBe listOf(0, 2, 2)
-            this["median age"].values shouldBe listOf(17.5, 37.5, 30.0)
-            this["min age"].values shouldBe listOf(15, 30, 20)
-            this["oldest origin"].values shouldBe listOf(null, "Dubai", "Milan")
-            this["youngest origin"].values shouldBe listOf("London", "Tokyo", "Moscow")
-            this["all with weights"].values shouldBe listOf(true, true, false)
-            this["from London"].values shouldBe listOf(1, 0, 0)
-            this["from Dubai"].values shouldBe listOf(0, 1, 0)
-            this["from Moscow"].values shouldBe listOf(0, 0, 2)
-            this["from Milan"].values shouldBe listOf(0, 0, 1)
-            this["from Tokyo"].values shouldBe listOf(0, 1, 0)
-            this["from null"].values shouldBe listOf(1, 0, 0)
-            this["ages"].values shouldBe listOf(listOf(15, 20), listOf(45, 30), listOf(20, 40, 30))
+            this["name"].toList() shouldBe listOf("Alice", "Bob", "Mark")
+            this["n"].toList() shouldBe listOf(2, 2, 3)
+            this["old count"].toList() shouldBe listOf(0, 2, 2)
+            this["median age"].toList() shouldBe listOf(17.5, 37.5, 30.0)
+            this["min age"].toList() shouldBe listOf(15, 30, 20)
+            this["oldest origin"].toList() shouldBe listOf(null, "Dubai", "Milan")
+            this["youngest origin"].toList() shouldBe listOf("London", "Tokyo", "Moscow")
+            this["all with weights"].toList() shouldBe listOf(true, true, false)
+            this["from London"].toList() shouldBe listOf(1, 0, 0)
+            this["from Dubai"].toList() shouldBe listOf(0, 1, 0)
+            this["from Moscow"].toList() shouldBe listOf(0, 0, 2)
+            this["from Milan"].toList() shouldBe listOf(0, 0, 1)
+            this["from Tokyo"].toList() shouldBe listOf(0, 1, 0)
+            this["from null"].toList() shouldBe listOf(1, 0, 0)
+            this["ages"].toList() shouldBe listOf(listOf(15, 20), listOf(45, 30), listOf(20, 40, 30))
         }
 
         typed.groupBy { name and age }.print()
@@ -677,7 +677,7 @@ class DataFrameTests : BaseTest() {
         val now = 2020
         val expected = typed.map { now - age }
 
-        fun AnyFrame.check() = this["year"].values shouldBe expected
+        fun AnyFrame.check() = this["year"].toList() shouldBe expected
 
         typed.add("year") { now - age }.check()
         typed.add("year") { now - it.age }.check()
@@ -693,7 +693,7 @@ class DataFrameTests : BaseTest() {
         val now = 2020
         val expected = typed.map { now - age }
 
-        fun AnyFrame.check() = (1..3).forEach { this["year$it"].values shouldBe expected }
+        fun AnyFrame.check() = (1..3).forEach { this["year$it"].toList() shouldBe expected }
 
         typed.add {
             "year1" { now - age }
@@ -748,7 +748,7 @@ class DataFrameTests : BaseTest() {
     fun `merge similar dataframes`() {
 
         val res = typed + typed + typed
-        res.name.size shouldBe 3 * typed.nrow()
+        res.name.size() shouldBe 3 * typed.nrow()
         res.rows().forEach { it.values shouldBe typed[it.index % typed.nrow()].values }
     }
 
@@ -773,7 +773,7 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `row to frame`() {
-        typed[1].toDataFrame().name.size shouldBe 1
+        typed[1].toDataFrame().name.size() shouldBe 1
     }
 
     @Test
@@ -786,11 +786,11 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `union dataframes with different type of the same column`() {
         val df2 = dataFrameOf("age")(32.6, 56.3, null)
-        df2["age"].type shouldBe getType<Double?>()
+        df2["age"].type() shouldBe getType<Double?>()
         val merged = df.union(df2)
-        merged["age"].type shouldBe getType<Number?>()
+        merged["age"].type() shouldBe getType<Number?>()
         val updated = merged.update("age") { "age"<Number?>()?.toDouble() }
-        updated["age"].type shouldBe getType<Double?>()
+        updated["age"].type() shouldBe getType<Double?>()
     }
 
     @Test
@@ -807,10 +807,10 @@ class DataFrameTests : BaseTest() {
     fun `addRow`() {
         val res = typed.append("Bob", null, "Paris", null)
         res.nrow() shouldBe typed.nrow() + 1
-        res.name.type shouldBe getType<String>()
-        res.age.type shouldBe getType<Int?>()
-        res.city.type shouldBe getType<String?>()
-        res.weight.type shouldBe getType<Int?>()
+        res.name.type() shouldBe getType<String>()
+        res.age.type() shouldBe getType<Int?>()
+        res.city.type() shouldBe getType<String?>()
+        res.weight.type() shouldBe getType<Int?>()
 
         val row = res.last()
         row.name shouldBe "Bob"
@@ -823,8 +823,8 @@ class DataFrameTests : BaseTest() {
     fun `rename`() {
 
         fun AnyFrame.check() {
-            this["name2"].values shouldBe typed.name.values
-            this["age2"].values shouldBe typed.age.values
+            this["name2"].toList() shouldBe typed.name.toList()
+            this["age2"].toList() shouldBe typed.age.toList()
             this.columnNames() shouldBe listOf("name2", "age2", "city", "weight")
             this.tryGetColumn("age") shouldBe null
         }
@@ -843,20 +843,20 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `nunique`() {
-        typed.name.ndistinct shouldBe 3
+        typed.name.ndistinct() shouldBe 3
     }
 
     @Test
     fun `encode names`() {
         val encoding = typed.name.distinct().addRowNumber("name_id")
         val res = typed.leftJoin(encoding)
-        res["name_id"].values shouldBe listOf(0, 1, 2, 2, 1, 0, 2)
+        res["name_id"].toList() shouldBe listOf(0, 1, 2, 2, 1, 0, 2)
     }
 
     @Test
     fun `spread exists`() {
         val spread = typed.spread { city }.into { it }
-        spread.ncol() shouldBe typed.ncol() + typed.city.ndistinct - 2
+        spread.ncol() shouldBe typed.ncol() + typed.city.ndistinct() - 2
 
         for (row in 0 until typed.nrow()) {
             val city = typed[row][city]
@@ -884,7 +884,7 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `spread to bool with conversion`() {
         val res = typed.spread { city }.into { it?.decapitalize() }
-        val cities = typed.city.values.filterNotNull()
+        val cities = typed.city.toList().filterNotNull()
         val gathered =
             res.gather { colsOf<Boolean> { cities.contains(it.name().capitalize()) } }.where { it }.into("city")
         val expected = typed.update { city }.with { it?.decapitalize() }.moveToRight { city }
@@ -894,7 +894,7 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `spread to bool distinct rows`() {
         val res = typed.spread { city }.into { it }
-        res.ncol() shouldBe typed.ncol() + typed.city.ndistinct - 2
+        res.ncol() shouldBe typed.ncol() + typed.city.ndistinct() - 2
 
         for (i in 0 until typed.nrow()) {
             val city = typed[i][city]
@@ -910,9 +910,9 @@ class DataFrameTests : BaseTest() {
         val selected = typed.select { name and city }
         val res = selected.spread { city }.into { it }
 
-        res.ncol() shouldBe selected.city.ndistinct
-        res.nrow() shouldBe selected.name.ndistinct
-        val trueValuesCount = res.columns().drop(1).sumBy { it.typed<Boolean>().values.count { it } }
+        res.ncol() shouldBe selected.city.ndistinct()
+        res.nrow() shouldBe selected.name.ndistinct()
+        val trueValuesCount = res.columns().drop(1).sumBy { it.typed<Boolean>().toList().count { it } }
         trueValuesCount shouldBe selected.filterNotNull { city }.distinct().nrow()
 
         val pairs = (1 until res.ncol()).flatMap { i ->
@@ -930,7 +930,7 @@ class DataFrameTests : BaseTest() {
         val other by column<String>()
         val sum by column<Int>()
 
-        val names = typed.name.values.distinct()
+        val names = typed.name.distinct().toList()
 
         val src = typed.select { name }
             .add(others) { names }
@@ -1089,7 +1089,7 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `generic column type`() {
         val d = typed.update { city }.with { it?.toCharArray()?.toList() ?: emptyList() }
-        println(d.city.type)
+        println(d.city.type())
     }
 
     @Test
@@ -1147,10 +1147,10 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `basic math`() {
-        typed.age.mean() shouldBe typed.age.values.mean()
-        typed.age.min() shouldBe typed.age.values.minOrNull()
-        typed.age.max() shouldBe typed.age.values.maxOrNull()
-        typed.age.sum() shouldBe typed.age.values.sum()
+        typed.age.mean() shouldBe typed.age.toList().mean()
+        typed.age.min() shouldBe typed.age.toList().minOrNull()
+        typed.age.max() shouldBe typed.age.toList().maxOrNull()
+        typed.age.sum() shouldBe typed.age.toList().sum()
     }
 
     @Test
@@ -1160,12 +1160,12 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `range slice`() {
-        typed[3..5].name.values.toList() shouldBe typed.name.values.toList().subList(3, 6)
+        typed[3..5].name.toList() shouldBe typed.name.toList().subList(3, 6)
     }
 
     @Test
     fun `range slice two times`() {
-        typed[3..5][1..2].name.values.toList() shouldBe typed.name.values.toList().subList(4, 6)
+        typed[3..5][1..2].name.toList() shouldBe typed.name.toList().subList(4, 6)
     }
 
     @Test
@@ -1201,7 +1201,7 @@ class DataFrameTests : BaseTest() {
 
         val a = 20
         val b = 40
-        val expected = typed.age.values.map {
+        val expected = typed.age.toList().map {
             when {
                 it < a -> 0
                 it < b -> 1
@@ -1210,7 +1210,7 @@ class DataFrameTests : BaseTest() {
         }
         typed.age.digitize(a, b).toList() shouldBe expected
 
-        val expectedRight = typed.age.values.map {
+        val expectedRight = typed.age.toList().map {
             when {
                 it <= a -> 0
                 it <= b -> 1
@@ -1245,7 +1245,7 @@ class DataFrameTests : BaseTest() {
         mean.ncol() shouldBe 2
         mean.columnNames() shouldBe listOf("age", "weight")
         mean.columns().forEach {
-            it.type shouldBe getType<Double>()
+            it.type() shouldBe getType<Double>()
         }
     }
 
@@ -1263,7 +1263,7 @@ class DataFrameTests : BaseTest() {
             it!!.ncol() shouldBe 2
             it.columnNames() shouldBe listOf("age", "weight")
             it.columns().forEach {
-                it.type.classifier shouldBe Int::class
+                it.valueClass shouldBe Int::class
             }
         }
     }
@@ -1304,7 +1304,7 @@ class DataFrameTests : BaseTest() {
 
         val res = typed.cast { age }.to<Double>()
         res.age.valueClass shouldBe Double::class
-        res["age"].values.all { it is Double } shouldBe true
+        res["age"].all { it is Double } shouldBe true
     }
 
     @Test
@@ -1312,7 +1312,7 @@ class DataFrameTests : BaseTest() {
 
         val res = typed.cast { weight }.to<BigDecimal>()
         res.weight.valueClass shouldBe BigDecimal::class
-        res["weight"].values.all { it == null || it is BigDecimal } shouldBe true
+        res["weight"].all { it == null || it is BigDecimal } shouldBe true
     }
 
     @Test
@@ -1320,7 +1320,7 @@ class DataFrameTests : BaseTest() {
 
         val res = typed.cast { all() }.to<String>()
         res.columns().forEach { it.valueClass shouldBe String::class }
-        res.columns().map { it.hasNulls } shouldBe typed.columns().map { it.hasNulls }
+        res.columns().map { it.hasNulls() } shouldBe typed.columns().map { it.hasNulls() }
     }
 
     @Test
@@ -1329,7 +1329,7 @@ class DataFrameTests : BaseTest() {
         val time by columnOf("2020-01-06", "2020-01-07")
         val df = dataFrameOf(time)
         val casted = df.cast(time).toDate()
-        casted[time].type shouldBe getType<LocalDate>()
+        casted[time].type() shouldBe getType<LocalDate>()
     }
 
     @Test

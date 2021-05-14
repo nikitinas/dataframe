@@ -2,6 +2,7 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.values
 import kotlin.reflect.KProperty
 
 fun <T, D : Comparable<D>> DataFrame<T>.maxBy(col: KProperty<D?>) = rows().maxByOrNull { it[col] as D }!!

@@ -4,12 +4,16 @@ import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.dataFrameOf
 import kotlin.reflect.KType
 
-internal abstract class DataColumnImpl<T>(override val values: List<T>, val name: String, override val type: KType, set: Set<T>? = null) : DataColumn<T>, DataColumnInternal<T> {
+internal abstract class DataColumnImpl<T>(protected val values: List<T>, val name: String, val type: KType, set: Set<T>? = null) : DataColumn<T>, DataColumnInternal<T> {
 
-    var valuesSet: Set<T>? = set
+    protected var valuesSet: Set<T>? = set
         private set
 
     override fun name() = name
+
+    override fun values() = values
+
+    override fun type() = type
 
     override fun toSet() = valuesSet ?: values.toSet().also { valuesSet = it }
 
@@ -17,14 +21,13 @@ internal abstract class DataColumnImpl<T>(override val values: List<T>, val name
 
     override fun toString() = dataFrameOf(this).toString() // "${name()}: $type"
 
-    override val ndistinct by lazy { toSet().size }
+    override fun ndistinct() = toSet().size
 
     override fun get(index: Int) = values[index]
 
     override fun get(columnName: String) = throw UnsupportedOperationException()
 
-    override val size: Int
-        get() = values.size
+    override fun size() = values.size
 
     override fun equals(other: Any?) = checkEquals(other)
 
@@ -41,9 +44,9 @@ internal abstract class DataColumnImpl<T>(override val values: List<T>, val name
     }
 
     override fun slice(mask: BooleanArray): DataColumn<T> {
-        val res = ArrayList<T?>(size)
+        val res = ArrayList<T?>(values.size)
         var hasNulls = false
-        for(index in 0 until size) {
+        for(index in 0 until values.size) {
             if(mask[index]) {
                 val value = this[index]
                 if(!hasNulls && value == null) hasNulls = true

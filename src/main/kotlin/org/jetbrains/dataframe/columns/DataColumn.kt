@@ -11,8 +11,6 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.full.isSubtypeOf
-import kotlin.reflect.full.withNullability
 
 interface DataColumn<out T> : ColumnReference<T>, ColumnProvider<T> {
 
@@ -46,16 +44,10 @@ interface DataColumn<out T> : ColumnReference<T>, ColumnProvider<T> {
         fun empty() = create("", emptyList<Unit>(), getType<Unit>()) as AnyCol
     }
 
-    val values: Iterable<T>
-    val ndistinct: Int
-    val type: KType
-    val hasNulls: Boolean get() = type.isMarkedNullable
-    val size: Int
-
-    fun type() = type
-    fun size() = size
-    fun hasNulls() = hasNulls
-    fun ndistinct() = ndistinct
+    fun type(): KType
+    fun size(): Int
+    fun hasNulls(): Boolean = type().isMarkedNullable
+    fun ndistinct(): Int
 
     fun kind(): ColumnKind
 
@@ -63,9 +55,9 @@ interface DataColumn<out T> : ColumnReference<T>, ColumnProvider<T> {
 
     operator fun get(row: AnyRow) = get(row.getIndex())
 
-    fun values() = values
+    fun values(): Iterable<T>
 
-    fun toList() = values.asList()
+    fun toList() = values().asList()
 
     fun defaultValue(): T?
 
@@ -84,5 +76,11 @@ interface DataColumn<out T> : ColumnReference<T>, ColumnProvider<T> {
     override operator fun getValue(thisRef: Any?, property: KProperty<*>) = rename(property.name)
 }
 
-val AnyCol.valueClass get() = type.classifier as KClass<*>
+internal val <T> DataColumn<T>.values get() = values()
+internal val AnyCol.ndistinct get() = ndistinct()
+internal val AnyCol.type get() = type()
+internal val AnyCol.size get() = size()
+internal val AnyCol.hasNulls get() = hasNulls()
+internal val AnyCol.valueClass get() = type.classifier as KClass<*>
+
 

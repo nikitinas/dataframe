@@ -12,14 +12,14 @@ internal abstract class MissingDataColumn<T> : DataColumnInternal<T> {
 
     val name: String
         get() = throw UnsupportedOperationException()
-    override val values: Iterable<T>
-        get() = throw UnsupportedOperationException()
-    override val ndistinct: Int
-        get() = throw UnsupportedOperationException()
-    override val type: KType
-        get() = throw UnsupportedOperationException()
-    override val size: Int
-        get() = throw UnsupportedOperationException()
+
+    override fun values() = throw UnsupportedOperationException()
+
+    override fun type() = throw UnsupportedOperationException()
+
+    override fun ndistinct() = throw UnsupportedOperationException()
+
+    override fun size() = throw UnsupportedOperationException()
 
     override fun name() = name
 

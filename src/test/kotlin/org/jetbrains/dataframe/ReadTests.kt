@@ -17,9 +17,9 @@ class ReadTests {
         val df = DataFrame.readJsonStr(json)
         df.ncol() shouldBe 3
         df.nrow() shouldBe 2
-        df["a"].type shouldBe getType<Int>()
-        df["b"].type shouldBe getType<Comparable<*>>()
-        df["c"].type shouldBe getType<Double?>()
+        df["a"].type() shouldBe getType<Int>()
+        df["b"].type() shouldBe getType<Comparable<*>>()
+        df["c"].type() shouldBe getType<Double?>()
     }
 
     @Test
@@ -35,9 +35,9 @@ class ReadTests {
         df.nrow() shouldBe 3
         val group = df["a"] as ColumnGroup<*>
         group.ncol() shouldBe 3
-        group["b"].type shouldBe getType<Int?>()
-        group["value"].type shouldBe getType<String?>()
-        group["array"].type shouldBe getType<List<Int>>()
+        group["b"].type() shouldBe getType<Int?>()
+        group["value"].type() shouldBe getType<String?>()
+        group["array"].type() shouldBe getType<List<Int>>()
     }
 
     @Test
@@ -50,7 +50,7 @@ class ReadTests {
         val df = DataFrame.readJsonStr(json)
         df.ncol() shouldBe 1
         df.nrow() shouldBe 3
-        df["a"].type shouldBe getType<List<Number>>()
+        df["a"].type() shouldBe getType<List<Number>>()
         df[1]["a"] shouldBe emptyList<Int>()
     }
 

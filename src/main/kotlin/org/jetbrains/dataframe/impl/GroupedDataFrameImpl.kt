@@ -1,6 +1,7 @@
 package org.jetbrains.dataframe.impl
 
 import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.columns.FrameColumn
 
 internal class GroupedDataFrameImpl<T, G>(val df: DataFrame<T>, override val groups: FrameColumn<G>): GroupedDataFrame<T, G> {

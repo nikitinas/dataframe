@@ -50,7 +50,7 @@ class SeriesTests {
 
         val srcData = typed.map { (city to day) to temp }.toMap()
         val expected = typed.sortBy {city and day}.map { row -> srcData[city to (day-1)]?.let { row.temp - it} ?: 0 }
-        withDiff["diff"].values shouldBe expected
+        withDiff["diff"].toList() shouldBe expected
     }
 
     @Test
@@ -67,6 +67,6 @@ class SeriesTests {
                 .sortBy { city and day }
                 .map { (0 until k).map { srcData[city to day - it] }.filterNotNull().let { it.sum().toDouble() / it.size } }
 
-        withMa["ma_temp"].values shouldBe expected
+        withMa["ma_temp"].toList() shouldBe expected
     }
 }

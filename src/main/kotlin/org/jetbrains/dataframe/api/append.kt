@@ -1,6 +1,7 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.impl.EmptyDataFrame
+import org.jetbrains.dataframe.columns.values
 
 fun <T> DataFrame<T>.appendNulls(numberOfRows: Int = 1): DataFrame<T> {
     require(numberOfRows >= 0)

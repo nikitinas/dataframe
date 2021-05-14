@@ -17,8 +17,8 @@ class BuildTests {
         val df = persons.toDataFrame()
         df.ncol() shouldBe 2
         df.nrow() shouldBe 2
-        df["name"].type shouldBe getType<String>()
-        df["age"].type shouldBe getType<Int>()
+        df["name"].type() shouldBe getType<String>()
+        df["age"].type() shouldBe getType<Int>()
     }
 
     @Test
@@ -29,8 +29,8 @@ class BuildTests {
         }
         df.ncol() shouldBe 2
         df.nrow() shouldBe 2
-        df["name"].type shouldBe getType<String>()
-        df["year of birth"].type shouldBe getType<Int>()
+        df["name"].type() shouldBe getType<String>()
+        df["year of birth"].type() shouldBe getType<Int>()
     }
 
     @Test

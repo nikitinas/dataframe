@@ -5,6 +5,8 @@ import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.size
+import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.TreeNode
 import org.jetbrains.dataframe.impl.columns.DataColumnWithParent
 import org.jetbrains.dataframe.impl.columns.ColumnWithParent

@@ -2,8 +2,10 @@ package org.jetbrains.dataframe
 
 import com.beust.klaxon.internal.firstNotNullResult
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.impl.asList
+import org.jetbrains.dataframe.columns.hasNulls
 import org.jetbrains.dataframe.io.valueColumnName
+import org.jetbrains.dataframe.columns.type
+import org.jetbrains.dataframe.columns.values
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
 

@@ -2,6 +2,10 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.size
+import org.jetbrains.dataframe.columns.type
+import org.jetbrains.dataframe.columns.values
+import org.jetbrains.dataframe.columns.ndistinct
 import kotlin.reflect.KType
 
 fun <T> DataFrame<T>.describe(columns: ColumnsSelector<T, *> = { numberCols() }) = describe(this[columns])

@@ -2,6 +2,7 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.createDataCollector
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -65,7 +66,7 @@ internal fun <T, G> doAggregate(df: DataFrame<T>, selector: ColumnSelector<T, Da
     if(!removeColumns) removedNode.data.wasRemoved = false
 
     val columnsToInsert = groupedFrame.columns().map {
-        ColumnToInsert(insertPath + it.name(), it, removedNode)
+        ColumnToInsert(insertPath + it.name, it, removedNode)
     }
     val src = if(removeColumns) df2 else df
     return src.insert(columnsToInsert)

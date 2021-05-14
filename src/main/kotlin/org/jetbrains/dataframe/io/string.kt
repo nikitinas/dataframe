@@ -2,6 +2,7 @@ package org.jetbrains.dataframe.io
 
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.impl.*
+import org.jetbrains.dataframe.columns.values
 
 fun <T, G> GroupedDataFrame<T, G>.print() = println(this)
 

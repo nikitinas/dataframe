@@ -4,6 +4,9 @@ import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.ValueColumn
+import org.jetbrains.dataframe.columns.size
+import org.jetbrains.dataframe.columns.type
+import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.impl.columns.isTable

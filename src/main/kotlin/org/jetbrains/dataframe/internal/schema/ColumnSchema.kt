@@ -5,6 +5,8 @@ import org.jetbrains.dataframe.ColumnKind
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.ValueColumn
+import org.jetbrains.dataframe.columns.hasNulls
+import org.jetbrains.dataframe.columns.type
 import org.jetbrains.dataframe.impl.columns.internal
 import kotlin.reflect.KType
 import kotlin.reflect.full.isSubtypeOf

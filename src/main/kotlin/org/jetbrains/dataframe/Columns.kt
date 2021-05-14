@@ -6,7 +6,7 @@ import org.jetbrains.dataframe.columns.AnyColumn
 import org.jetbrains.dataframe.columns.ColumnAccessor
 import org.jetbrains.dataframe.impl.columns.ColumnAccessorImpl
 import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.ColumnSet
+import org.jetbrains.dataframe.columns.Columns
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.Column
@@ -39,15 +39,15 @@ class ColumnResolutionContext(val df: DataFrameBase<*>, val unresolvedColumnsPol
     val allowMissingColumns = unresolvedColumnsPolicy == UnresolvedColumnsPolicy.Skip
 }
 
-fun <TD, T : DataFrameBase<TD>, C> Selector<T, ColumnSet<C>>.toColumns(createReceiver: (ColumnResolutionContext) -> T): ColumnSet<C> =
+fun <TD, T : DataFrameBase<TD>, C> Selector<T, Columns<C>>.toColumns(createReceiver: (ColumnResolutionContext) -> T): Columns<C> =
     createColumnSet {
         val receiver = createReceiver(it)
         val columnSet = this(receiver, receiver)
         columnSet.resolve(ColumnResolutionContext(receiver, it.unresolvedColumnsPolicy))
     }
 
-fun <C> createColumnSet(resolver: (ColumnResolutionContext) -> List<ColumnWithPath<C>>): ColumnSet<C> =
-    object : ColumnSet<C> {
+fun <C> createColumnSet(resolver: (ColumnResolutionContext) -> List<ColumnWithPath<C>>): Columns<C> =
+    object : Columns<C> {
         override fun resolve(context: ColumnResolutionContext) = resolver(context)
     }
 

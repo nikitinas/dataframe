@@ -3,7 +3,7 @@ package org.jetbrains.dataframe
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.ColumnSet
+import org.jetbrains.dataframe.columns.Columns
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.impl.DataFrameReceiver
 import org.jetbrains.dataframe.impl.columns.addPath
@@ -15,16 +15,16 @@ import kotlin.reflect.KProperty
 
 interface SortReceiver<out T> : SelectReceiver<T> {
 
-    val <C> ColumnSet<C>.desc: ColumnSet<C> get() = addFlag(SortFlag.Reversed)
-    val String.desc: ColumnSet<Comparable<*>?> get() = cast<Comparable<*>>().desc
-    val <C> KProperty<C>.desc: ColumnSet<C> get() = toColumnDef().desc
+    val <C> Columns<C>.desc: Columns<C> get() = addFlag(SortFlag.Reversed)
+    val String.desc: Columns<Comparable<*>?> get() = cast<Comparable<*>>().desc
+    val <C> KProperty<C>.desc: Columns<C> get() = toColumnDef().desc
 
-    val <C> ColumnSet<C?>.nullsLast: ColumnSet<C?> get() = addFlag(SortFlag.NullsLast)
-    val String.nullsLast: ColumnSet<Comparable<*>?> get() = cast<Comparable<*>>().nullsLast
-    val <C> KProperty<C?>.nullsLast: ColumnSet<C?> get() = toColumnDef().nullsLast
+    val <C> Columns<C?>.nullsLast: Columns<C?> get() = addFlag(SortFlag.NullsLast)
+    val String.nullsLast: Columns<Comparable<*>?> get() = cast<Comparable<*>>().nullsLast
+    val <C> KProperty<C?>.nullsLast: Columns<C?> get() = toColumnDef().nullsLast
 }
 
-typealias SortColumnsSelector<T, C> = Selector<SortReceiver<T>, ColumnSet<C>>
+typealias SortColumnsSelector<T, C> = Selector<SortReceiver<T>, Columns<C>>
 
 fun <T,C> DataFrame<T>.sortBy(selector: SortColumnsSelector<T, C>) = doSortBy(selector, UnresolvedColumnsPolicy.Fail)
 fun <T> DataFrame<T>.sortBy(cols: Iterable<ColumnReference<Comparable<*>?>>) = sortBy { cols.toColumnSet() }
@@ -105,7 +105,7 @@ internal fun <T, G> GroupedDataFrame<T, G>.doSortBy(selector: SortColumnsSelecto
 
 internal enum class SortFlag { Reversed, NullsLast }
 
-internal fun <C> ColumnSet<C>.addFlag(flag: SortFlag) = ColumnsWithSortFlag(this, flag)
+internal fun <C> Columns<C>.addFlag(flag: SortFlag) = ColumnsWithSortFlag(this, flag)
 
 internal fun <C> ColumnWithPath<C>.addFlag(flag: SortFlag): ColumnWithPath<C> {
     val col = data
@@ -125,6 +125,6 @@ internal fun <C> ColumnWithPath<C>.addFlag(flag: SortFlag): ColumnWithPath<C> {
     }.addPath(path, df)
 }
 
-internal class ColumnsWithSortFlag<C>(val column: ColumnSet<C>, val flag: SortFlag) : ColumnSet<C> {
+internal class ColumnsWithSortFlag<C>(val column: Columns<C>, val flag: SortFlag) : Columns<C> {
     override fun resolve(context: ColumnResolutionContext) = column.resolve(context).map { it.addFlag(flag) }
 }

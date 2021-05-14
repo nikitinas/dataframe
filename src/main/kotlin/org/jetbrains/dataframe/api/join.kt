@@ -1,7 +1,7 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.ColumnSet
+import org.jetbrains.dataframe.columns.Columns
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.impl.DataFrameReceiver
@@ -17,7 +17,7 @@ interface JoinReceiver<out A, out B> : SelectReceiver<A> {
     infix fun <C> ColumnReference<C>.match(other: ColumnReference<C>) = ColumnMatch(this, other)
 }
 
-class ColumnMatch<C>(val left: ColumnReference<C>, val right: ColumnReference<C>) : ColumnSet<C> {
+class ColumnMatch<C>(val left: ColumnReference<C>, val right: ColumnReference<C>) : Columns<C> {
 
     override fun resolve(context: ColumnResolutionContext): List<ColumnWithPath<C>> {
         throw UnsupportedOperationException()
@@ -30,9 +30,9 @@ internal class JoinReceiverImpl<A, B>(left: DataFrame<A>, val other: DataFrame<B
     override val right: DataFrame<B> = prepareForReceiver(other)
 }
 
-typealias JoinColumnSelector<A, B> = JoinReceiver<A, B>.(JoinReceiver<A, B>) -> ColumnSet<*>
+typealias JoinColumnSelector<A, B> = JoinReceiver<A, B>.(JoinReceiver<A, B>) -> Columns<*>
 
-internal fun <C> ColumnSet<C>.extractJoinColumns(other: AnyFrame): List<ColumnMatch<C>> = when (this) {
+internal fun <C> Columns<C>.extractJoinColumns(other: AnyFrame): List<ColumnMatch<C>> = when (this) {
     is ColumnsList -> columns.flatMap { it.extractJoinColumns(other) }
     is ColumnReference<C> -> listOf(ColumnMatch(this, path().toColumnDef() as ColumnReference<C>))
     is ColumnMatch -> listOf(this)

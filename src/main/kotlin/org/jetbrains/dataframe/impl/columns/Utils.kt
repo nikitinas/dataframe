@@ -14,7 +14,7 @@ import org.jetbrains.dataframe.SortColumnsSelector
 import org.jetbrains.dataframe.SortReceiverImpl
 import org.jetbrains.dataframe.UnresolvedColumnsPolicy
 import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.ColumnSet
+import org.jetbrains.dataframe.columns.Columns
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.Column
@@ -96,26 +96,26 @@ internal fun <T> DataColumn<T>.assertIsComparable(): DataColumn<T> {
     return this
 }
 
-internal fun <A, B> ColumnSet<A>.transform(transform: (List<ColumnWithPath<A>>) -> List<ColumnWithPath<B>>): ColumnSet<B> {
+internal fun <A, B> Columns<A>.transform(transform: (List<ColumnWithPath<A>>) -> List<ColumnWithPath<B>>): Columns<B> {
 
-    class TransformedColumnSet<A, B>(
-        val src: ColumnSet<A>,
+    class TransformedColumns<A, B>(
+        val src: Columns<A>,
         val transform: (List<ColumnWithPath<A>>) -> List<ColumnWithPath<B>>
     ) :
-        ColumnSet<B> {
+        Columns<B> {
 
         override fun resolve(context: ColumnResolutionContext) = transform(src.resolve(context))
     }
 
-    return TransformedColumnSet(this, transform)
+    return TransformedColumns(this, transform)
 }
 
-internal fun Array<out String>.toColumns(): ColumnSet<Any?> = map { it.toColumnDef() }.toColumnSet()
-internal fun Array<out ColumnPath>.toColumns(): ColumnSet<Any?> = map { it.toColumnDef() }.toColumnSet()
-internal fun <C> Iterable<ColumnSet<C>>.toColumnSet(): ColumnSet<C> = ColumnsList(asList())
+internal fun Array<out String>.toColumns(): Columns<Any?> = map { it.toColumnDef() }.toColumnSet()
+internal fun Array<out ColumnPath>.toColumns(): Columns<Any?> = map { it.toColumnDef() }.toColumnSet()
+internal fun <C> Iterable<Columns<C>>.toColumnSet(): Columns<C> = ColumnsList(asList())
 internal fun <C> Array<out KProperty<C>>.toColumns() = map { it.toColumnDef() }.toColumnSet()
 internal fun <T> Array<out ColumnReference<T>>.toColumns() = map { it.toAccessor() }.toColumnSet()
-internal fun <T, C> ColumnsSelector<T, C>.toColumns(): ColumnSet<C> = toColumns {
+internal fun <T, C> ColumnsSelector<T, C>.toColumns(): Columns<C> = toColumns {
     SelectReceiverImpl(
         it.df.typed(),
         it.allowMissingColumns
@@ -123,7 +123,7 @@ internal fun <T, C> ColumnsSelector<T, C>.toColumns(): ColumnSet<C> = toColumns 
 }
 
 @JvmName("toColumnSetForSort")
-internal fun <T, C> SortColumnsSelector<T, C>.toColumns(): ColumnSet<C> = toColumns {
+internal fun <T, C> SortColumnsSelector<T, C>.toColumns(): Columns<C> = toColumns {
     SortReceiverImpl(
         it.df.typed(),
         it.allowMissingColumns

@@ -7,7 +7,7 @@ import org.jetbrains.dataframe.impl.DataRowImpl
 import org.jetbrains.dataframe.impl.EmptyDataFrame
 import org.jetbrains.dataframe.impl.getOrPut
 import org.jetbrains.dataframe.impl.topDfs
-import org.jetbrains.dataframe.columns.ColumnSet
+import org.jetbrains.dataframe.columns.Columns
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.FrameColumn
@@ -33,7 +33,7 @@ typealias ColumnPath = List<String>
 
 typealias DataFrameSelector<T, R> = DataFrame<T>.(DataFrame<T>) -> R
 
-typealias ColumnsSelector<T, C> = SelectReceiver<T>.(SelectReceiver<T>) -> ColumnSet<C>
+typealias ColumnsSelector<T, C> = SelectReceiver<T>.(SelectReceiver<T>) -> Columns<C>
 
 typealias ColumnSelector<T, C> = SelectReceiver<T>.(SelectReceiver<T>) -> ColumnReference<C>
 

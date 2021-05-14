@@ -1,7 +1,7 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.ColumnSet
+import org.jetbrains.dataframe.columns.Columns
 import org.jetbrains.dataframe.impl.columns.toColumnSet
 import org.jetbrains.dataframe.impl.columns.toColumns
 import java.math.BigDecimal
@@ -16,7 +16,7 @@ fun <T> DataFrame<T>.nullToZero(selector: ColumnsSelector<T, Number?>): DataFram
     }
 }
 
-fun <T> DataFrame<T>.nullToZero(vararg cols: String) = nullToZero { cols.toColumns() as ColumnSet<Number?> }
+fun <T> DataFrame<T>.nullToZero(vararg cols: String) = nullToZero { cols.toColumns() as Columns<Number?> }
 fun <T> DataFrame<T>.nullToZero(vararg cols: ColumnReference<Number?>) = nullToZero { cols.toColumns() }
 fun <T> DataFrame<T>.nullToZero(cols: Iterable<ColumnReference<Number?>>) = nullToZero { cols.toColumnSet() }
 

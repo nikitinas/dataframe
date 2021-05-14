@@ -8,7 +8,9 @@ import org.jetbrains.dataframe.columns.Column
 import org.jetbrains.dataframe.columns.ColumnGroup
 import kotlin.reflect.KProperty
 
-internal class ColumnGroupWithParent<T>(override val parent: MapColumnReference?, val source: ColumnGroup<T>) : DataColumnWithParent<DataRow<T>>, DataColumnGroup<T> by (source as DataColumnGroup<T>) {
+internal class ColumnGroupWithParent<T>(override val parent: MapColumnReference?, override val source: ColumnGroup<T>) : ColumnWithParent<DataRow<T>>, DataColumnGroup<T> by (source as DataColumnGroup<T>) {
+
+    override fun path() = super<ColumnWithParent>.path()
 
     override fun getValue(thisRef: Any?, property: KProperty<*>): DataColumnGroup<T> = source.getValue(thisRef, property) as DataColumnGroup<T>
 
@@ -27,11 +29,7 @@ internal class ColumnGroupWithParent<T>(override val parent: MapColumnReference?
 
     override fun hashCode() = getHashCode()
 
-    override fun resolveSingle(context: ColumnResolutionContext): ColumnWithPath<DataRow<T>>? {
-        return super<DataColumnWithParent>.resolveSingle(context)
-    }
+    override fun resolveSingle(context: ColumnResolutionContext) = super<ColumnWithParent>.resolveSingle(context)
 
-    override fun resolve(context: ColumnResolutionContext): List<ColumnWithPath<DataRow<T>>> {
-        return super<DataColumnWithParent>.resolve(context)
-    }
+    override fun resolve(context: ColumnResolutionContext) =  super<ColumnWithParent>.resolve(context)
 }

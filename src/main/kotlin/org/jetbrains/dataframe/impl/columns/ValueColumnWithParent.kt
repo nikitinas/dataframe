@@ -1,10 +1,11 @@
 package org.jetbrains.dataframe.impl.columns
 
-import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.ColumnResolutionContext
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.ColumnGroup
+import org.jetbrains.dataframe.columns.ValueColumn
 
-internal class FrameColumnWithParent<T>(override val parent: ColumnGroup<*>, override val source: FrameColumnInternal<T>) : ColumnWithParent<DataFrame<T>?>, FrameColumnInternal<T> by source {
+internal class ValueColumnWithParent<T>(override val parent: ColumnGroup<*>, override val source: ValueColumn<T>) : ColumnWithParent<T>, ValueColumn<T> by source {
 
     override fun equals(other: Any?) = checkEquals(other)
 

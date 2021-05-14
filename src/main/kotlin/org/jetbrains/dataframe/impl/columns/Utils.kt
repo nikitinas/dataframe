@@ -20,6 +20,7 @@ import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.Column
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
+import org.jetbrains.dataframe.columns.SingleColumn
 import org.jetbrains.dataframe.columns.ValueColumn
 import org.jetbrains.dataframe.columns.toAccessor
 import org.jetbrains.dataframe.columns.type
@@ -113,6 +114,10 @@ internal fun <A, B> Columns<A>.transform(transform: (List<ColumnWithPath<A>>) ->
 internal fun Array<out String>.toColumns(): Columns<Any?> = map { it.toColumnDef() }.toColumnSet()
 internal fun Array<out ColumnPath>.toColumns(): Columns<Any?> = map { it.toColumnDef() }.toColumnSet()
 internal fun <C> Iterable<Columns<C>>.toColumnSet(): Columns<C> = ColumnsList(asList())
+
+@JvmName("toColumnSetC")
+internal fun <C> Iterable<ColumnReference<C>>.toColumnSet(): Columns<C> = ColumnsList(map { it.toAccessor() })
+
 internal fun <C> Array<out KProperty<C>>.toColumns() = map { it.toColumnDef() }.toColumnSet()
 internal fun <T> Array<out ColumnReference<T>>.toColumns() = map { it.toAccessor() }.toColumnSet()
 internal fun <T, C> ColumnsSelector<T, C>.toColumns(): Columns<C> = toColumns {

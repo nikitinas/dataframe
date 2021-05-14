@@ -15,7 +15,7 @@ internal open class ValueImplColumn<T>(values: List<T>, name: String, type: KTyp
 
     override fun changeType(type: KType) = ValueImplColumn(values, name, type, defaultValue, distinct)
 
-    override fun addParent(parent: ColumnGroup<*>): DataColumn<T> = ValueWithParentImplColumn(parent, this)
+    override fun addParent(parent: ColumnGroup<*>): DataColumn<T> = ValueColumnWithParent(parent, this)
 
     override fun createWithValues(values: List<T>, hasNulls: Boolean?): DataColumn<T> {
         val nulls = hasNulls ?: values.any { it == null}

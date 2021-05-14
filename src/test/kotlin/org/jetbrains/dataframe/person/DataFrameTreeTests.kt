@@ -24,6 +24,7 @@ import org.jetbrains.dataframe.columnList
 import org.jetbrains.dataframe.columnOf
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
+import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.toAccessor
 import org.jetbrains.dataframe.count
 import org.jetbrains.dataframe.dataFrameOf
@@ -630,5 +631,10 @@ class DataFrameTreeTests : BaseTest() {
     fun `distinct at column group`() {
         typed2.nameAndCity.distinct().filter { name.startsWith("A") } shouldBe typed.select { name and city }.distinct()
             .filter { name.startsWith("A") }
+    }
+
+    @Test
+    fun `check column path`(){
+        typed2.getColumnPath { nameAndCity.name }.size shouldBe 2
     }
 }

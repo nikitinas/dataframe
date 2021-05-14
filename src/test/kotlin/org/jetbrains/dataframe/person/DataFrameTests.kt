@@ -1477,4 +1477,17 @@ class DataFrameTests : BaseTest() {
     fun `select several column values`() {
         typed.name[2,5,6] shouldBe typed.name.slice(listOf(2, 5, 6))
     }
+
+    @Test
+    fun `get by column accessors`(){
+        val animal by columnOf("cat", "snake", "dog")
+        val age by columnOf(2.5, 3.0, 0.5)
+        val visits by columnOf(1, 3, 2)
+
+        val df = dataFrameOf(animal, age, visits)
+
+        val filtered = df[1..1][animal, age]
+        filtered.ncol() shouldBe 2
+        filtered.nrow() shouldBe 1
+    }
 }

@@ -9,7 +9,6 @@ import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.size
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.TreeNode
-import org.jetbrains.dataframe.impl.columns.DataColumnWithParent
 import org.jetbrains.dataframe.impl.columns.ColumnWithParent
 import org.jetbrains.dataframe.impl.columns.addPath
 import org.jetbrains.dataframe.impl.columns.asGroup
@@ -185,7 +184,6 @@ internal data class ColumnPosition(
 
 fun Column.getParent(): MapColumnReference? = when (this) {
     is ColumnWithParent<*> -> parent
-    is DataColumnWithParent<*> -> parent
     else -> null
 }
 

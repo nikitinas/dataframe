@@ -1,12 +1,18 @@
 package org.jetbrains.dataframe.impl.columns
 
-import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.ColumnResolutionContext
+import org.jetbrains.dataframe.MapColumnReference
+import org.jetbrains.dataframe.columns.Column
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.ColumnWithPath
 
-internal interface ColumnWithParent<C> : ColumnReference<C> {
+internal interface ColumnWithParent<out C> : ColumnReference<C> {
 
     val parent: MapColumnReference?
+
+    val source: Column<C>
+
+    override fun path() = parent?.path()?.plus(name()) ?: listOf(name())
 
     override fun resolveSingle(context: ColumnResolutionContext): ColumnWithPath<C>? {
 

@@ -9,9 +9,9 @@ typealias GroupKey = List<Any?>
 
 interface GroupedDataFrame<out T, out G> {
 
-    val groups : FrameColumn<G>
+    val groups: FrameColumn<G>
 
-    val keys : DataFrame<T>
+    val keys: DataFrame<T>
 
     fun plain(): DataFrame<T>
 
@@ -25,11 +25,12 @@ interface GroupedDataFrame<out T, out G> {
     data class Entry<T, G>(val key: DataRow<T>, val group: DataFrame<G>?)
 }
 
-internal fun <T,G> DataFrame<T>.toGrouped(groupedColumnName: String): GroupedDataFrame<T,G> = GroupedDataFrameImpl(this, this[groupedColumnName] as FrameColumn<G>)
+internal fun <T, G> DataFrame<T>.toGrouped(groupedColumnName: String): GroupedDataFrame<T, G> =
+    GroupedDataFrameImpl(this, this[groupedColumnName] as FrameColumn<G>)
 
-internal fun <T> DataFrame<T>.toGrouped(): GroupedDataFrame<T,T> {
+internal fun <T> DataFrame<T>.toGrouped(): GroupedDataFrame<T, T> {
 
-    val groupCol = columns().single {it.isTable()}.asTable() as FrameColumn<T>
+    val groupCol = columns().single { it.isTable() }.asTable() as FrameColumn<T>
     return toGrouped { groupCol }
 }
 

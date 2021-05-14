@@ -1510,4 +1510,18 @@ class DataFrameTests : BaseTest() {
 
         typed.age.between(20,40).count { it } shouldBe 5
     }
+
+    @Test
+    fun iterators() {
+
+        var counter = 0
+        for(a in df) counter++
+        counter shouldBe df.nrow()
+
+        var ageSum = 0
+        for(a in typed.age)
+            ageSum += a
+
+        ageSum shouldBe typed.age.sum()
+    }
 }

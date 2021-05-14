@@ -73,6 +73,8 @@ interface DataColumn<out T> : Column<T> {
     override fun resolveSingle(context: ColumnResolutionContext): ColumnWithPath<T>? = this.addPath(context.df)
 
     override operator fun getValue(thisRef: Any?, property: KProperty<*>): DataColumn<T> = super.getValue(thisRef, property) as DataColumn<T>
+
+    operator fun iterator() = values().iterator()
 }
 
 typealias DoubleCol = DataColumn<Double?>

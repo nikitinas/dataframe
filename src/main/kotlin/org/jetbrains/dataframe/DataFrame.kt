@@ -202,6 +202,8 @@ interface DataFrame<out T> : DataFrameBase<T> {
     fun <R> mapIndexed(action: (Int, DataRow<T>) -> R) = rows().mapIndexed(action)
 
     fun <R> mapIndexedNotNull(action: (Int, DataRow<T>) -> R?) = rows().mapIndexedNotNull(action)
+
+    operator fun iterator() = rows().iterator()
 }
 
 fun <T> DataFrame<T>.distinct() = distinctBy { it.values }

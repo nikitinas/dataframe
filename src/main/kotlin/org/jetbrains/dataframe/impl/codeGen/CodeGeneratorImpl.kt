@@ -6,12 +6,12 @@ import org.jetbrains.dataframe.DataFrameBase
 import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.DataRowBase
 import org.jetbrains.dataframe.annotations.DataSchema
-import org.jetbrains.dataframe.internal.codeGen.SchemaProcessor
+import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.internal.codeGen.CodeWithConverter
 import org.jetbrains.dataframe.internal.codeGen.GeneratedField
 import org.jetbrains.dataframe.internal.codeGen.Marker
-import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.internal.codeGen.SchemaProcessor
 import org.jetbrains.dataframe.internal.schema.ColumnSchema
 import org.jetbrains.dataframe.internal.schema.DataFrameSchema
 import org.jetbrains.dataframe.keywords.HardKeywords
@@ -47,7 +47,7 @@ internal class CodeGeneratorImpl : CodeGenerator {
     private fun GeneratedField.renderColumnType() : Code =
         when (columnKind) {
             ColumnKind.Value -> "${DataColumn::class.qualifiedName}<${(columnSchema as ColumnSchema.Value).type}>"
-            ColumnKind.Map -> "${ColumnGroup::class.qualifiedName}<${markerName}>"
+            ColumnKind.Map -> "${MapColumn::class.qualifiedName}<${markerName}>"
             ColumnKind.Frame -> "${DataColumn::class.qualifiedName}<${DataFrame::class.qualifiedName}<${markerName}>${renderNullability(columnSchema.nullable)}>"
         }
 

@@ -4,9 +4,9 @@ import org.jetbrains.dataframe.AnyCol
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.MapDataColumn
 
-internal class MissingMapColumn<T> : MissingDataColumn<DataRow<T>>(), MapColumn<T> {
+internal class MissingMapColumn<T> : MissingDataColumn<DataRow<T>>(), MapDataColumn<T> {
 
     override fun <R> get(column: ColumnReference<R>) = MissingValueColumn<R>()
 

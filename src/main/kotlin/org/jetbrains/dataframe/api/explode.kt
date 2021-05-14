@@ -32,7 +32,7 @@ fun <T> DataFrame<T>.explode(selector: ColumnsSelector<T, *>): DataFrame<T> {
 
     fun splitIntoRows(df: AnyFrame, data: Set<ColumnPath>): AnyFrame {
 
-        val newColumns: List<AnyCol> = df.columns().map { col ->
+        val newColumns: List<AnyColumn> = df.columns().map { col ->
 
             val isTargetColumn = data.contains(listOf(col.name))
             if (col is MapColumn<*>) { // go to nested columns recursively

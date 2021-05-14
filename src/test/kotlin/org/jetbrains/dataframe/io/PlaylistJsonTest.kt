@@ -1,15 +1,27 @@
 package org.jetbrains.dataframe.io
 
 import io.kotest.matchers.shouldBe
-import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.DataFrame
+import org.jetbrains.dataframe.DataFrameBase
+import org.jetbrains.dataframe.DataRow
+import org.jetbrains.dataframe.DataRowBase
+import org.jetbrains.dataframe.aggregate
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.MapColumn
-import org.jetbrains.dataframe.columns.ColumnGroup
+import org.jetbrains.dataframe.getType
 import org.jetbrains.dataframe.images.Image
-import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
-import org.jetbrains.dataframe.impl.codeGen.CodeGeneratorImpl
 import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
+import org.jetbrains.dataframe.into
+import org.jetbrains.dataframe.map
+import org.jetbrains.dataframe.minBy
+import org.jetbrains.dataframe.move
+import org.jetbrains.dataframe.remove
+import org.jetbrains.dataframe.select
+import org.jetbrains.dataframe.typed
+import org.jetbrains.dataframe.union
+import org.jetbrains.dataframe.update
+import org.jetbrains.dataframe.with
 import org.junit.Test
 
 class PlaylistJsonTest {
@@ -106,7 +118,7 @@ class PlaylistJsonTest {
     val DataRowBase<DataFrameType1>.id: String @JvmName("DataFrameType1_id") get() = this["id"] as String
     val DataFrameBase<DataFrameType1>.kind: DataColumn<String> @JvmName("DataFrameType1_kind") get() = this["kind"] as DataColumn<String>
     val DataRowBase<DataFrameType1>.kind: String @JvmName("DataFrameType1_kind") get() = this["kind"] as String
-    val DataFrameBase<DataFrameType1>.snippet: ColumnGroup<DataFrameType2> @JvmName("DataFrameType1_snippet") get() = this["snippet"] as ColumnGroup<DataFrameType2>
+    val DataFrameBase<DataFrameType1>.snippet: MapColumn<DataFrameType2> @JvmName("DataFrameType1_snippet") get() = this["snippet"] as MapColumn<DataFrameType2>
     val DataRowBase<DataFrameType1>.snippet: org.jetbrains.dataframe.DataRow<DataFrameType2> @JvmName("DataFrameType1_snippet") get() = this["snippet"] as org.jetbrains.dataframe.DataRow<DataFrameType2>
     val DataFrameBase<DataFrameType2>.channelId: DataColumn<String> @JvmName("DataFrameType2_channelId") get() = this["channelId"] as DataColumn<String>
     val DataRowBase<DataFrameType2>.channelId: String @JvmName("DataFrameType2_channelId") get() = this["channelId"] as String
@@ -120,21 +132,21 @@ class PlaylistJsonTest {
     val DataRowBase<DataFrameType2>.position: Int @JvmName("DataFrameType2_position") get() = this["position"] as Int
     val DataFrameBase<DataFrameType2>.publishedAt: DataColumn<String> @JvmName("DataFrameType2_publishedAt") get() = this["publishedAt"] as DataColumn<String>
     val DataRowBase<DataFrameType2>.publishedAt: String @JvmName("DataFrameType2_publishedAt") get() = this["publishedAt"] as String
-    val DataFrameBase<DataFrameType2>.resourceId: ColumnGroup<DataFrameType9> @JvmName("DataFrameType2_resourceId") get() = this["resourceId"] as ColumnGroup<DataFrameType9>
+    val DataFrameBase<DataFrameType2>.resourceId: MapColumn<DataFrameType9> @JvmName("DataFrameType2_resourceId") get() = this["resourceId"] as MapColumn<DataFrameType9>
     val DataRowBase<DataFrameType2>.resourceId: org.jetbrains.dataframe.DataRow<DataFrameType9> @JvmName("DataFrameType2_resourceId") get() = this["resourceId"] as org.jetbrains.dataframe.DataRow<DataFrameType9>
-    val DataFrameBase<DataFrameType2>.thumbnails: ColumnGroup<DataFrameType3> @JvmName("DataFrameType2_thumbnails") get() = this["thumbnails"] as ColumnGroup<DataFrameType3>
+    val DataFrameBase<DataFrameType2>.thumbnails: MapColumn<DataFrameType3> @JvmName("DataFrameType2_thumbnails") get() = this["thumbnails"] as MapColumn<DataFrameType3>
     val DataRowBase<DataFrameType2>.thumbnails: org.jetbrains.dataframe.DataRow<DataFrameType3> @JvmName("DataFrameType2_thumbnails") get() = this["thumbnails"] as org.jetbrains.dataframe.DataRow<DataFrameType3>
     val DataFrameBase<DataFrameType2>.title: DataColumn<String> @JvmName("DataFrameType2_title") get() = this["title"] as DataColumn<String>
     val DataRowBase<DataFrameType2>.title: String @JvmName("DataFrameType2_title") get() = this["title"] as String
-    val DataFrameBase<DataFrameType3>.default: ColumnGroup<DataFrameType4> @JvmName("DataFrameType3_default") get() = this["default"] as ColumnGroup<DataFrameType4>
+    val DataFrameBase<DataFrameType3>.default: MapColumn<DataFrameType4> @JvmName("DataFrameType3_default") get() = this["default"] as MapColumn<DataFrameType4>
     val DataRowBase<DataFrameType3>.default: org.jetbrains.dataframe.DataRow<DataFrameType4> @JvmName("DataFrameType3_default") get() = this["default"] as org.jetbrains.dataframe.DataRow<DataFrameType4>
-    val DataFrameBase<DataFrameType3>.high: ColumnGroup<DataFrameType6> @JvmName("DataFrameType3_high") get() = this["high"] as ColumnGroup<DataFrameType6>
+    val DataFrameBase<DataFrameType3>.high: MapColumn<DataFrameType6> @JvmName("DataFrameType3_high") get() = this["high"] as MapColumn<DataFrameType6>
     val DataRowBase<DataFrameType3>.high: DataRow<DataFrameType6> @JvmName("DataFrameType3_high") get() = this["high"] as DataRow<DataFrameType6>
-    val DataFrameBase<DataFrameType3>.maxres: ColumnGroup<DataFrameType8> @JvmName("DataFrameType3_maxres") get() = this["maxres"] as ColumnGroup<DataFrameType8>
+    val DataFrameBase<DataFrameType3>.maxres: MapColumn<DataFrameType8> @JvmName("DataFrameType3_maxres") get() = this["maxres"] as MapColumn<DataFrameType8>
     val DataRowBase<DataFrameType3>.maxres: org.jetbrains.dataframe.DataRow<DataFrameType8> @JvmName("DataFrameType3_maxres") get() = this["maxres"] as org.jetbrains.dataframe.DataRow<DataFrameType8>
-    val DataFrameBase<DataFrameType3>.medium: ColumnGroup<DataFrameType5> @JvmName("DataFrameType3_medium") get() = this["medium"] as ColumnGroup<DataFrameType5>
+    val DataFrameBase<DataFrameType3>.medium: MapColumn<DataFrameType5> @JvmName("DataFrameType3_medium") get() = this["medium"] as MapColumn<DataFrameType5>
     val DataRowBase<DataFrameType3>.medium: org.jetbrains.dataframe.DataRow<DataFrameType5> @JvmName("DataFrameType3_medium") get() = this["medium"] as org.jetbrains.dataframe.DataRow<DataFrameType5>
-    val DataFrameBase<DataFrameType3>.standard: ColumnGroup<DataFrameType7> @JvmName("DataFrameType3_standard") get() = this["standard"] as ColumnGroup<DataFrameType7>
+    val DataFrameBase<DataFrameType3>.standard: MapColumn<DataFrameType7> @JvmName("DataFrameType3_standard") get() = this["standard"] as MapColumn<DataFrameType7>
     val DataRowBase<DataFrameType3>.standard: org.jetbrains.dataframe.DataRow<DataFrameType7> @JvmName("DataFrameType3_standard") get() = this["standard"] as org.jetbrains.dataframe.DataRow<DataFrameType7>
     val DataFrameBase<DataFrameType4>.height: DataColumn<Int> @JvmName("DataFrameType4_height") get() = this["height"] as DataColumn<Int>
     val DataRowBase<DataFrameType4>.height: Int @JvmName("DataFrameType4_height") get() = this["height"] as Int
@@ -182,7 +194,7 @@ class PlaylistJsonTest {
     val DataRowBase<DataRecord>.kind: String @JvmName("DataRecord_kind") get() = this["kind"] as String
     val DataFrameBase<DataRecord>.nextPageToken: DataColumn<String> @JvmName("DataRecord_nextPageToken") get() = this["nextPageToken"] as DataColumn<String>
     val DataRowBase<DataRecord>.nextPageToken: String @JvmName("DataRecord_nextPageToken") get() = this["nextPageToken"] as String
-    val DataFrameBase<DataRecord>.pageInfo: ColumnGroup<DataFrameType10> @JvmName("DataRecord_pageInfo") get() = this["pageInfo"] as ColumnGroup<DataFrameType10>
+    val DataFrameBase<DataRecord>.pageInfo: MapColumn<DataFrameType10> @JvmName("DataRecord_pageInfo") get() = this["pageInfo"] as MapColumn<DataFrameType10>
     val DataRowBase<DataRecord>.pageInfo: org.jetbrains.dataframe.DataRow<DataFrameType10> @JvmName("DataRecord_pageInfo") get() = this["pageInfo"] as org.jetbrains.dataframe.DataRow<DataFrameType10>
 
     fun generateExtensionProperties(): List<String> {

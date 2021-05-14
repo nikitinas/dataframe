@@ -1,16 +1,21 @@
 package org.jetbrains.dataframe.internal.codeGen
 
 import io.kotest.matchers.shouldBe
-import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.columns.ColumnGroup
+import org.jetbrains.dataframe.DataFrameBase
+import org.jetbrains.dataframe.DataRow
+import org.jetbrains.dataframe.DataRowBase
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.filterNotNull
 import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
 import org.jetbrains.dataframe.impl.codeGen.InterfaceGenerationMode
 import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
 import org.jetbrains.dataframe.impl.codeGen.generate
 import org.jetbrains.dataframe.internal.schema.extractSchema
+import org.jetbrains.dataframe.move
 import org.jetbrains.dataframe.person.BaseTest
 import org.jetbrains.dataframe.person.DataFrameTests
+import org.jetbrains.dataframe.under
 import org.junit.Test
 import kotlin.reflect.full.memberProperties
 
@@ -24,7 +29,7 @@ class CodeGenerationTests : BaseTest(){
     val dfRowName = (DataRowBase::class).qualifiedName
     val dataCol = (DataColumn::class).qualifiedName!!
     val dataRow = (DataRow::class).qualifiedName!!
-    val colGroup = (ColumnGroup::class).qualifiedName!!
+    val colGroup = (MapColumn::class).qualifiedName!!
 
     fun expectedProperties(fullTypeName: String, shortTypeName: String) = """
             val $dfName<$fullTypeName>.age: $dataCol<kotlin.Int> @JvmName("${shortTypeName}_age") get() = this["age"] as $dataCol<kotlin.Int>

@@ -78,7 +78,7 @@ internal open class ColumnDataCollector(initCapacity: Int = 0, val getType: (KCl
                     (it as AnyRow?)?.toDataFrame() ?: emptyDataFrame(1)
                 }
                 val merged = frames.union()
-                return DataColumn.create(name, merged)
+                return DataColumn.create(name, merged) as AnyCol
             }
         }
         return createColumn(name, getType(commonClass()).withNullability(hasNulls))

@@ -29,9 +29,3 @@ fun <T, C> RenameClause<T, C>.into(vararg newNames: String) = df.move(selector).
 fun <T, C> RenameClause<T, C>.into(transform: (ColumnWithPath<C>) -> String) = df.move(selector).into {
     it.path.dropLast(1) + transform(it)
 }
-
-fun <C> ColumnReference<C>.rename(newName: String) = if (newName == name()) this else RenamedColumnReference(this, newName)
-
-fun <C> DataColumn<C>.rename(newName: String) = if (newName == name()) this else (this as DataColumnInternal<C>).rename(newName)
-
-infix fun <C> DataColumn<C>.named(newName: String) = rename(newName)

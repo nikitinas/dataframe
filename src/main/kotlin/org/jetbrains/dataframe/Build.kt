@@ -5,12 +5,9 @@ import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.impl.ColumnNameGenerator
 import org.jetbrains.dataframe.impl.DataFrameImpl
-import org.jetbrains.dataframe.impl.TreeNode
 import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.columns.DataColumnWithParentImpl
 import org.jetbrains.dataframe.impl.columns.MapColumnWithParent
-import org.jetbrains.dataframe.impl.getOrPut
-import java.lang.UnsupportedOperationException
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -19,9 +16,9 @@ import kotlin.reflect.full.withNullability
 import kotlin.reflect.jvm.javaField
 
 class IterableDataFrameBuilder<T>(val source: Iterable<T>) {
-    internal val columns = mutableListOf<AnyCol>()
+    internal val columns = mutableListOf<AnyColumn>()
 
-    fun add(column: AnyCol) = columns.add(column)
+    fun add(column: AnyColumn) = columns.add(column)
 
     inline fun <reified R> add(name: String, noinline expression: T.(T) -> R?) =
         add(column(name, source.map { expression(it, it) }))
@@ -34,12 +31,12 @@ class IterableDataFrameBuilder<T>(val source: Iterable<T>) {
 }
 
 fun <T> Iterable<T>.toDataFrame(body: IterableDataFrameBuilder<T>.() -> Unit): AnyFrame {
-    val builder = IterableDataFrameBuilder<T>(this)
+    val builder = IterableDataFrameBuilder(this)
     builder.body()
     return dataFrameOf(builder.columns)
 }
 
-inline fun <reified T> Iterable<T>.toDataFrame() = T::class.declaredMembers
+inline fun <reified T> Iterable<T>.toDataFrameByProperties() = T::class.declaredMembers
     .filter { it.parameters.toList().size == 1 }
     .filter { it is KProperty }
     .map {
@@ -59,11 +56,11 @@ inline fun <reified T> Iterable<T>.toDataFrame() = T::class.declaredMembers
         DataColumn.create(it.name, values, property.returnType.withNullability(nullable))
     }.let { dataFrameOf(it) }
 
-fun DataFrame.Companion.of(columns: Iterable<AnyCol>) = dataFrameOf(columns)
+fun DataFrame.Companion.of(columns: Iterable<AnyColumn>) = dataFrameOf(columns)
 fun DataFrame.Companion.of(vararg header: String) = dataFrameOf(header.toList())
-fun DataFrame.Companion.of(vararg columns: AnyCol) = dataFrameOf(columns.asIterable())
+fun DataFrame.Companion.of(vararg columns: AnyColumn) = dataFrameOf(columns.asIterable())
 
-fun dataFrameOf(columns: Iterable<AnyCol>): AnyFrame {
+fun dataFrameOf(columns: Iterable<AnyColumn>): AnyFrame {
     val cols = columns.map { it.unbox() }
     if(cols.isEmpty()) return DataFrame.empty()
     return DataFrameImpl<Unit>(cols)
@@ -71,7 +68,7 @@ fun dataFrameOf(columns: Iterable<AnyCol>): AnyFrame {
 
 fun dataFrameOf(vararg header: ColumnReference<*>) = DataFrameBuilder(header.map { it.name() })
 
-fun dataFrameOf(vararg columns: AnyCol): AnyFrame = dataFrameOf(columns.asIterable())
+fun dataFrameOf(vararg columns: AnyColumn): AnyFrame = dataFrameOf(columns.asIterable())
 
 fun dataFrameOf(vararg header: String) = dataFrameOf(header.toList())
 
@@ -81,22 +78,22 @@ fun emptyDataFrame(nrow: Int) = DataFrame.empty(nrow)
 
 
 // TODO: remove checks for ColumnWithParent types
-internal fun AnyCol.unbox(): AnyCol = when (this) {
+internal fun AnyColumn.unbox(): AnyCol = when (this) {
     is ColumnWithPath<*> -> data.unbox()
     is DataColumnWithParentImpl<*> -> source.unbox()
     is MapColumnWithParent<*> -> source.unbox()
-    else -> this
+    else -> this as AnyCol
 }
 
-fun <T> Iterable<AnyCol>.asDataFrame() = dataFrameOf(this).typed<T>()
+fun <T> Iterable<AnyColumn>.asDataFrame() = dataFrameOf(this).typed<T>()
 
 @JvmName("toDataFrameColumnPathAnyCol")
-fun <T> Iterable<Pair<ColumnPath, AnyCol>>.toDataFrame(): DataFrame<T> {
+fun <T> Iterable<Pair<ColumnPath, AnyColumn>>.toDataFrame(): DataFrame<T> {
 
     val nameGenerator = ColumnNameGenerator()
     val columnNames = mutableListOf<String>()
-    val columnGroups = mutableListOf<MutableList<Pair<ColumnPath, AnyCol>>?>()
-    val columns = mutableListOf<AnyCol?>()
+    val columnGroups = mutableListOf<MutableList<Pair<ColumnPath, AnyColumn>>?>()
+    val columns = mutableListOf<AnyColumn?>()
     val columnIndices = mutableMapOf<String, Int>()
     val columnGroupName = mutableMapOf<String, String>()
 
@@ -141,7 +138,7 @@ fun <T> Iterable<Pair<ColumnPath, AnyCol>>.toDataFrame(): DataFrame<T> {
 }
 
 @JvmName("toDataFrameAnyCol")
-fun Iterable<AnyCol>.toDataFrame() = asDataFrame<Unit>()
+fun Iterable<AnyColumn>.toDataFrame() = asDataFrame<Unit>()
 
 class DataFrameBuilder(private val columnNames: List<String>) {
 

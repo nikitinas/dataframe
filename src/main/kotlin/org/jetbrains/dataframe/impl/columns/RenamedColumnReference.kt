@@ -12,4 +12,6 @@ internal class RenamedColumnReference<C>(val source: ColumnReference<C>, val nam
     }
 
     override fun name() = name
+
+    override fun rename(newName: String) = RenamedColumnReference(source, newName)
 }

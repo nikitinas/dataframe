@@ -87,7 +87,7 @@ class MatchSchemeTests {
 
         val codeGen = ReplCodeGenerator.create()
         codeGen.process(DataRecord::class)
-        val generated = codeGen.process(modified, ::modified)!!
+        val generated = codeGen.process(modified, ::modified)
         generated.declarations.contains(DataRecord::class.simpleName!!) shouldBe true
     }
 

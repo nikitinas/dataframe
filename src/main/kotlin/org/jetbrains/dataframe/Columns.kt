@@ -1,12 +1,13 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.annotations.ColumnName
-import org.jetbrains.dataframe.columns.ColumnDefinition
-import org.jetbrains.dataframe.columns.ColumnDefinitionImpl
+import org.jetbrains.dataframe.columns.ColumnAccessor
+import org.jetbrains.dataframe.impl.columns.ColumnAccessorImpl
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.ColumnSet
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.Column
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.SingleColumn
@@ -57,24 +58,32 @@ typealias Column = ColumnReference<*>
 
 typealias MapColumnReference = ColumnReference<AnyRow>
 
-fun String.toColumnDef(): ColumnDefinition<Any?> = ColumnDefinitionImpl(this)
+fun String.toColumnDef(): ColumnAccessor<Any?> = ColumnAccessorImpl(this)
 
-fun <T> String.toColumnOf(): ColumnDefinition<T> = ColumnDefinitionImpl(this)
+fun <T> String.toColumnOf(): ColumnAccessor<T> = ColumnAccessorImpl(this)
 
-fun <T> ColumnPath.toColumnOf(): ColumnDefinition<T> = ColumnDefinitionImpl(this)
+fun <T> ColumnPath.toColumnOf(): ColumnAccessor<T> = ColumnAccessorImpl(this)
 
-fun ColumnPath.toColumnDef(): ColumnDefinition<Any?> = ColumnDefinitionImpl(this)
+fun ColumnPath.toColumnDef(): ColumnAccessor<Any?> = ColumnAccessorImpl(this)
 
-fun ColumnPath.toGroupColumnDef(): ColumnDefinition<AnyRow> = ColumnDefinitionImpl(this)
+fun ColumnPath.toGroupColumnDef(): ColumnAccessor<AnyRow> = ColumnAccessorImpl(this)
 
 internal fun KProperty<*>.getColumnName() = this.findAnnotation<ColumnName>()?.name ?: name
 
-fun <T> KProperty<T>.toColumnDef(): ColumnDefinition<T> = ColumnDefinitionImpl<T>(name)
+fun <T> KProperty<T>.toColumnDef(): ColumnAccessor<T> = ColumnAccessorImpl<T>(name)
 
-fun <T> ColumnDefinition<DataRow<*>>.subcolumn(childName: String): ColumnDefinition<T> =
-    ColumnDefinitionImpl(path() + childName)
+fun <T> ColumnAccessor<DataRow<*>>.subcolumn(childName: String): ColumnAccessor<T> =
+    ColumnAccessorImpl(path() + childName)
 
-inline fun <reified T> ColumnDefinition<T>.nullable() = changeType<T?>()
+typealias DoubleCol = DataColumn<Double?>
+typealias BooleanCol = DataColumn<Boolean?>
+typealias IntCol = DataColumn<Int?>
+typealias NumberCol = DataColumn<Number?>
+typealias StringCol = DataColumn<String?>
+typealias AnyCol = DataColumn<*>
+typealias AnyColumn = Column<*>
+
+inline fun <reified T> ColumnAccessor<T>.nullable() = changeType<T?>()
 
 enum class ColumnKind {
     Value,
@@ -93,7 +102,7 @@ inline fun <reified T> ColumnReference<T>.withValues(vararg values: T) = withVal
 inline fun <reified T> ColumnReference<T>.withValues(values: Iterable<T>) =
     DataColumn.create(name(), values.asList(), getType<T>())
 
-fun AnyCol.toDataFrame() = dataFrameOf(listOf(this))
+fun AnyColumn.toDataFrame() = dataFrameOf(listOf(this))
 
 inline fun <T, reified R> DataFrame<T>.newColumn(name: String, noinline expression: RowSelector<T, R>): DataColumn<R> {
     var nullable = false
@@ -103,19 +112,19 @@ inline fun <T, reified R> DataFrame<T>.newColumn(name: String, noinline expressi
 }
 
 class ColumnDelegate<T>(private val parent: MapColumnReference? = null) {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): ColumnDefinition<T> = named(property.name)
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): ColumnAccessor<T> = named(property.name)
 
-    infix fun named(name: String): ColumnDefinition<T> =
-        parent?.let { ColumnDefinitionImpl(it.path() + name) } ?: ColumnDefinitionImpl(name)
+    infix fun named(name: String): ColumnAccessor<T> =
+        parent?.let { ColumnAccessorImpl(it.path() + name) } ?: ColumnAccessorImpl(name)
 }
 
-fun AnyCol.asFrame(): AnyFrame = when (this) {
+fun AnyColumn.asFrame(): AnyFrame = when (this) {
     is MapColumn<*> -> df
     is ColumnWithPath<*> -> data.asFrame()
     else -> error("Can not extract DataFrame from ${javaClass.kotlin}")
 }
 
-fun AnyCol.isGroup(): Boolean = kind() == ColumnKind.Map
+fun AnyColumn.isGroup(): Boolean = kind() == ColumnKind.Map
 
 fun <T> column() = ColumnDelegate<T>()
 
@@ -133,26 +142,20 @@ fun <T> frameColumn(name: String) = column<DataFrame<T>>(name)
 
 fun <T> columnList(name: String) = column<List<T>>(name)
 
-fun <T> column(name: String): ColumnDefinition<T> = ColumnDefinitionImpl(name)
+fun <T> column(name: String): ColumnAccessor<T> = ColumnAccessorImpl(name)
 
 fun <T> column(parent: MapColumnReference): ColumnDelegate<T> = ColumnDelegate(parent)
 
-fun <T> column(parent: MapColumnReference, name: String): ColumnDefinition<T> =
-    ColumnDefinitionImpl(parent.path() + name)
+fun <T> column(parent: MapColumnReference, name: String): ColumnAccessor<T> =
+    ColumnAccessorImpl(parent.path() + name)
 
 inline fun <reified T> columnOf(vararg values: T) = column(values.asIterable())
 
-fun columnOf(vararg values: AnyCol) = DataColumn.create("", dataFrameOf(values.asIterable()))
+fun columnOf(vararg values: AnyColumn): DataColumn<AnyRow> = DataColumn.create("", dataFrameOf(values.asIterable())) as DataColumn<AnyRow>
 
 fun columnOf(vararg frames: AnyFrame?) = columnOf(frames.asIterable())
 
 fun <T> columnOf(frames: Iterable<DataFrame<T>?>) = DataColumn.create("", frames.toList())
-
-interface ColumnProvider<out T> {
-    operator fun getValue(thisRef: Any?, property: KProperty<*>) = named(property.name)
-
-    infix fun named(name: String): DataColumn<T>
-}
 
 inline fun <reified T> column(values: Iterable<T>): DataColumn<T> = when {
     values.all { it is AnyCol } -> DataColumn.create("", (values as Iterable<AnyCol>).toDataFrame()) as DataColumn<T>
@@ -183,20 +186,13 @@ inline fun <reified T> column(name: String, values: List<T>): DataColumn<T> = wh
 inline fun <reified T> column(name: String, values: List<T>, hasNulls: Boolean): DataColumn<T> =
     DataColumn.create(name, values, getType<T>().withNullability(hasNulls))
 
-fun <C> DataColumn<C>.single() = values.single()
+fun <C> Column<C>.single() = values.single()
 
 fun <T> FrameColumn<T>.toDefinition() = frameColumn<T>(name)
 fun <T> MapColumn<T>.toDefinition() = columnGroup<T>(name)
 fun <T> ValueColumn<T>.toDefinition() = column<T>(name)
 
-operator fun AnyCol.plus(other: AnyCol) = dataFrameOf(listOf(this, other))
-
-typealias DoubleCol = DataColumn<Double?>
-typealias BooleanCol = DataColumn<Boolean?>
-typealias IntCol = DataColumn<Int?>
-typealias NumberCol = DataColumn<Number?>
-typealias StringCol = DataColumn<String?>
-typealias AnyCol = DataColumn<*>
+operator fun AnyColumn.plus(other: AnyColumn) = dataFrameOf(listOf(this, other))
 
 fun StringCol.len() = map { it?.length }
 fun StringCol.lower() = map { it?.toLowerCase() }
@@ -219,11 +215,11 @@ infix fun <T> DataColumn<T>.isMatching(predicate: Predicate<T>): BooleanArray = 
     predicate(this[it])
 }
 
-fun <T> DataColumn<T>.first() = get(0)
-fun <T> DataColumn<T>.firstOrNull() = if(size > 0) first() else null
-fun <T> DataColumn<T>.first(predicate: (T)->Boolean) = values.first(predicate)
-fun <T> DataColumn<T>.firstOrNull(predicate: (T)->Boolean) = values.firstOrNull(predicate)
-fun <T> DataColumn<T>.last() = get(size-1)
+fun <T> Column<T>.first() = get(0)
+fun <T> Column<T>.firstOrNull() = if(size > 0) first() else null
+fun <T> Column<T>.first(predicate: (T)->Boolean) = values.first(predicate)
+fun <T> Column<T>.firstOrNull(predicate: (T)->Boolean) = values.firstOrNull(predicate)
+fun <T> Column<T>.last() = get(size-1)
 fun <T> DataColumn<T>.lastOrNull() = if(size > 0) last() else null
 
 fun <C> DataColumn<C>.allNulls() = size == 0 || (hasNulls && ndistinct == 1)

@@ -1,6 +1,6 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.columns.ColumnDefinition
+import org.jetbrains.dataframe.columns.ColumnAccessor
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
 import kotlin.reflect.KProperty
@@ -26,7 +26,7 @@ inline fun <reified R, T> DataFrame<T>.add(property: KProperty<R>, noinline expr
 inline fun <reified R, T, G> GroupedDataFrame<T, G>.add(name: String, noinline expression: RowSelector<G, R>) =
         mapNotNullGroups { add(name, expression) }
 
-inline fun <reified R, T> DataFrame<T>.add(column: ColumnDefinition<R>, noinline expression: RowSelector<T, R>): DataFrame<T> {
+inline fun <reified R, T> DataFrame<T>.add(column: ColumnAccessor<R>, noinline expression: RowSelector<T, R>): DataFrame<T> {
     val col = newColumn(column.name(), expression)
     val path = column.path()
     if(path.size == 1) return this + col

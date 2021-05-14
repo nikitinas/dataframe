@@ -1,19 +1,31 @@
 package org.jetbrains.dataframe.columns
 
-import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.impl.asList
-import org.jetbrains.dataframe.internal.schema.DataFrameSchema
-import org.jetbrains.dataframe.impl.columns.MapColumnImpl
+import org.jetbrains.dataframe.AnyCol
+import org.jetbrains.dataframe.AnyRow
+import org.jetbrains.dataframe.ColumnResolutionContext
+import org.jetbrains.dataframe.DataFrame
+import org.jetbrains.dataframe.DataRow
+import org.jetbrains.dataframe.getType
+import org.jetbrains.dataframe.union
 import org.jetbrains.dataframe.impl.columns.FrameColumnImpl
+import org.jetbrains.dataframe.impl.columns.MapColumnImpl
 import org.jetbrains.dataframe.impl.columns.ValueImplColumn
 import org.jetbrains.dataframe.impl.columns.addPath
-import org.jetbrains.dataframe.impl.toIterable
+import org.jetbrains.dataframe.internal.schema.DataFrameSchema
+import org.jetbrains.dataframe.toDataFrame
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.isSubclassOf
 
-interface DataColumn<out T> : ColumnReference<T>, ColumnProvider<T> {
+/**
+ * Column with type, name/path and values
+ * Base interface only for [ValueColumn] and [FrameColumn]
+ *
+ * All column extension functions that clash with [DataFrame] API (such as filter, forEach, map etc.) are defined for this interface,
+ * because [MapColumn] doesn't inherit from it
+ */
+interface DataColumn<out T> : Column<T> {
 
     companion object {
 
@@ -46,48 +58,28 @@ interface DataColumn<out T> : ColumnReference<T>, ColumnProvider<T> {
     }
 
     fun type(): KType
-    fun size(): Int
+
     fun hasNulls(): Boolean = type().isMarkedNullable
-    fun ndistinct(): Int
 
-    fun kind(): ColumnKind
+    override fun distinct(): DataColumn<T>
 
-    operator fun get(index: Int): T
+    override fun slice(range: IntRange): DataColumn<T>
 
-    operator fun get(firstIndex: Int, vararg otherIndices: Int) = slice(headPlusIterable(firstIndex, otherIndices.asIterable()))
+    override fun slice(indices: Iterable<Int>): DataColumn<T>
 
-    operator fun get(row: AnyRow) = get(row.getIndex())
+    override fun slice(mask: BooleanArray): DataColumn<T>
 
-    fun values(): Iterable<T>
-
-    fun toList() = values().asList()
-
-    fun defaultValue(): T?
-
-    fun slice(range: IntRange): DataColumn<T>
-
-    operator fun get(columnName: String): AnyCol
-
-    fun slice(indices: Iterable<Int>): DataColumn<T>
-
-    fun slice(mask: BooleanArray): DataColumn<T>
-
-    fun toSet(): Set<T>
-
-    fun distinct(): DataColumn<T>
-
-    operator fun set(predicate: Predicate<T>, value: Any) = {}
+    override fun rename(newName: String): DataColumn<T>
 
     override fun resolveSingle(context: ColumnResolutionContext): ColumnWithPath<T>? = this.addPath(context.df)
 
-    override operator fun getValue(thisRef: Any?, property: KProperty<*>) = rename(property.name)
+    override operator fun getValue(thisRef: Any?, property: KProperty<*>): DataColumn<T> = super.getValue(thisRef, property) as DataColumn<T>
 }
 
-internal val <T> DataColumn<T>.values get() = values()
-internal val AnyCol.ndistinct get() = ndistinct()
 internal val AnyCol.type get() = type()
-internal val AnyCol.size get() = size()
 internal val AnyCol.hasNulls get() = hasNulls()
 internal val AnyCol.valueClass get() = type.classifier as KClass<*>
+
+infix fun <T, C: Column<T>> C.named(name: String) = rename(name) as C
 
 

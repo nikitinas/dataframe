@@ -1,28 +1,13 @@
-package org.jetbrains.dataframe.columns
+package org.jetbrains.dataframe.impl.columns
 
 import org.jetbrains.dataframe.AnyCol
 import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.ColumnResolutionContext
-import org.jetbrains.dataframe.impl.columns.asGroup
-import org.jetbrains.dataframe.impl.columns.getColumn
-import org.jetbrains.dataframe.impl.columns.addPath
+import org.jetbrains.dataframe.columns.ColumnAccessor
+import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.isGroup
-import org.jetbrains.dataframe.impl.columns.typed
-import kotlin.reflect.KProperty
 
-interface ColumnDefinition<out T> : ColumnReference<T> {
-
-    operator fun getValue(thisRef: Any?, property: KProperty<*>) = this
-
-    fun <C> changeType() = this as ColumnDefinition<C>
-}
-
-fun <T> ColumnReference<T>.definition(): ColumnDefinition<T> = when(this){
-    is ColumnDefinition<T> -> this
-    else -> ColumnDefinitionImpl(path())
-}
-
-internal class ColumnDefinitionImpl<T>(val path: ColumnPath) : ColumnDefinition<T> {
+internal class ColumnAccessorImpl<T>(val path: ColumnPath) : ColumnAccessor<T> {
 
     override fun name() = path.last()
 
@@ -40,4 +25,6 @@ internal class ColumnDefinitionImpl<T>(val path: ColumnPath) : ColumnDefinition<
         }
         return col?.typed<T>()?.addPath(path, context.df)
     }
+
+    override fun rename(newName: String) = ColumnAccessorImpl<T>(path.dropLast(1) + newName)
 }

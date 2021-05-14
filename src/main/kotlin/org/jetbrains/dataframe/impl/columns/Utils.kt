@@ -13,15 +13,15 @@ import org.jetbrains.dataframe.SelectReceiverImpl
 import org.jetbrains.dataframe.SortColumnsSelector
 import org.jetbrains.dataframe.SortReceiverImpl
 import org.jetbrains.dataframe.UnresolvedColumnsPolicy
-import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.ColumnSet
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.Column
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.ValueColumn
-import org.jetbrains.dataframe.columns.definition
+import org.jetbrains.dataframe.columns.toAccessor
 import org.jetbrains.dataframe.columns.type
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.getType
@@ -37,17 +37,18 @@ import org.jetbrains.dataframe.typed
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.isSubtypeOf
 
-internal fun <T> DataColumn<T>.checkEquals(other: Any?): Boolean {
+internal fun <T> Column<T>.checkEquals(other: Any?): Boolean {
     if (this === other) return true
 
-    if (!(other is DataColumn<*>)) return false
+    if (this !is AnyCol) return false
+    if (other !is AnyCol) return false
 
-    if (name() != other.name()) return false
+    if (name != other.name) return false
     if (type != other.type) return false
     return values.equalsByElement(other.values)
 }
 
-internal fun <T> DataColumn<T>.getHashCode(): Int {
+internal fun AnyCol.getHashCode(): Int {
     var result = values.rollingHash()
     result = 31 * result + name().hashCode()
     result = 31 * result + type.hashCode()
@@ -60,14 +61,14 @@ internal fun <C> TreeNode<ColumnPosition>.toColumnWithPath(df: DataFrameBase<*>)
 @JvmName("toColumnWithPathAnyCol")
 internal fun <C> TreeNode<DataColumn<C>>.toColumnWithPath(df: DataFrameBase<*>) = data.addPath(pathFromRoot(), df)
 
-internal fun <T> DataColumn<T>.addPath(path: ColumnPath, df: DataFrameBase<*>): ColumnWithPath<T> =
-    ColumnWithPathImpl(this, path, df)
+internal fun <T> Column<T>.addPath(path: ColumnPath, df: DataFrameBase<*>): ColumnWithPath<T> =
+    ColumnWithPathImpl(this as DataColumn<T>, path, df)
 
 internal fun <T> ColumnWithPath<T>.changePath(path: ColumnPath): ColumnWithPath<T> = data.addPath(path, df)
 
-internal fun <T> DataColumn<T>.addParentPath(path: ColumnPath, df: DataFrameBase<*>) = addPath(path + name, df)
+internal fun <T> Column<T>.addParentPath(path: ColumnPath, df: DataFrameBase<*>) = addPath(path + name, df)
 
-internal fun <T> DataColumn<T>.addPath(df: DataFrameBase<*>): ColumnWithPath<T> = addPath(listOf(name), df)
+internal fun <T> Column<T>.addPath(df: DataFrameBase<*>): ColumnWithPath<T> = addPath(listOf(name), df)
 
 internal fun ColumnPath.depth() = size - 1
 
@@ -79,7 +80,7 @@ internal fun <T> ValueColumn<*>.typed() = this as ValueColumn<T>
 internal fun <T> FrameColumn<*>.typed() = this as FrameColumn<T>
 internal fun <T> MapColumn<*>.typed() = this as MapColumn<T>
 internal fun <T> AnyCol.grouped() = this as MapColumn<T>
-internal fun <T> MapColumn<*>.withDf(newDf: DataFrame<T>) = DataColumn.create(name(), newDf)
+internal fun <T> MapColumn<*>.withDf(newDf: DataFrame<T>) = DataColumn.create(name, newDf)
 internal fun AnyCol.asGroup(): MapColumn<*> = this as MapColumn<*>
 
 @JvmName("asGroupedT")
@@ -113,7 +114,7 @@ internal fun Array<out String>.toColumns(): ColumnSet<Any?> = map { it.toColumnD
 internal fun Array<out ColumnPath>.toColumns(): ColumnSet<Any?> = map { it.toColumnDef() }.toColumnSet()
 internal fun <C> Iterable<ColumnSet<C>>.toColumnSet(): ColumnSet<C> = ColumnsList(asList())
 internal fun <C> Array<out KProperty<C>>.toColumns() = map { it.toColumnDef() }.toColumnSet()
-internal fun <T> Array<out ColumnReference<T>>.toColumns() = map { it.definition() }.toColumnSet()
+internal fun <T> Array<out ColumnReference<T>>.toColumns() = map { it.toAccessor() }.toColumnSet()
 internal fun <T, C> ColumnsSelector<T, C>.toColumns(): ColumnSet<C> = toColumns {
     SelectReceiverImpl(
         it.df.typed(),

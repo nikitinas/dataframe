@@ -27,4 +27,6 @@ interface ColumnWithPath<out T> : ColumnReference<T> {
     override fun name() = name
 
     override fun resolveSingle(context: ColumnResolutionContext) = this
+
+    override fun rename(newName: String): ColumnWithPath<T>
 }

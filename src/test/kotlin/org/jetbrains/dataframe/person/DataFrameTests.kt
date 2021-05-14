@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.name
+import org.jetbrains.dataframe.columns.named
 import org.jetbrains.dataframe.columns.valueClass
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.typed
@@ -25,7 +26,7 @@ class DataFrameTests : BaseTest() {
 
         dataFrameOf("name", "age", "city", "weight")(df.columns()) shouldBe df
 
-        dataFrameOf("name", "age", "city", "weight")(typed.name named "bla", typed.age  named "", typed.city.rename("qq"), typed.weight.named("asda")) shouldBe df
+        dataFrameOf("name", "age", "city", "weight")(typed.name named "bla", typed.age named "", typed.city.rename("qq"), typed.weight.named("asda")) shouldBe df
 
         val c1 = typed.name.toList().toColumn()
         val c2 = typed.age.toList().toColumn()
@@ -837,7 +838,7 @@ class DataFrameTests : BaseTest() {
     fun `select with rename`() {
 
         val expected = typed.select { name and age }.rename { all() }.into { it.name + 2 }
-        typed.select { name.rename("name2") and age.rename("age2") } shouldBe expected
+        typed.select { name into "name2" and age.into("age2") } shouldBe expected
         df.select { name("name2") and age("age2") } shouldBe expected
     }
 

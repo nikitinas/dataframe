@@ -72,7 +72,7 @@ internal fun fromList(records: List<*>): AnyFrame {
         nameGenerator.addUnique(arrayColumnName)
     }else arrayColumnName
 
-    val columns: List<AnyCol> = nameGenerator.names.map { colName ->
+    val columns: List<AnyColumn> = nameGenerator.names.map { colName ->
         when {
             colName == valueColumn -> {
                 val collector = createDataCollector(records.size)

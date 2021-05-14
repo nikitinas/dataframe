@@ -4,6 +4,7 @@ import io.kotest.matchers.shouldBe
 import org.jetbrains.dataframe.column
 import org.jetbrains.dataframe.getType
 import org.jetbrains.dataframe.toDataFrame
+import org.jetbrains.dataframe.toDataFrameByProperties
 import org.junit.Test
 
 class BuildTests {
@@ -14,7 +15,7 @@ class BuildTests {
 
     @Test
     fun test1(){
-        val df = persons.toDataFrame()
+        val df = persons.toDataFrameByProperties()
         df.ncol() shouldBe 2
         df.nrow() shouldBe 2
         df["name"].type() shouldBe getType<String>()
@@ -36,12 +37,12 @@ class BuildTests {
     @Test
     fun test3(){
         val list = persons + listOf(null)
-        val df = list.toDataFrame()
+        val df = list.toDataFrameByProperties()
         df.nrow() shouldBe 3
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun `unequal column sizes`(){
-        persons.toDataFrame() + column("id", listOf(1,2,3))
+        persons.toDataFrameByProperties() + column("id", listOf(1,2,3))
     }
 }

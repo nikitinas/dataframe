@@ -1,10 +1,10 @@
 package org.jetbrains.dataframe.impl.columns
 
 import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.columns.ColumnGroup
+import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.MapDataColumn
 import org.jetbrains.dataframe.columns.MapColumn
-import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.createType
 import org.jetbrains.dataframe.impl.renderSchema
 import java.lang.UnsupportedOperationException
@@ -12,7 +12,9 @@ import kotlin.reflect.KType
 
 internal val mapColumnType = createType<AnyRow>()
 
-internal class MapColumnImpl<T>(override val df: DataFrame<T>, val name: String) : MapColumn<T>, DataColumnInternal<DataRow<T>>, DataFrame<T> by df {
+
+internal class MapColumnImpl<T>(override val df: DataFrame<T>, val name: String) : MapColumn<T>, DataColumnInternal<DataRow<T>>,
+    MapDataColumn<T>, DataFrame<T> by df {
 
     override fun values() = df.rows()
 
@@ -38,11 +40,11 @@ internal class MapColumnImpl<T>(override val df: DataFrame<T>, val name: String)
 
     override fun defaultValue() = null
 
-    override fun slice(indices: Iterable<Int>) = withDf(df[indices])
+    override fun slice(indices: Iterable<Int>) = MapColumnImpl(df[indices], name)
 
-    override fun slice(mask: BooleanArray) = withDf(df.getRows(mask))
+    override fun slice(mask: BooleanArray) = MapColumnImpl(df.getRows(mask), name)
 
-    override fun addParent(parent: MapColumn<*>) = MapColumnWithParent(parent, this)
+    override fun addParent(parent: MapColumn<*>): DataColumn<DataRow<T>> = MapColumnWithParent(parent, this)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -62,5 +64,9 @@ internal class MapColumnImpl<T>(override val df: DataFrame<T>, val name: String)
 
     override fun name() = name
 
-    override fun distinct() = DataColumn.create(name, distinct)
+    override fun distinct() = MapColumnImpl(distinct, name)
+
+    override fun resolveSingle(context: ColumnResolutionContext): ColumnWithPath<DataRow<T>>? {
+        return df.resolveSingle(context)
+    }
 }

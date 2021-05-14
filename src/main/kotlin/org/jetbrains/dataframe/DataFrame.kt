@@ -30,7 +30,6 @@ typealias Predicate<T> = (T) -> Boolean
 
 typealias ColumnPath = List<String>
 
-
 typealias DataFrameSelector<T, R> = DataFrame<T>.(DataFrame<T>) -> R
 
 typealias ColumnsSelector<T, C> = SelectReceiver<T>.(SelectReceiver<T>) -> ColumnSet<C>

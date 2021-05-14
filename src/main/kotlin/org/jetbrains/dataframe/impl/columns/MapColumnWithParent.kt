@@ -2,13 +2,17 @@ package org.jetbrains.dataframe.impl.columns
 
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnWithPath
+import org.jetbrains.dataframe.columns.Column
+import org.jetbrains.dataframe.columns.MapDataColumn
 import org.jetbrains.dataframe.columns.MapColumn
+import kotlin.reflect.KProperty
 
-internal class MapColumnWithParent<T>(override val parent: MapColumnReference?, val source: MapColumn<T>) : DataColumnWithParent<DataRow<T>>, MapColumn<T> by source {
+internal class MapColumnWithParent<T>(override val parent: MapColumnReference?, val source: MapColumn<T>) : DataColumnWithParent<DataRow<T>>, MapDataColumn<T> by (source as MapDataColumn<T>) {
 
-    private fun <T> DataColumn<T>.addParent(parent: MapColumn<*>) = (this as DataColumnInternal<T>).addParent(parent)
+    override fun getValue(thisRef: Any?, property: KProperty<*>): MapDataColumn<T> = source.getValue(thisRef, property) as MapDataColumn<T>
+
+    private fun <T> Column<T>.addParent(parent: MapColumn<*>) = (this as DataColumnInternal<T>).addParent(parent)
 
     override fun get(columnName: String): AnyCol {
         val col = df[columnName]

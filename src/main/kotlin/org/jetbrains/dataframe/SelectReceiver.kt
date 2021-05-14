@@ -1,13 +1,14 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.columns.ColumnDefinition
-import org.jetbrains.dataframe.columns.ColumnDefinitionImpl
+import org.jetbrains.dataframe.columns.ColumnAccessor
+import org.jetbrains.dataframe.impl.columns.ColumnAccessorImpl
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.ColumnSet
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.name
+import org.jetbrains.dataframe.columns.renamedReference
 import org.jetbrains.dataframe.impl.columns.ColumnsList
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.toColumnSet
@@ -53,7 +54,7 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
 
     operator fun String.invoke() = toColumnDef()
 
-    fun <C> String.cast(): ColumnDefinition<C> = ColumnDefinitionImpl(this)
+    fun <C> String.cast(): ColumnAccessor<C> = ColumnAccessorImpl(this)
 
     fun <C> col(property: KProperty<C>) = property.toColumnDef()
 
@@ -74,9 +75,6 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
     fun <C> ColumnSet<C>.takeWhile(predicate: Predicate<ColumnWithPath<C>>) = transform { it.takeWhile(predicate) }
     fun <C> ColumnSet<C>.takeLastWhile(predicate: Predicate<ColumnWithPath<C>>) = transform { it.takeLastWhile(predicate) }
     fun <C> ColumnSet<C>.filter(predicate: Predicate<ColumnWithPath<C>>) = transform { it.filter(predicate) }
-
-    fun <C> DataColumn<C>.rename(newName: String) = (this as ColumnReference<C>).rename(newName)
-    infix fun <C> DataColumn<C>.named(newName: String) = rename(newName)
 
     fun ColumnSet<*>.numberCols(filter: (NumberCol) -> Boolean = { true }) = colsOf(filter)
     fun ColumnSet<*>.stringCols(filter: (StringCol) -> Boolean = { true }) = colsOf(filter)
@@ -102,8 +100,8 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
 
     operator fun <C> ColumnSelector<T, C>.invoke() = this(this@SelectReceiver, this@SelectReceiver)
 
-    operator fun <C> ColumnReference<C>.invoke(newName: String) = rename(newName)
-    infix fun <C> DataColumn<C>.into(newName: String) = (this as ColumnReference<C>).rename(newName)
+    operator fun <C> ColumnReference<C>.invoke(newName: String) = renamedReference(newName)
+    infix fun <C> DataColumn<C>.into(newName: String) = (this as ColumnReference<C>).renamedReference(newName)
 
     infix fun String.and(other: String) = toColumnDef() and other.toColumnDef()
     infix fun <C> String.and(other: ColumnSet<C>) = toColumnDef() and other

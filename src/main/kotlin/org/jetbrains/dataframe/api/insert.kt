@@ -1,6 +1,6 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.columns.ColumnDefinition
+import org.jetbrains.dataframe.columns.ColumnAccessor
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.name
@@ -18,7 +18,7 @@ inline fun <T, reified R> DataFrame<T>.insert(name: String, noinline expression:
 data class InsertClause<T>(val df: DataFrame<T>, val column: AnyCol)
 
 fun <T> InsertClause<T>.into(path: ColumnPath) = df.insert(path, column.rename(path.last()))
-fun <T> InsertClause<T>.into(reference: ColumnDefinition<*>) = into(reference.path())
+fun <T> InsertClause<T>.into(reference: ColumnAccessor<*>) = into(reference.path())
 
 fun <T> InsertClause<T>.under(path: ColumnPath) = df.insert(path + column.name, column)
 fun <T> InsertClause<T>.under(selector: ColumnSelector<T, *>) = under(df.getColumnPath(selector))
@@ -58,7 +58,7 @@ internal fun <T> insertColumns(
 
     val columnsMap = columns.groupBy { it.insertionPath[depth] }.toMutableMap() // map: columnName -> columnsToAdd
 
-    val newColumns = mutableListOf<AnyCol>()
+    val newColumns = mutableListOf<AnyColumn>()
 
     // insert new columns under existing
     df?.columns()?.forEach {

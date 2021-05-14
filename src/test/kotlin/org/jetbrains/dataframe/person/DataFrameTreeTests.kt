@@ -20,16 +20,17 @@ import org.jetbrains.dataframe.by
 import org.jetbrains.dataframe.colsDfsOf
 import org.jetbrains.dataframe.column
 import org.jetbrains.dataframe.columnGroup
-import org.jetbrains.dataframe.columnOf
 import org.jetbrains.dataframe.columnList
-import org.jetbrains.dataframe.columns.ColumnGroup
+import org.jetbrains.dataframe.columnOf
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.MapColumn
-import org.jetbrains.dataframe.columns.definition
+import org.jetbrains.dataframe.columns.toAccessor
+import org.jetbrains.dataframe.count
 import org.jetbrains.dataframe.dataFrameOf
 import org.jetbrains.dataframe.duplicate
 import org.jetbrains.dataframe.emptyDataFrame
 import org.jetbrains.dataframe.execute
+import org.jetbrains.dataframe.explode
 import org.jetbrains.dataframe.filter
 import org.jetbrains.dataframe.forEach
 import org.jetbrains.dataframe.frameColumn
@@ -73,7 +74,6 @@ import org.jetbrains.dataframe.select
 import org.jetbrains.dataframe.single
 import org.jetbrains.dataframe.sortBy
 import org.jetbrains.dataframe.split
-import org.jetbrains.dataframe.explode
 import org.jetbrains.dataframe.spread
 import org.jetbrains.dataframe.subcolumn
 import org.jetbrains.dataframe.sumBy
@@ -87,6 +87,7 @@ import org.jetbrains.dataframe.update
 import org.jetbrains.dataframe.with
 import org.jetbrains.dataframe.with2
 import org.jetbrains.dataframe.withNull
+import org.junit.Ignore
 import org.junit.Test
 
 class DataFrameTreeTests : BaseTest() {
@@ -117,7 +118,7 @@ class DataFrameTreeTests : BaseTest() {
     val DataRowBase<GroupedPerson>.nameAndCity get() = this["nameAndCity"] as DataRowBase<NameAndCity>
     val DataFrameBase<GroupedPerson>.age @JvmName("get-age") get() = this["age"].typed<Int>()
     val DataFrameBase<GroupedPerson>.weight @JvmName("get-weight") get() = this["weight"].typed<Int?>()
-    val DataFrameBase<GroupedPerson>.nameAndCity get() = this["nameAndCity"] as ColumnGroup<NameAndCity>
+    val DataFrameBase<GroupedPerson>.nameAndCity get() = this["nameAndCity"] as MapColumn<NameAndCity>
 
     val nameAndCity by columnGroup()
     val nameInGroup = nameAndCity.subcolumn<String>("name")
@@ -445,7 +446,7 @@ class DataFrameTreeTests : BaseTest() {
         val className = GroupedPerson::class.qualifiedName
         val shortName = GroupedPerson::class.simpleName!!
         val nameAndCity = NameAndCity::class.qualifiedName
-        val groupedColumn = ColumnGroup::class.qualifiedName
+        val groupedColumn = MapColumn::class.qualifiedName
         val columnData = DataColumn::class.qualifiedName
         val expected = """
             val $dataFrameBase<$className>.age: $columnData<kotlin.Int> @JvmName("${shortName}_age") get() = this["age"] as $columnData<kotlin.Int>
@@ -552,7 +553,7 @@ class DataFrameTreeTests : BaseTest() {
     fun `join by frame column`() {
         val left = typed.groupBy { name }.mapGroups { it?.remove { name and city } }
         val right = typed.update { name }.with { it.reversed() }.groupBy { name }.mapGroups { it?.remove { name and city } }
-        val groupCol = left.groups.definition()
+        val groupCol = left.groups.toAccessor()
         val joined = left.plain().join(right.plain()) { groupCol }
         joined.ncol shouldBe 3
         val name_1 by column<String>()
@@ -603,5 +604,27 @@ class DataFrameTreeTests : BaseTest() {
         res.nameAndCity.last().values shouldBe listOf(null, null)
         res.age.hasNulls() shouldBe true
         res.nameAndCity.name.hasNulls() shouldBe true
+    }
+
+
+    @Test
+    fun `create data frame from map column`() {
+        val df = dataFrameOf(typed.name, typed2.nameAndCity)
+        df.nrow() shouldBe typed.nrow()
+    }
+
+    @Test
+    fun `map column properties`() {
+        typed2.nameAndCity.name() shouldBe "nameAndCity"
+        val renamed = typed2.nameAndCity.rename("newName")
+        renamed.name() shouldBe "newName"
+        renamed.select { name } shouldBe typed2.select { nameAndCity.name }
+        renamed.filter { name.startsWith("A") }.nrow() shouldBe typed.count { name.startsWith("A") }
+    }
+
+    @Test
+    @Ignore
+    fun `distinct map column`() {
+     //   typed2.nameAndCity.distinct().filter { name.startsWith("a") }
     }
 }

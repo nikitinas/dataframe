@@ -35,13 +35,13 @@ internal fun <T> DataFrame<T>.doRemove(selector: ColumnsSelector<T, *>): RemoveR
 
     if(colPaths.isEmpty()) return RemoveResult(this, emptyList())
 
-    fun dfs(cols: Iterable<AnyCol>, paths: List<ColumnPath>, node: TreeNode<ColumnPosition>): AnyFrame? {
+    fun dfs(cols: Iterable<AnyColumn>, paths: List<ColumnPath>, node: TreeNode<ColumnPosition>): AnyFrame? {
 
         if(paths.isEmpty()) return null
 
         val depth = node.depth
         val children = paths.groupBy { it[depth] }
-        val newCols = mutableListOf<AnyCol>()
+        val newCols = mutableListOf<AnyColumn>()
 
         cols.forEachIndexed { index, column ->
             val childPaths = children[column.name()]
@@ -56,7 +56,7 @@ internal fun <T> DataFrame<T>.doRemove(selector: ColumnsSelector<T, *>): RemoveR
                         node.data.wasRemoved = false
                     }
                 } else {
-                    node.data.column = column
+                    node.data.column = column as AnyCol
                 }
             } else newCols.add(column)
         }

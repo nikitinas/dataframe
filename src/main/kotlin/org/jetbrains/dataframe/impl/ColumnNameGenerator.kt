@@ -2,7 +2,6 @@ package org.jetbrains.dataframe.impl
 
 import org.jetbrains.dataframe.AnyFrame
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.rename
 
 internal class ColumnNameGenerator(columnNames: List<String> = emptyList()) {
 

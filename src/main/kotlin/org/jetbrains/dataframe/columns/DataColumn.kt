@@ -84,6 +84,6 @@ typealias AnyCol = DataColumn<*>
 
 internal val AnyCol.type get() = type()
 internal val AnyCol.hasNulls get() = hasNulls()
-internal val AnyCol.valueClass get() = type.classifier as KClass<*>
+internal val AnyCol.typeClass get() = type.classifier as KClass<*>
 
 infix fun <T, C: Column<T>> C.named(name: String) = rename(name) as C

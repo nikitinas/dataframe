@@ -7,7 +7,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.named
-import org.jetbrains.dataframe.columns.valueClass
+import org.jetbrains.dataframe.columns.typeClass
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.typed
 import org.jetbrains.dataframe.impl.trackColumnAccess
@@ -1263,7 +1263,7 @@ class DataFrameTests : BaseTest() {
             it!!.ncol() shouldBe 2
             it.columnNames() shouldBe listOf("age", "weight")
             it.columns().forEach {
-                it.valueClass shouldBe Int::class
+                it.typeClass shouldBe Int::class
             }
         }
     }
@@ -1303,7 +1303,7 @@ class DataFrameTests : BaseTest() {
     fun cast1() {
 
         val res = typed.cast { age }.to<Double>()
-        res.age.valueClass shouldBe Double::class
+        res.age.typeClass shouldBe Double::class
         res["age"].all { it is Double } shouldBe true
     }
 
@@ -1311,7 +1311,7 @@ class DataFrameTests : BaseTest() {
     fun cast2() {
 
         val res = typed.cast { weight }.to<BigDecimal>()
-        res.weight.valueClass shouldBe BigDecimal::class
+        res.weight.typeClass shouldBe BigDecimal::class
         res["weight"].all { it == null || it is BigDecimal } shouldBe true
     }
 
@@ -1319,7 +1319,7 @@ class DataFrameTests : BaseTest() {
     fun cast3() {
 
         val res = typed.cast { all() }.to<String>()
-        res.columns().forEach { it.valueClass shouldBe String::class }
+        res.columns().forEach { it.typeClass shouldBe String::class }
         res.columns().map { it.hasNulls() } shouldBe typed.columns().map { it.hasNulls() }
     }
 

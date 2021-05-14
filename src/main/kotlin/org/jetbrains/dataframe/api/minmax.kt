@@ -2,7 +2,7 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.valueClass
+import org.jetbrains.dataframe.columns.typeClass
 import org.jetbrains.dataframe.impl.columns.assertIsComparable
 import java.math.BigDecimal
 import kotlin.reflect.KClass
@@ -55,5 +55,5 @@ internal fun <T : Number> Iterable<T>.max(clazz: KClass<*>) = when (clazz) {
 fun <T: Comparable<T>> DataColumn<T?>.min() = asSequence().filterNotNull().minOrNull()
 fun <T: Comparable<T>> DataColumn<T?>.max() = asSequence().filterNotNull().maxOrNull()
 
-internal fun DataColumn<Number?>.minNumber() = asIterable().filterNotNull().min(valueClass)
-internal fun DataColumn<Number?>.maxNumber() = asIterable().filterNotNull().max(valueClass)
+internal fun DataColumn<Number?>.minNumber() = asIterable().filterNotNull().min(typeClass)
+internal fun DataColumn<Number?>.maxNumber() = asIterable().filterNotNull().max(typeClass)

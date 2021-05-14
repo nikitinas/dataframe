@@ -1,6 +1,7 @@
 package org.jetbrains.dataframe.impl
 
 import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.impl.columns.missing.MissingMapColumn
 import org.jetbrains.dataframe.impl.columns.missing.MissingFrameColumn
 import org.jetbrains.dataframe.impl.columns.missing.MissingValueColumn

@@ -2,8 +2,8 @@ package org.jetbrains.dataframe.jupyter
 
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.annotations.DataSchema
+import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.MapColumn
-import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
 import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
 import org.jetbrains.dataframe.io.toHTML
 import org.jetbrains.dataframe.stubs.DataFrameToListNamedStub

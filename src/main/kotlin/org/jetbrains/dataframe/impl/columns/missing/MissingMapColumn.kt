@@ -1,6 +1,6 @@
 package org.jetbrains.dataframe.impl.columns.missing
 
-import org.jetbrains.dataframe.AnyCol
+import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.columns.ColumnReference

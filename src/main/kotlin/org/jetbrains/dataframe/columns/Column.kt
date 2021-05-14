@@ -1,7 +1,5 @@
 package org.jetbrains.dataframe.columns
 
-import org.jetbrains.dataframe.AnyCol
-import org.jetbrains.dataframe.AnyColumn
 import org.jetbrains.dataframe.AnyRow
 import org.jetbrains.dataframe.ColumnKind
 import org.jetbrains.dataframe.headPlusIterable
@@ -49,6 +47,8 @@ interface Column<out T> : ColumnReference<T> {
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = rename(property.name)
 }
+
+typealias AnyColumn = Column<*>
 
 internal val <T> Column<T>.values get() = values()
 internal val AnyColumn.ndistinct get() = ndistinct()

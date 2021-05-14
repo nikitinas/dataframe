@@ -1,6 +1,6 @@
 package org.jetbrains.dataframe.impl.columns
 
-import org.jetbrains.dataframe.AnyCol
+import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.ColumnResolutionContext
 import org.jetbrains.dataframe.columns.ColumnAccessor

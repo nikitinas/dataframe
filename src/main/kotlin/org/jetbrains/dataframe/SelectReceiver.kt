@@ -1,12 +1,18 @@
 package org.jetbrains.dataframe
 
+import org.jetbrains.dataframe.columns.AnyCol
+import org.jetbrains.dataframe.columns.BooleanCol
 import org.jetbrains.dataframe.columns.ColumnAccessor
 import org.jetbrains.dataframe.impl.columns.ColumnAccessorImpl
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.ColumnSet
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.DoubleCol
+import org.jetbrains.dataframe.columns.IntCol
 import org.jetbrains.dataframe.columns.MapColumn
+import org.jetbrains.dataframe.columns.NumberCol
+import org.jetbrains.dataframe.columns.StringCol
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.renamedReference
 import org.jetbrains.dataframe.impl.columns.ColumnsList

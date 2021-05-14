@@ -1,6 +1,8 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.annotations.ColumnName
+import org.jetbrains.dataframe.columns.AnyCol
+import org.jetbrains.dataframe.columns.AnyColumn
 import org.jetbrains.dataframe.columns.ColumnAccessor
 import org.jetbrains.dataframe.impl.columns.ColumnAccessorImpl
 import org.jetbrains.dataframe.columns.ColumnReference
@@ -11,6 +13,7 @@ import org.jetbrains.dataframe.columns.Column
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.MapColumn
 import org.jetbrains.dataframe.columns.SingleColumn
+import org.jetbrains.dataframe.columns.StringCol
 import org.jetbrains.dataframe.columns.ValueColumn
 import org.jetbrains.dataframe.columns.size
 import org.jetbrains.dataframe.columns.type
@@ -74,14 +77,6 @@ fun <T> KProperty<T>.toColumnDef(): ColumnAccessor<T> = ColumnAccessorImpl<T>(na
 
 fun <T> ColumnAccessor<DataRow<*>>.subcolumn(childName: String): ColumnAccessor<T> =
     ColumnAccessorImpl(path() + childName)
-
-typealias DoubleCol = DataColumn<Double?>
-typealias BooleanCol = DataColumn<Boolean?>
-typealias IntCol = DataColumn<Int?>
-typealias NumberCol = DataColumn<Number?>
-typealias StringCol = DataColumn<String?>
-typealias AnyCol = DataColumn<*>
-typealias AnyColumn = Column<*>
 
 inline fun <reified T> ColumnAccessor<T>.nullable() = changeType<T?>()
 

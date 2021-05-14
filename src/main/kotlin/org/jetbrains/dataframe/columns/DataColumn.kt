@@ -1,6 +1,5 @@
 package org.jetbrains.dataframe.columns
 
-import org.jetbrains.dataframe.AnyCol
 import org.jetbrains.dataframe.AnyRow
 import org.jetbrains.dataframe.ColumnResolutionContext
 import org.jetbrains.dataframe.DataFrame
@@ -76,10 +75,15 @@ interface DataColumn<out T> : Column<T> {
     override operator fun getValue(thisRef: Any?, property: KProperty<*>): DataColumn<T> = super.getValue(thisRef, property) as DataColumn<T>
 }
 
+typealias DoubleCol = DataColumn<Double?>
+typealias BooleanCol = DataColumn<Boolean?>
+typealias IntCol = DataColumn<Int?>
+typealias NumberCol = DataColumn<Number?>
+typealias StringCol = DataColumn<String?>
+typealias AnyCol = DataColumn<*>
+
 internal val AnyCol.type get() = type()
 internal val AnyCol.hasNulls get() = hasNulls()
 internal val AnyCol.valueClass get() = type.classifier as KClass<*>
 
 infix fun <T, C: Column<T>> C.named(name: String) = rename(name) as C
-
-

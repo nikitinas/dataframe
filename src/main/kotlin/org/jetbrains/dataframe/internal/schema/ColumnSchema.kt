@@ -1,6 +1,6 @@
 package org.jetbrains.dataframe.internal.schema
 
-import org.jetbrains.dataframe.AnyCol
+import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.ColumnKind
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.MapColumn

@@ -1,5 +1,6 @@
 package org.jetbrains.dataframe
 
+import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.io.DisplayConfiguration
 import org.jetbrains.dataframe.io.toHTML
 

@@ -1,6 +1,7 @@
 package org.jetbrains.dataframe.impl.columns
 
 import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.Column

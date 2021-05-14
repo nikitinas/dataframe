@@ -1,6 +1,5 @@
 package org.jetbrains.dataframe.columns
 
-import org.jetbrains.dataframe.AnyCol
 import org.jetbrains.dataframe.ColumnKind
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataRow

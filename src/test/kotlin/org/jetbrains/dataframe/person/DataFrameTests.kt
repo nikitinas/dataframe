@@ -6,7 +6,6 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.named
 import org.jetbrains.dataframe.columns.valueClass
 import org.jetbrains.dataframe.impl.columns.isTable
@@ -51,8 +50,8 @@ class DataFrameTests : BaseTest() {
         val a = columnOf("Alice", "Bob")
         val b = columnOf(1, 2)
         val d = dataFrameOf(a, b)
-        d.nrow shouldBe 2
-        d.ncol shouldBe 2
+        d.nrow() shouldBe 2
+        d.ncol() shouldBe 2
         d.columnNames() shouldBe listOf("", "")
         d[""] shouldBe d.column(0)
     }
@@ -1441,11 +1440,11 @@ class DataFrameTests : BaseTest() {
     fun `create column with single string value`() {
         val frameCol by columnOf(typed, null, typed)
         frameCol.kind() shouldBe ColumnKind.Frame
-        frameCol.name shouldBe "frameCol"
+        frameCol.name() shouldBe "frameCol"
 
         val mapCol by columnOf(typed.name, typed.city)
         mapCol.kind() shouldBe ColumnKind.Group
-        mapCol.name shouldBe "mapCol"
+        mapCol.name() shouldBe "mapCol"
 
         val valueCol = columnOf("Alice") named "person"
         valueCol.kind() shouldBe ColumnKind.Value

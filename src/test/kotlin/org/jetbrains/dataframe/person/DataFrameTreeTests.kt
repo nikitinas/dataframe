@@ -47,7 +47,6 @@ import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.typed
-import org.jetbrains.dataframe.indices
 import org.jetbrains.dataframe.insert
 import org.jetbrains.dataframe.into
 import org.jetbrains.dataframe.intoRows
@@ -65,8 +64,6 @@ import org.jetbrains.dataframe.move
 import org.jetbrains.dataframe.moveTo
 import org.jetbrains.dataframe.moveToLeft
 import org.jetbrains.dataframe.moveToRight
-import org.jetbrains.dataframe.ncol
-import org.jetbrains.dataframe.nrow
 import org.jetbrains.dataframe.plus
 import org.jetbrains.dataframe.print
 import org.jetbrains.dataframe.remove
@@ -141,10 +138,10 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun createFrameColumn2() {
-        val id by column(typed.indices)
+        val id by column(typed.indices())
         val groups by id.map { typed[it..it] }
         val df = dataFrameOf(id, groups)
-        df.nrow shouldBe typed.nrow
+        df.nrow() shouldBe typed.nrow()
         df.forEach {
             val rowId = it[id]
             groups() shouldBe typed[rowId..rowId]
@@ -356,7 +353,7 @@ class DataFrameTreeTests : BaseTest() {
                         null -> {
                         }
                         is AnyRow -> value.isEmpty() shouldBe true
-                        is AnyFrame -> value.ncol shouldBe 0
+                        is AnyFrame -> value.ncol() shouldBe 0
                     }
                     expValues.size == 1 -> {
                         value shouldNotBe null
@@ -467,7 +464,7 @@ class DataFrameTreeTests : BaseTest() {
     @Test
     fun parentColumnTest() {
         val res = typed2.move { colsDfs { it.depth > 0 } }.toTop { it.parent!!.name + "-" + it.name }
-        res.ncol shouldBe 4
+        res.ncol() shouldBe 4
         res.columnNames() shouldBe listOf("nameAndCity-name", "nameAndCity-city", "age", "weight")
     }
 
@@ -547,7 +544,7 @@ class DataFrameTreeTests : BaseTest() {
         val nameAndAge by columnGroup()
         val cityFirst by column<String>(nameAndAge)
         val grouped = typed.group { name and age }.into(nameAndAge).add(cityFirst) { city?.get(0) }
-        grouped[nameAndAge].ncol shouldBe 3
+        grouped[nameAndAge].ncol() shouldBe 3
 
         val left = grouped - { weight }
         val right = grouped - { city }
@@ -562,7 +559,7 @@ class DataFrameTreeTests : BaseTest() {
             typed.update { name }.with { it.reversed() }.groupBy { name }.mapGroups { it?.remove { name and city } }
         val groupCol = left.groups.toAccessor()
         val joined = left.plain().join(right.plain()) { groupCol }
-        joined.ncol shouldBe 3
+        joined.ncol() shouldBe 3
         val name_1 by column<String>()
         joined.columnNames() shouldBe listOf(typed.name.name(), groupCol.name(), name_1.name())
         joined[groupCol].kind() shouldBe ColumnKind.Frame

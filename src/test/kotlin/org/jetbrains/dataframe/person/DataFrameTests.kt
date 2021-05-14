@@ -1500,4 +1500,14 @@ class DataFrameTests : BaseTest() {
         val r2 = df[0]["animal", "age"]
         r2 shouldBe df[animal, age][0]
     }
+
+    @Test
+    fun between() {
+
+        typed.filter { age.between(20, 40, false) }.nrow() shouldBe 2
+
+        typed.filter { age in 20..40 }.nrow() shouldBe 5
+
+        typed.age.between(20,40).count { it } shouldBe 5
+    }
 }

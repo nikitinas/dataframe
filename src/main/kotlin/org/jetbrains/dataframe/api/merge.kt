@@ -9,7 +9,7 @@ inline fun <T, C, reified R> MergeClause<T, C, R>.into(columnName: String) = int
 inline fun <T, C, reified R> MergeClause<T, C, R>.into(columnPath: ColumnPath): DataFrame<T> {
     val grouped = df.move(selector).under(columnPath)
     val res = grouped.update { getGroup(columnPath) }.with {
-        transform(it.values as List<C>)
+        transform(it.values() as List<C>)
     }
     return res
 }

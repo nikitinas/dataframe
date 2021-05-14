@@ -749,7 +749,7 @@ class DataFrameTests : BaseTest() {
 
         val res = typed + typed + typed
         res.name.size() shouldBe 3 * typed.nrow()
-        res.rows().forEach { it.values shouldBe typed[it.index % typed.nrow()].values }
+        res.rows().forEach { it.values() shouldBe typed[it.index % typed.nrow()].values() }
     }
 
     @Test
@@ -1428,7 +1428,7 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `mean all columns`() {
-        typed.mean().values shouldBe listOf(typed.age.mean(), typed.weight.mean())
+        typed.mean().values() shouldBe listOf(typed.age.mean(), typed.weight.mean())
     }
 
     @Test
@@ -1490,7 +1490,7 @@ class DataFrameTests : BaseTest() {
         filtered.ncol() shouldBe 2
         filtered.nrow() shouldBe 1
 
-        val filtered2 = df[1][animal, age]
-        filtered2.values shouldBe listOf(animal[1], age[1])
+        val row = df[1][animal, age]
+        row.values() shouldBe listOf(animal[1], age[1])
     }
 }

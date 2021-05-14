@@ -33,7 +33,7 @@ interface DataRow<out T>: DataRowBase<T> {
 
     fun <T> read(name: String) = get(name) as T
     fun size() = owner.ncol()
-    val values: List<Any?>
+    fun values(): List<Any?>
 
     fun int(name: String) = read<Int>(name)
     fun nint(name: String) = read<Int?>(name)
@@ -82,7 +82,9 @@ interface DataRow<out T>: DataRowBase<T> {
     infix fun <R> KProperty1<*, R>.neq(a: R?) = get(this) != a
 }
 
-val <T> DataRow<T>.index @JvmName("getRowIndex") get() = getIndex()
+internal val AnyRow.values get() = values()
+val AnyRow.index @JvmName("getRowIndex") get() = getIndex()
+
 val <T> DataRow<T>.prev: DataRow<T>? get() = getPrev()
 val <T> DataRow<T>.next: DataRow<T>? get() = getNext()
 

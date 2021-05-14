@@ -16,7 +16,9 @@ internal class DataRowImpl<T>(private val index: Int, override val owner: DataFr
     override fun getRow(index: Int): DataRow<T>? =
         if (index >= 0 && index < owner.nrow()) DataRowImpl(index, owner) else null
 
-    override val values by lazy { owner.columns().map { it[index] } }
+    val values by lazy { owner.columns().map { it[index] } }
+
+    override fun values() = values
 
     override fun get(columnIndex: Int): Any? {
         val column = owner.column(columnIndex)
@@ -27,7 +29,7 @@ internal class DataRowImpl<T>(private val index: Int, override val owner: DataFr
     override fun toString() = renderToString()
 
     override fun equals(other: Any?): Boolean {
-        val o = other as? DataRow<T>
+        val o = other as? DataRowImpl<T>
         if (o == null) return false
         return values.equals(o.values)
     }

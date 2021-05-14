@@ -598,7 +598,7 @@ class DataFrameTreeTests : BaseTest() {
     fun append() {
         val res = typed2.append(listOf("Bill", "San Francisco"), null, 66)
         res.nrow() shouldBe typed2.nrow() + 1
-        res.nameAndCity.last().values shouldBe listOf("Bill", "San Francisco")
+        res.nameAndCity.last().values() shouldBe listOf("Bill", "San Francisco")
         res.age.hasNulls() shouldBe true
     }
 
@@ -606,7 +606,7 @@ class DataFrameTreeTests : BaseTest() {
     fun `append nulls`() {
         val res = typed2.append(null, null, null)
         res.nrow() shouldBe typed2.nrow() + 1
-        res.nameAndCity.last().values shouldBe listOf(null, null)
+        res.nameAndCity.last().values() shouldBe listOf(null, null)
         res.age.hasNulls() shouldBe true
         res.nameAndCity.name.hasNulls() shouldBe true
     }

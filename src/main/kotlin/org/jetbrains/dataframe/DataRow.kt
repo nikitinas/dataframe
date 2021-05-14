@@ -28,6 +28,9 @@ interface DataRow<out T>: DataRowBase<T> {
     operator fun <R> ColumnReference<R>.invoke() = get(this)
     operator fun <R> String.invoke() = get(this) as R
 
+    operator fun get(first: Column, vararg other: Column) = owner.select(listOf(first) + other)[index]
+    operator fun get(first: String, vararg other: String) = owner.select(listOf(first) + other)[index]
+
     fun <T> read(name: String) = get(name) as T
     fun size() = owner.ncol()
     val values: List<Any?>

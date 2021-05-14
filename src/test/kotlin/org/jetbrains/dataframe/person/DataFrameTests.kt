@@ -1486,8 +1486,11 @@ class DataFrameTests : BaseTest() {
 
         val df = dataFrameOf(animal, age, visits)
 
-        val filtered = df[1..1][animal, age]
+        val filtered = df[1..1].get(animal, age)
         filtered.ncol() shouldBe 2
         filtered.nrow() shouldBe 1
+
+        val filtered2 = df[1][animal, age]
+        filtered2.values shouldBe listOf(animal[1], age[1])
     }
 }

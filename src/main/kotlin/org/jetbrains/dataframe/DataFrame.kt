@@ -168,8 +168,8 @@ interface DataFrame<out T> : DataFrameBase<T> {
     fun tryGetColumnGroup(name: String) = tryGetColumn(name) as? ColumnGroup<*>
     fun getColumnGroup(name: String) = tryGetColumnGroup(name)!!
 
-    operator fun get(col1: Column, col2: Column, vararg other: Column) = select(listOf(col1, col2) + other)
-    operator fun get(col1: String, col2: String, vararg other: String) = select(getColumns(listOf(col1, col2) + other))
+    operator fun get(first: Column, vararg other: Column) = select(listOf(first) + other)
+    operator fun get(first: String, vararg other: String) = select(listOf(first) + other)
 
     fun all(predicate: RowFilter<T>): Boolean = rows().all { predicate(it, it) }
     fun any(predicate: RowFilter<T>): Boolean = rows().any { predicate(it, it) }

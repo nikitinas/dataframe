@@ -120,7 +120,7 @@ class GatherTests {
 
             val newDf = listOf(
                     name.replaceAll(MutableList(cols.size){ name[0] }),
-                    mode.withValues(cols.map { it.name() }, false),
+                    mode.withValues(cols.map { it.name }),
                 column("c1", dataRows.map { it.tryGet("c1") as? String}),
                 column("c2", dataRows.map { it.tryGet("c2") as? String}),
                 column("c3", dataRows.map { it.tryGet("c3") as? String})

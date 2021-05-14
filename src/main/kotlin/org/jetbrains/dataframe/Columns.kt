@@ -87,8 +87,10 @@ inline fun <reified T> getType() = typeOf<T>()
 fun KClass<*>.createStarProjectedType(nullable: Boolean) =
     this.starProjectedType.let { if (nullable) it.withNullability(true) else it }
 
-inline fun <reified T> ColumnReference<T>.withValues(values: List<T>, hasNulls: Boolean) =
-    column(name(), values, hasNulls)
+inline fun <reified T> ColumnReference<T>.withValues(vararg values: T) = withValues(values.asIterable())
+
+inline fun <reified T> ColumnReference<T>.withValues(values: Iterable<T>) =
+    DataColumn.create(name(), values.asList(), getType<T>())
 
 fun AnyCol.toDataFrame() = dataFrameOf(listOf(this))
 
@@ -161,6 +163,9 @@ fun <T> Iterable<DataFrame<T>?>.toFrameColumn(name: String): FrameColumn<T> =
 
 inline fun <reified T> Iterable<T>.toColumn(name: String = ""): ValueColumn<T> =
     asList().let { DataColumn.create(name, it, getType<T>().withNullability(it.any { it == null })) }
+
+inline fun <reified T> Iterable<T>.toColumn(ref: ColumnReference<T>): ValueColumn<T> =
+    toColumn(ref.name())
 
 fun Iterable<AnyFrame?>.toColumn() = columnOf(this)
 

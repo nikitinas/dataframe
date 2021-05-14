@@ -65,6 +65,26 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
+    fun `create column reference`(){
+
+        val name by column<String>()
+        val col = name.withValues("Alice", "Bob")
+        val df = col.toDataFrame()
+        df.nrow shouldBe 2
+        df.columnNames() shouldBe listOf("name")
+    }
+
+    @Test
+    fun `add values to column reference`(){
+
+        val name by column<String>()
+        val values = listOf("Alice", "Bob")
+        val col1 = name.withValues(values)
+        val col2 = values.toColumn(name)
+        col1 shouldBe col2
+    }
+
+    @Test
     fun `size`() {
         df.size() shouldBe DataFrameSize(df.ncol(), df.nrow())
     }

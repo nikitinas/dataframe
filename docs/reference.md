@@ -3,6 +3,10 @@
 **Table of contents**
 <!--- TOC -->
 
+* [Create columns](#create-columns)
+    * [Unnamed column with values](#unnamed-column-with-values)
+    * [Named column with values](#named-column-with-values)
+    * [Named column without values](#named-column-without-values)
 * [Create `DataFrame`](#create-dataframe)
     * [from values](#from-values)
     * [from columns](#from-columns)
@@ -79,6 +83,44 @@
 
 <!--- END -->
 
+## Create columns
+
+### Unnamed column with values
+```kotlin
+val col = columnOf("Alice", "Bob")
+val col = listOf("Alice", "Bob").toColumn()
+```
+### Named column with values
+```kotlin
+val name by columnOf("Alice", "Bob")
+val col = listOf("Alice", "Bob").toColumn("name")
+```
+To rename column use function `rename` or infix function `named`:
+```kotlin
+val unnamedCol = columnOf("Alice", "Bob")
+val col = unnamedCol.rename("name")
+val col = columnOf("Alice", "Bob") named "name"
+```
+### Named column without values
+```kotlin
+val name by column<String>()
+val col = column<String>("name")
+```
+Named column without values is called `ColumnReference` and can be used in `DataFrame` operations for typed access to columns:
+```kotlin
+df.filter { it[name].startsWith("A") }
+df.sortBy { col }
+```
+`ColumnReference` can be converted to `DataColumn` by adding values:
+```kotlin
+val col = name.withValues("Alice", "Bob")
+```
+or for `Iterable` of values:
+```kotlin
+val values = listOf("Alice", "Bob")
+val col = name.withValues(values)
+val col = values.toColumn(name)
+```
 ## Create `DataFrame`
 
 Several ways to convert data into `DataFrame`
@@ -91,7 +133,8 @@ val df = dataFrameOf("name", "age")(
 ```
 
 ### from columns
-`DataFrame` can be created from one or several `DataColumn`s
+`DataFrame` can be created from one or several [columns](#create-columns)
+
 ```kotlin
 val name by columnOf("Alice", "Bob")
 val age by columnOf(15, 20)

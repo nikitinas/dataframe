@@ -3,15 +3,13 @@ package org.jetbrains.dataframe.impl.columns
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.DataColumnGroup
 import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.createType
 import org.jetbrains.dataframe.impl.renderSchema
 import java.lang.UnsupportedOperationException
 import kotlin.reflect.KType
 
-internal val mapColumnType = createType<AnyRow>()
-
+internal val anyRowType = createType<AnyRow>()
 
 internal class ColumnGroupImpl<T>(override val df: DataFrame<T>, val name: String) : ColumnGroup<T>, DataColumnInternal<DataRow<T>>,
     DataColumnGroup<T>, DataFrame<T> by df {
@@ -20,7 +18,7 @@ internal class ColumnGroupImpl<T>(override val df: DataFrame<T>, val name: Strin
 
     override fun ndistinct() = distinct.nrow()
 
-    override fun type() = mapColumnType
+    override fun type() = anyRowType
 
     private val distinct by lazy { df.distinct() }
 

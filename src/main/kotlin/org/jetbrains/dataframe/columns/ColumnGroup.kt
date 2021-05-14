@@ -21,7 +21,7 @@ interface ColumnGroup<out T> : Column<DataRow<T>>, DataFrame<T> {
 
     override fun kind() = ColumnKind.Group
 
-    override fun distinct(): DataColumnGroup<T>
+    override fun distinct(): ColumnGroup<T>
 
     override fun get(firstIndex: Int, vararg otherIndices: Int): ColumnGroup<T>
 

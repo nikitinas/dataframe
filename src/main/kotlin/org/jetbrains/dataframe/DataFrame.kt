@@ -202,9 +202,9 @@ interface DataFrame<out T> : DataFrameBase<T> {
     fun <R> mapIndexed(action: (Int, DataRow<T>) -> R) = rows().mapIndexed(action)
 
     fun <R> mapIndexedNotNull(action: (Int, DataRow<T>) -> R?) = rows().mapIndexedNotNull(action)
-
-    fun distinct() = distinctBy { it.values }
 }
+
+fun <T> DataFrame<T>.distinct() = distinctBy { it.values }
 
 fun AnyFrame.size() = DataFrameSize(ncol(), nrow())
 

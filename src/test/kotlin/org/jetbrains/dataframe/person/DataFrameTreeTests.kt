@@ -27,6 +27,7 @@ import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.toAccessor
 import org.jetbrains.dataframe.count
 import org.jetbrains.dataframe.dataFrameOf
+import org.jetbrains.dataframe.distinct
 import org.jetbrains.dataframe.duplicate
 import org.jetbrains.dataframe.emptyDataFrame
 import org.jetbrains.dataframe.execute
@@ -434,12 +435,16 @@ class DataFrameTreeTests : BaseTest() {
         val col = updated[info.name()]
         col.kind() shouldBe ColumnKind.Frame
         val table = col.asTable()
-        table.schema.value.columns.map { it.key }.sorted() shouldBe typed.select { age and weight }.columnNames().sorted()
+        table.schema.value.columns.map { it.key }.sorted() shouldBe typed.select { age and weight }.columnNames()
+            .sorted()
     }
 
     @Test
     fun extensionPropertiesTest() {
-        val code = CodeGenerator.create().generate<GroupedPerson>(interfaceMode = InterfaceGenerationMode.None, extensionProperties = true).declarations
+        val code = CodeGenerator.create().generate<GroupedPerson>(
+            interfaceMode = InterfaceGenerationMode.None,
+            extensionProperties = true
+        ).declarations
         val dataFrameBase = DataFrameBase::class.qualifiedName
         val dataFrameRowBase = DataRowBase::class.qualifiedName
         val dataFrameRow = DataRow::class.qualifiedName
@@ -506,7 +511,8 @@ class DataFrameTreeTests : BaseTest() {
         val grouped = typed.groupBy { city }
         val groupCol = grouped.groups.name()
         val plain = grouped.plain()
-        val res = plain.split(groupCol).intoRows().remove { it[groupCol]["city"] }.ungroup(groupCol).sortBy { name and age }
+        val res =
+            plain.split(groupCol).intoRows().remove { it[groupCol]["city"] }.ungroup(groupCol).sortBy { name and age }
         res shouldBe typed.sortBy { name and age }.moveToLeft { city }
     }
 
@@ -517,9 +523,9 @@ class DataFrameTreeTests : BaseTest() {
         val plain = grouped.plain()
             .update { groupCol }.at(1).withNull()
             .update { groupCol }.at(2).with { emptyDataFrame(0) }
-            .update { groupCol }.at(3).with { it.filter {false} }
+            .update { groupCol }.at(3).with { it.filter { false } }
         val res = plain.explode { groupCol }
-        val expected = plain[groupCol].sumBy { Math.max(it?.nrow() ?: 0, 1)}
+        val expected = plain[groupCol].sumBy { Math.max(it?.nrow() ?: 0, 1) }
         res.nrow() shouldBe expected
     }
 
@@ -552,7 +558,8 @@ class DataFrameTreeTests : BaseTest() {
     @Test
     fun `join by frame column`() {
         val left = typed.groupBy { name }.mapGroups { it?.remove { name and city } }
-        val right = typed.update { name }.with { it.reversed() }.groupBy { name }.mapGroups { it?.remove { name and city } }
+        val right =
+            typed.update { name }.with { it.reversed() }.groupBy { name }.mapGroups { it?.remove { name and city } }
         val groupCol = left.groups.toAccessor()
         val joined = left.plain().join(right.plain()) { groupCol }
         joined.ncol shouldBe 3
@@ -614,7 +621,7 @@ class DataFrameTreeTests : BaseTest() {
     }
 
     @Test
-    fun `map column properties`() {
+    fun `column group properties`() {
         typed2.nameAndCity.name() shouldBe "nameAndCity"
         val renamed = typed2.nameAndCity.rename("newName")
         renamed.name() shouldBe "newName"
@@ -623,8 +630,8 @@ class DataFrameTreeTests : BaseTest() {
     }
 
     @Test
-    @Ignore
-    fun `distinct map column`() {
-     //   typed2.nameAndCity.distinct().filter { name.startsWith("a") }
+    fun `distinct at column group`() {
+        typed2.nameAndCity.distinct().filter { name.startsWith("A") } shouldBe typed.select { name and city }.distinct()
+            .filter { name.startsWith("A") }
     }
 }

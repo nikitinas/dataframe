@@ -5,7 +5,6 @@ import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.Column
-import org.jetbrains.dataframe.columns.DataColumnGroup
 import org.jetbrains.dataframe.columns.ColumnGroup
 import kotlin.reflect.KProperty
 

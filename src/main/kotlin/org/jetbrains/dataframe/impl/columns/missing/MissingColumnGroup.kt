@@ -4,7 +4,7 @@ import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.DataColumnGroup
+import org.jetbrains.dataframe.impl.columns.DataColumnGroup
 
 internal class MissingColumnGroup<T> : MissingDataColumn<DataRow<T>>(), DataColumnGroup<T> {
 

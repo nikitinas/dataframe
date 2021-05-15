@@ -128,11 +128,26 @@ val col = values.toColumn(name)
 
 Several ways to convert data into `DataFrame`
 ### from values
+2 columns and 3 rows:
 ```kotlin
 val df = dataFrameOf("name", "age")(
    "Alice", 15,
-   "Bob", 20
+   "Bob", 20,
+   "Mark", 100
 )
+```
+Columns from 'a' to 'z', values from 1 to 10 for each column:
+```kotlin
+val df = dataFrameOf('a'..'z') { 1..10 }
+```
+Columns from 1 to 5 filled with 7 random double values each:
+```kotlin
+val df = dataFrameOf(1..5).randomDouble(7)
+```
+Column names from list, fill each column with 15 'true' values:
+```kotlin
+val names = listOf("first", "second", "third")
+val df = dataFrameOf(names).fill(15, true)
 ```
 
 ### from columns
@@ -162,7 +177,7 @@ val persons = listOf(Person("Alice", 15), Person("Bob", 20))
 ```
 This list can be converted to `DataFrame` with columns for every public property of `Person` class:
 ```kotlin
-persons.toDataFrame()
+persons.toDataFrameByProperties()
 ```
 
 name | age

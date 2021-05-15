@@ -25,14 +25,19 @@ class DataFrameTests : BaseTest() {
 
         dataFrameOf("name", "age", "city", "weight")(df.columns()) shouldBe df
 
-        dataFrameOf("name", "age", "city", "weight")(typed.name named "bla", typed.age named "", typed.city.rename("qq"), typed.weight.named("asda")) shouldBe df
+        dataFrameOf("name", "age", "city", "weight")(
+            typed.name named "bla",
+            typed.age named "",
+            typed.city.rename("qq"),
+            typed.weight.named("asda")
+        ) shouldBe df
 
         val c1 = typed.name.toList().toColumn()
         val c2 = typed.age.toList().toColumn()
         val c3 = typed.city.toList().toColumn()
         val c4 = typed.weight.toList().toColumn()
 
-        dataFrameOf("name", "age", "city", "weight")(c1,c2,c3,c4) shouldBe df
+        dataFrameOf("name", "age", "city", "weight")(c1, c2, c3, c4) shouldBe df
     }
 
     @Test
@@ -65,7 +70,7 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun `create column reference`(){
+    fun `create column reference`() {
 
         val name by column<String>()
         val col = name.withValues("Alice", "Bob")
@@ -75,7 +80,7 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun `add values to column reference`(){
+    fun `add values to column reference`() {
 
         val name by column<String>()
         val values = listOf("Alice", "Bob")
@@ -85,7 +90,7 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun `guess column type`(){
+    fun `guess column type`() {
         val col by columnOf("Alice", 1, 3.5)
         col.type() shouldBe getType<Any>()
         val filtered = col.filter { it is String }
@@ -94,8 +99,8 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun `create from map`(){
-        val data = mapOf("name" to listOf("Alice", "Bob"), "age" to listOf(15,null))
+    fun `create from map`() {
+        val data = mapOf("name" to listOf("Alice", "Bob"), "age" to listOf(15, null))
         val df = data.toDataFrame()
         df.ncol() shouldBe 2
         df.nrow() shouldBe 2
@@ -105,7 +110,7 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun `toMap`(){
+    fun `toMap`() {
         val map = df.toMap()
         map.size shouldBe 4
         map.forEach {
@@ -181,7 +186,8 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `incorrect column nullability`() {
 
-        val col = column<Int>().named("weight") // non-nullable column definition is incorrect here, because actual dataframe has nulls in this column
+        val col =
+            column<Int>().named("weight") // non-nullable column definition is incorrect here, because actual dataframe has nulls in this column
 
         shouldThrow<NullPointerException> {
             println(df[2][col])
@@ -895,7 +901,7 @@ class DataFrameTests : BaseTest() {
     fun `spread to bool distinct rows`() {
         val res = typed.spread { city }.into { it }
         res.ncol() shouldBe typed.ncol() + typed.city.ndistinct() - 2
-
+        res.print()
         for (i in 0 until typed.nrow()) {
             val city = typed[i][city]
             if (city != null) res[i][city] == true
@@ -1453,33 +1459,35 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `append many`() {
-        val res = typed.append("John", 22, "New York", 46,
-                    "Philip", 25, "Chelyabinsk", 36)
+        val res = typed.append(
+            "John", 22, "New York", 46,
+            "Philip", 25, "Chelyabinsk", 36
+        )
         res.nrow shouldBe typed.nrow + 2
     }
 
     @Test
     fun `first last`() {
         typed.first() shouldBe typed[0]
-        typed.last() shouldBe typed[typed.nrow-1]
+        typed.last() shouldBe typed[typed.nrow - 1]
         typed.city.first() shouldBe typed[0].city
-        typed.city.last() shouldBe typed[typed.nrow-1].city
+        typed.city.last() shouldBe typed[typed.nrow - 1].city
     }
 
     @Test
     fun `select several rows`() {
         df[2, 5].nrow() shouldBe 2
-        df[0,3,5] shouldBe df[listOf(0,3,5)]
-        df[3,5][name, age] shouldBe df[name, age][3,5]
+        df[0, 3, 5] shouldBe df[listOf(0, 3, 5)]
+        df[3, 5][name, age] shouldBe df[name, age][3, 5]
     }
 
     @Test
     fun `select several column values`() {
-        typed.name[2,5,6] shouldBe typed.name.slice(listOf(2, 5, 6))
+        typed.name[2, 5, 6] shouldBe typed.name.slice(listOf(2, 5, 6))
     }
 
     @Test
-    fun `get by column accessors`(){
+    fun `get by column accessors`() {
         val animal by columnOf("cat", "snake", "dog")
         val age by columnOf(2.5, 3.0, 0.5)
         val visits by columnOf(1, 3, 2)
@@ -1508,20 +1516,79 @@ class DataFrameTests : BaseTest() {
 
         typed.filter { age in 20..40 }.nrow() shouldBe 5
 
-        typed.age.between(20,40).count { it } shouldBe 5
+        typed.age.between(20, 40).count { it } shouldBe 5
     }
 
     @Test
     fun iterators() {
 
         var counter = 0
-        for(a in df) counter++
+        for (a in df) counter++
         counter shouldBe df.nrow()
 
         var ageSum = 0
-        for(a in typed.age)
+        for (a in typed.age)
             ageSum += a
 
         ageSum shouldBe typed.age.sum()
+    }
+
+    @Test
+    fun `create with random`() {
+        val df = dataFrameOf('a'..'f').randomInt(3)
+        df.nrow() shouldBe 3
+        df.ncol() shouldBe ('a'..'f').count()
+        df.columns().forEach { it.type() shouldBe getType<Int>() }
+    }
+
+    @Test
+    fun `create with list builder`() {
+        val df = dataFrameOf(4..10 step 2) { h -> List(10) { h } }
+        df.nrow() shouldBe 10
+        df.ncol() shouldBe 4
+        df.columns().forEach { col -> col.forEach { it shouldBe col.name().toInt() } }
+    }
+
+    @Test
+    fun `create with vararg header and builder`() {
+        val df = dataFrameOf("first", "secon", "third") { name -> name.toCharArray().toList() }
+        df.nrow() shouldBe 5
+        df.ncol() shouldBe 3
+        df.columns().forEach { col -> col.name() shouldBe col.values().joinToString("") }
+    }
+
+    @Test
+    fun `create with vararg doubles and fill equal`() {
+        val df = dataFrameOf(1.0, 2.5).fill(5, true)
+        df.nrow() shouldBe 5
+        df.ncol() shouldBe 2
+        df.columns().forEach { col -> col.forEach { it shouldBe true } }
+    }
+
+    @Test
+    fun `create with list of names and fill nulls`() {
+        val names = listOf("first", "second")
+        val df = dataFrameOf(names).nulls<Double>(10)
+        df.nrow() shouldBe 10
+        df.ncol() shouldBe 2
+        df.columns().forEach { col -> (col.type() == getType<Double?>() && col.allNulls()) shouldBe true }
+    }
+
+    @Test
+    fun `create with list of names and fill true`() {
+        val first by column<Boolean>()
+        val second by column<Boolean>()
+        val df = dataFrameOf(first, second).fill(5) { true }
+        df.nrow() shouldBe 5
+        df.ncol() shouldBe 2
+        df.columns().forEach { col -> (col.type() == getType<Boolean>() && col.all { it == true }) shouldBe true }
+    }
+
+    @Test
+    fun `create with int range header and int range data `() {
+        val df = dataFrameOf(1..5) { 1..5 }
+        df.nrow() shouldBe 5
+        df.ncol() shouldBe 5
+        df.columns().forEach { col -> col.forEachIndexed { row, value -> value shouldBe row + 1 } }
     }
 }

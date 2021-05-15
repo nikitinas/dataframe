@@ -9,9 +9,9 @@ import org.jetbrains.dataframe.impl.ColumnNameGenerator
 import org.jetbrains.dataframe.impl.DataFrameImpl
 import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.columns.ColumnWithParent
+import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.KType
 import kotlin.reflect.full.declaredMembers
 import kotlin.reflect.full.withNullability
 import kotlin.reflect.jvm.javaField
@@ -72,6 +72,16 @@ fun dataFrameOf(vararg header: ColumnReference<*>) = DataFrameBuilder(header.map
 fun dataFrameOf(vararg columns: AnyColumn): AnyFrame = dataFrameOf(columns.asIterable())
 
 fun dataFrameOf(vararg header: String) = dataFrameOf(header.toList())
+
+inline fun <T, reified C> dataFrameOf(first: T, second: T, vararg other: T, fill: (T) -> Iterable<C>) = dataFrameOf(listOf(first, second) + other, fill)
+
+fun <T> dataFrameOf(first: T, second: T, vararg other: T) = dataFrameOf((listOf(first, second) + other).map {it.toString()})
+
+fun <T> dataFrameOf(header: Iterable<T>) = dataFrameOf(header.map {it.toString()})
+
+inline fun <T, reified C> dataFrameOf(header: Iterable<T>, fill: (T) -> Iterable<C>) = header.map { value -> fill(value).asList().let { DataColumn.createWithNullCheck(value.toString(), it)} }.toDataFrame()
+
+fun dataFrameOf(header: CharProgression) = dataFrameOf(header.map { it.toString() })
 
 fun dataFrameOf(header: List<String>) = DataFrameBuilder(header)
 
@@ -140,61 +150,70 @@ fun <T> Iterable<Pair<ColumnPath, AnyColumn>>.toDataFrame(): DataFrame<T> {
 @JvmName("toDataFrameAnyCol")
 fun Iterable<AnyColumn>.toDataFrame() = asDataFrame<Unit>()
 
-class DataFrameBuilder(private val columnNames: List<String>) {
+class DataFrameBuilder(private val header: List<String>) {
 
     operator fun invoke(vararg columns: AnyCol) = invoke(columns.asIterable())
 
     operator fun invoke(columns: Iterable<AnyCol>): AnyFrame {
         val cols = columns.asList()
-        require(cols.size == columnNames.size) { "Number of columns differs from number of column names" }
+        require(cols.size == header.size) { "Number of columns differs from number of column names" }
         return cols.mapIndexed { i, col ->
-            col.rename(columnNames[i])
+            col.rename(header[i])
         }.asDataFrame<Unit>()
     }
 
     operator fun invoke(vararg values: Any?) = invoke(values.asIterable())
 
     @JvmName("invoke1")
-    operator fun invoke(args: Iterable<Any?>): AnyFrame {
+    operator fun invoke(values: Iterable<Any?>): AnyFrame {
 
-        val values = args.asList()
+        val list = values.asList()
 
-        require(columnNames.size > 0 && values.size.rem(columnNames.size) == 0) {
-            "Data dimension ${columnNames.size} is not compatible with length of data vector ${values.size}"
+        val ncol = header.size
+
+        require(header.size > 0 && list.size.rem(ncol) == 0) {
+            "Number of values ${list.size} is not divisible by number of columns $ncol"
         }
 
-        val columnValues = values
-            .mapIndexed { i, value -> i.rem(columnNames.size) to value }
-            .groupBy { it.first }.values.map {
-                it.map { it.second }
+        val nrow = list.size / ncol
+
+        return (0 until ncol).map { col ->
+            val colValues = (0 until nrow).map { row ->
+                list[row * ncol + col]
             }
-
-        val columns = columnNames.zip(columnValues).map { (columnName, values) ->
-            guessColumnType(columnName, values)
-        }
-
-        return dataFrameOf(columns)
+            DataColumn.create(header[col], colValues)
+        }.toDataFrame()
     }
+
     operator fun invoke(args: Sequence<Any?>) = invoke(*args.toList().toTypedArray())
+
+    fun withColumns(columnBuilder: (String)->AnyCol): AnyFrame = header.map(columnBuilder).toDataFrame()
+
+    inline operator fun <reified T> invoke(crossinline valuesBuilder: (String) -> Iterable<T>) = withColumns { name -> valuesBuilder(name).let { DataColumn.createWithNullCheck(name, it.asList()) }}
+
+    inline fun <reified C> fill(nrow: Int, value: C) = withColumns { name -> DataColumn.create(name, List(nrow) { value }, getType<C>().withNullability(value == null)) }
+
+    inline fun <reified C> nulls(nrow: Int) = fill<C?>(nrow, null)
+
+    inline fun <reified C> fillIndexed(nrow: Int, crossinline init: (Int, String) -> C) = withColumns { name -> DataColumn.createWithNullCheck(name, List(nrow){ init(it, name) })}
+
+    inline fun <reified C> fill(nrow: Int, crossinline init: (Int) -> C) = withColumns { name -> DataColumn.createWithNullCheck(name, List(nrow, init))}
+
+    private inline fun <reified C> fillNotNull(nrow: Int, crossinline init: (Int) -> C) = withColumns { name -> DataColumn.create(name, List(nrow, init), getType<C>())}
+
+    fun randomInt(nrow: Int) = fillNotNull(nrow) { Random.nextInt() }
+
+    fun randomDouble(nrow: Int) = fillNotNull(nrow) { Random.nextDouble() }
+
+    fun randomFloat(nrow: Int) = fillNotNull(nrow) { Random.nextFloat() }
+
+    fun randomBoolean(nrow: Int) = fillNotNull(nrow) { Random.nextBoolean() }
 }
 
 internal fun Iterable<KClass<*>>.commonParent() = commonParents(this).withMostSuperclasses() ?: Any::class
 
 internal fun Iterable<KClass<*>>.commonType(nullable: Boolean) = commonParent().createStarProjectedType(nullable)
 
-internal fun guessValueType(values: List<Any?>): KType {
-    var nullable = false
-    val types = values.map {
-        if (it == null) nullable = true
-        it?.javaClass
-    }.distinct().mapNotNull { it?.kotlin }
-    return types.commonType(nullable)
-}
-
-internal fun guessColumnType(name: String, values: List<Any?>): AnyCol = guessValueType(values).let {
-    DataColumn.create(name, values, it)
-}
-
 fun Map<String, Iterable<Any?>>.toDataFrame(): AnyFrame {
-    return map { guessColumnType(it.key, it.value.toList()) }.toDataFrame()
+    return map { DataColumn.create(it.key, it.value.asList()) }.toDataFrame()
 }

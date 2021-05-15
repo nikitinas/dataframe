@@ -1,10 +1,14 @@
 package org.jetbrains.dataframe.columns
 
+import org.jetbrains.dataframe.AnyFrame
 import org.jetbrains.dataframe.AnyRow
 import org.jetbrains.dataframe.ColumnResolutionContext
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataRow
+import org.jetbrains.dataframe.commonType
 import org.jetbrains.dataframe.getType
+import org.jetbrains.dataframe.impl.anyNull
+import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.union
 import org.jetbrains.dataframe.impl.columns.FrameColumnImpl
 import org.jetbrains.dataframe.impl.columns.ColumnGroupImpl
@@ -16,6 +20,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.full.withNullability
 
 /**
  * Column with type, name/path and values
@@ -41,17 +46,11 @@ interface DataColumn<out T> : Column<T> {
 
         internal fun <T> create(name: String, groups: List<DataFrame<T>?>, hasNulls: Boolean? = null, schema: Lazy<DataFrameSchema>? = null): FrameColumn<T> = FrameColumnImpl(name, groups, hasNulls, schema)
 
-        internal fun <T> createGuess(name: String, values: List<T>, type:KType, defaultValue: T? = null): DataColumn<T> {
-            val kClass = type.classifier!! as KClass<*>
-            if(kClass.isSubclassOf(DataRow::class)){
-                val df = values.map { (it as AnyRow).toDataFrame() }.union()
-                return create(name, df) as DataColumn<T>
-            }
-            if(kClass.isSubclassOf(DataFrame::class)){
-                return create(name, values as List<DataFrame<T>?>, null) as DataColumn<T>
-            }
-            return create(name, values, type, defaultValue)
-        }
+        fun create(name: String, values: List<Any?>) = guessColumnType(name, values)
+
+        fun <T> createWithNullCheck(name: String, values: List<T>, type: KType): ValueColumn<T> = create(name, values, type.withNullability(values.anyNull()))
+
+        inline fun <reified T> createWithNullCheck(name: String, values: List<T>): ValueColumn<T> = createWithNullCheck(name, values, getType<T>())
 
         fun empty() = create("", emptyList<Unit>(), getType<Unit>()) as AnyCol
     }
@@ -89,3 +88,24 @@ internal val AnyCol.hasNulls get() = hasNulls()
 internal val AnyCol.typeClass get() = type.classifier as KClass<*>
 
 infix fun <T, C: Column<T>> C.named(name: String) = rename(name) as C
+
+internal fun guessValueType(values: List<Any?>): KType {
+    var nullable = false
+    val types = values.map {
+        if (it == null) nullable = true
+        it?.javaClass
+    }.distinct().mapNotNull { it?.kotlin }
+    return types.commonType(nullable)
+}
+
+internal fun guessColumnType(name: String, values: List<Any?>, type: KType? = null, defaultValue: Any? = null): AnyCol = (type ?: guessValueType(values)).let {
+    val kClass = it.classifier!! as KClass<*>
+    if(kClass.isSubclassOf(DataRow::class)){
+        val df = values.map { (it as AnyRow).toDataFrame() }.union()
+        return DataColumn.create(name, df) as AnyCol
+    }
+    if(kClass.isSubclassOf(DataFrame::class)){
+        return DataColumn.create(name, values as List<AnyFrame?>, it.isMarkedNullable)
+    }
+    DataColumn.create(name, values, it, defaultValue)
+}

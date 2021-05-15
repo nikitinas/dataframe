@@ -75,3 +75,5 @@ fun <T> Iterable<T>.asList() = when (this) {
     is List<T> -> this
     else -> this.toList()
 }
+
+internal fun <T> Iterable<T>.anyNull() = any { it == null }

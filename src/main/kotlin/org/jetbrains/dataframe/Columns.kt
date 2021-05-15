@@ -225,4 +225,4 @@ inline fun <reified T> AnyCol.isType() = type() == getType<T>()
 
 fun AnyCol.isNumber() = type.withNullability(false).isSubtypeOf(getType<Number>())
 
-fun AnyCol.guessType() = guessColumnType(name, toList())
+fun AnyCol.guessType() = DataColumn.create(name, toList())

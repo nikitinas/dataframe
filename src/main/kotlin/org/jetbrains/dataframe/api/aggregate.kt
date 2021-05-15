@@ -3,6 +3,7 @@ package org.jetbrains.dataframe
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.guessColumnType
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.createDataCollector
@@ -15,7 +16,7 @@ class GroupAggregateBuilder<T>(internal val df: DataFrame<T>): DataFrame<T> by d
 
     private val values = mutableListOf<NamedValue>()
 
-    internal fun toDataFrame() = values.map { it.path to DataColumn.createGuess(it.path.last(), listOf(it.value), it.type, it.defaultValue) }.let {
+    internal fun toDataFrame() = values.map { it.path to guessColumnType(it.path.last(), listOf(it.value), it.type, it.defaultValue) }.let {
         if(it.isEmpty()) emptyDataFrame(1)
         else it.toDataFrame<T>()
     }

@@ -8,6 +8,7 @@ import io.kotest.matchers.shouldNotBe
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.named
 import org.jetbrains.dataframe.columns.typeClass
+import org.jetbrains.dataframe.impl.columns.getColumn
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.typed
 import org.jetbrains.dataframe.impl.trackColumnAccess
@@ -1590,5 +1591,11 @@ class DataFrameTests : BaseTest() {
         df.nrow() shouldBe 5
         df.ncol() shouldBe 5
         df.columns().forEach { col -> col.forEachIndexed { row, value -> value shouldBe row + 1 } }
+    }
+
+    @Test
+    fun `get typed column by name`(){
+        val col = df.getColumn<String>("name")
+        col[0].substring(0, 3) shouldBe "Ali"
     }
 }

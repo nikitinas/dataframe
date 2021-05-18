@@ -129,7 +129,9 @@ interface DataFrame<out T> : DataFrameBase<T> {
     override operator fun get(columnName: String) =
         tryGetColumn(columnName) ?: throw Exception("Column not found: '$columnName'")
 
-    override operator fun <R> get(column: ColumnReference<R>): DataColumn<R> = tryGetColumn(column) ?: error("Column not found: ${column.path().joinToString("/")}")
+    override operator fun <R> get(column: ColumnReference<R>): DataColumn<R> = tryGetColumn(column) ?:
+        error("Column not found: ${column.path().joinToString("/")}")
+
     override operator fun <R> get(column: ColumnReference<DataRow<R>>): ColumnGroup<R> =
         get<DataRow<R>>(column) as ColumnGroup<R>
 

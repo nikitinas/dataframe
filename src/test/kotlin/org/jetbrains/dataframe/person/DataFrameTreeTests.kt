@@ -48,6 +48,7 @@ import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.typed
+import org.jetbrains.dataframe.index
 import org.jetbrains.dataframe.insert
 import org.jetbrains.dataframe.into
 import org.jetbrains.dataframe.intoRows
@@ -317,7 +318,7 @@ class DataFrameTreeTests : BaseTest() {
             }
 
             val actual = group.columns().sortedBy { it.name() }.flatMap { col ->
-                rows().sortedBy { it[name] }.map { row -> (col.name() to row[name]) to row[col] }
+                rows().sortedBy { it[name] }.map { row -> (col.name() to row[name]) to col[row.index] }
                     .filter { it.second != null }
             }
             actual shouldBe expected

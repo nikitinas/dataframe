@@ -22,7 +22,7 @@ interface DataRow<out T>: DataRowBase<T> {
     override fun tryGet(name: String): Any?
     operator fun get(columnIndex: Int): Any?
     fun <R> get(selector: Selector<DataRowBase<T>, R>) = selector(this, this)
-    operator fun <R> get(column: ColumnReference<R>) = get(column.name()) as R
+    operator fun <R> get(column: ColumnReference<R>): R
     operator fun <R> get(property: KProperty<R>) = get(property.name) as R
     operator fun <R> ColumnReference<R>.invoke() = get(this)
     operator fun <R> String.invoke() = get(this) as R

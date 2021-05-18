@@ -30,7 +30,7 @@ class AnimalsTests {
     fun `mean of empty`(){
         val cleared = df.update { age }.with(Double.NaN).update { visits }.withNull()
         val mean = cleared.mean()
-        mean[age.name()] shouldBe Double.NaN
-        mean[visits.name()] shouldBe Double.NaN
+        mean[age] shouldBe Double.NaN
+        (mean[visits.name()] as Double).isNaN() shouldBe true
     }
 }

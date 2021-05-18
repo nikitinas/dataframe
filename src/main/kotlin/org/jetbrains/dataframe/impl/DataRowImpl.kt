@@ -2,6 +2,7 @@ package org.jetbrains.dataframe.impl
 
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataRow
+import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.io.renderToString
 
 internal class DataRowImpl<T>(private val index: Int, override val owner: DataFrame<T>) : DataRow<T> {
@@ -9,6 +10,11 @@ internal class DataRowImpl<T>(private val index: Int, override val owner: DataFr
     override operator fun get(name: String): Any? {
         ColumnAccessTracker.registerColumnAccess(name)
         return owner[name][index]
+    }
+
+    override operator fun <R> get(column: ColumnReference<R>): R {
+        ColumnAccessTracker.registerColumnAccess(column.name())
+        return owner[column][index]
     }
 
     override fun getIndex() = index

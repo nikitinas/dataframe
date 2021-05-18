@@ -25,30 +25,30 @@ internal fun guessFormat(url: String): SupportedFormats? = when{
 
 fun DataFrame.Companion.read(file: File): AnyFrame = when(guessFormat(file)) {
     SupportedFormats.CSV -> readCSV(file)
-    SupportedFormats.JSON -> readJSON(file)
+    SupportedFormats.JSON -> readJson(file)
     else -> try {
         readCSV(file)
     } catch(e: Exception) {
-        readJSON(file)
+        readJson(file)
     }
 }
 
 fun DataFrame.Companion.read(url: URL): AnyFrame = when(guessFormat(url)) {
     SupportedFormats.CSV -> readCSV(url)
-    SupportedFormats.JSON -> readJSON(url)
+    SupportedFormats.JSON -> readJson(url)
     else -> try {
         readCSV(url)
     } catch(e: Exception) {
-        readJSON(url)
+        readJson(url)
     }
 }
 
 fun DataFrame.Companion.read(path: String): AnyFrame = when(guessFormat(path)) {
     SupportedFormats.CSV -> readCSV(path)
-    SupportedFormats.JSON -> readJSON(path)
+    SupportedFormats.JSON -> readJson(path)
     else -> try {
         readCSV(path)
     } catch(e: Exception) {
-        readJSON(path)
+        readJson(path)
     }
 }

@@ -2,7 +2,9 @@ package org.jetbrains.dataframe.io
 
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
+import com.beust.klaxon.KlaxonJson
 import com.beust.klaxon.Parser
+import com.beust.klaxon.json
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.AnyColumn
 import org.jetbrains.dataframe.columns.DataColumn
@@ -15,29 +17,30 @@ import org.jetbrains.dataframe.impl.createDataCollector
 import org.jetbrains.dataframe.columns.type
 import org.jetbrains.dataframe.columns.values
 import java.io.File
+import java.io.FileWriter
 import java.lang.StringBuilder
 import java.net.URL
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.withNullability
 
-fun DataFrame.Companion.readJSON(file: File) = readJSON(file.toURI().toURL())
+fun DataFrame.Companion.readJson(file: File) = readJson(file.toURI().toURL())
 
-fun DataFrame.Companion.readJSON(path: String): AnyFrame {
+fun DataFrame.Companion.readJson(path: String): AnyFrame {
     val url = when {
         isURL(path) -> URL(path).toURI()
         else -> File(path).toURI()
     }
-    return readJSON(url.toURL())
+    return readJson(url.toURL())
 }
 
 @Suppress("UNCHECKED_CAST")
-fun DataFrame.Companion.readJSON(url: URL): AnyFrame =
-        readJSON(Parser.default().parse(url.openStream()))
+fun DataFrame.Companion.readJson(url: URL): AnyFrame =
+        readJson(Parser.default().parse(url.openStream()))
 
-fun DataFrame.Companion.readJsonStr(text: String) = readJSON(Parser.default().parse(StringBuilder(text)))
+fun DataFrame.Companion.readJsonStr(text: String) = readJson(Parser.default().parse(StringBuilder(text)))
 
-private fun readJSON(parsed: Any?) = when (parsed) {
+private fun readJson(parsed: Any?) = when (parsed) {
     is JsonArray<*> -> fromList(parsed.value)
     else -> fromList(listOf(parsed))
 }
@@ -193,3 +196,9 @@ fun AnyFrame.writeJsonStr(prettyPrint: Boolean = false, canonical: Boolean = fal
         encodeFrame(this@writeJsonStr)
     }.toJsonString(prettyPrint, canonical)
 }
+
+fun AnyFrame.writeJson(file: File, prettyPrint: Boolean = false, canonical: Boolean = false) {
+    FileWriter(file).write(writeJsonStr(prettyPrint, canonical))
+}
+
+fun AnyFrame.writeJson(path: String, prettyPrint: Boolean = false, canonical: Boolean = false) = writeJson(File(path), prettyPrint, canonical)

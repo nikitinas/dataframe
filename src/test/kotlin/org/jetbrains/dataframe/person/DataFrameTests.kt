@@ -605,7 +605,12 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `groupBy invoked at column`() {
 
-        typed.weight.groupBy(typed.name).mean() shouldBe typed.groupBy { name }.mean("weight") { weight }
+        typed.weight.groupBy(typed.name).mean() shouldBe typed.groupBy { name }.mean { weight }
+    }
+
+    @Test
+    fun `groupBy meanOf`(){
+        typed.groupBy { name }.meanOf { age * 2 } shouldBe typed.groupBy { name }.aggregate { mean { age } * 2 into "mean" }
     }
 
     @Test

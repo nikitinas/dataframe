@@ -91,10 +91,12 @@ infix fun <T, C: Column<T>> C.named(name: String) = rename(name) as C
 
 internal fun guessValueType(values: List<Any?>): KType {
     var nullable = false
-    val types = values.map {
+    val types = mutableSetOf<KClass<*>>()
+    values.forEach {
         if (it == null) nullable = true
-        it?.javaClass
-    }.distinct().mapNotNull { it?.kotlin }
+        val type = it?.javaClass?.kotlin
+        if(type != null) types.add(type)
+    }
     return types.commonType(nullable)
 }
 

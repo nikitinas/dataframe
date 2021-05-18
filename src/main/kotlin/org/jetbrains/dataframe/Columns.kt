@@ -15,6 +15,7 @@ import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.SingleColumn
 import org.jetbrains.dataframe.columns.StringCol
 import org.jetbrains.dataframe.columns.ValueColumn
+import org.jetbrains.dataframe.columns.guessColumnType
 import org.jetbrains.dataframe.columns.size
 import org.jetbrains.dataframe.columns.type
 import org.jetbrains.dataframe.columns.hasNulls
@@ -163,6 +164,9 @@ fun <T> Iterable<DataFrame<T>?>.toFrameColumn(name: String): FrameColumn<T> =
 inline fun <reified T> Iterable<T>.toColumn(name: String = ""): ValueColumn<T> =
     asList().let { DataColumn.create(name, it, getType<T>().withNullability(it.any { it == null })) }
 
+fun Iterable<Any?>.toColumnGuessType(name: String = ""): AnyCol =
+    guessColumnType(name, asList())
+
 inline fun <reified T> Iterable<T>.toColumn(ref: ColumnReference<T>): ValueColumn<T> =
     toColumn(ref.name())
 
@@ -223,6 +227,6 @@ fun AnyCol.isSubtypeOf(type: KType) = this.type.isSubtypeOf(type) && (!this.type
 inline fun <reified T> AnyCol.isSubtypeOf() = isSubtypeOf(getType<T>())
 inline fun <reified T> AnyCol.isType() = type() == getType<T>()
 
-fun AnyCol.isNumber() = type.withNullability(false).isSubtypeOf(getType<Number>())
+fun AnyCol.isNumber() = isSubtypeOf<Number?>()
 
 fun AnyCol.guessType() = DataColumn.create(name, toList())

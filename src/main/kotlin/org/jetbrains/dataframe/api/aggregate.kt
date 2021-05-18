@@ -75,15 +75,15 @@ internal fun <T, G> doAggregate(df: DataFrame<T>, selector: ColumnSelector<T, Da
     return src.insert(columnsToInsert)
 }
 
-internal inline fun <T, reified C> DataFrame<T>.aggregateColumns(crossinline selector: (DataColumn<C>) -> Any?) = aggregateColumns(getType<C>()) { selector(it as DataColumn<C>) }
+internal inline fun <T, reified C> DataFrame<T>.aggregateColumns(crossinline selector: (DataColumn<C>) -> Any?): DataRow<T> = aggregateColumns(getType<C>()) { selector(it as DataColumn<C>) }
 
-internal fun <T> DataFrame<T>.aggregateColumns(type: KType, selector: (AnyCol) -> Any?) =
-    aggregateColumns({ it.isSubtypeOf(type) }, selector)
+internal fun <T> DataFrame<T>.aggregateColumns(type: KType, selector: (AnyCol) -> Any?): DataRow<T> =
+    aggregateColumns({ colsOf(type) }, selector)
 
-internal fun <T> DataFrame<T>.aggregateColumns(filter: Predicate<AnyCol>, selector: (AnyCol) -> Any?): DataRow<T> {
-    return columns().filter(filter).map {
+internal fun <T, C> DataFrame<T>.aggregateColumns(colSelector: ColumnsSelector<T, C>, valueSelector: (DataColumn<C>) -> Any?): DataRow<T> {
+    return this[colSelector].map {
         val collector = createDataCollector(1)
-        collector.add(selector(it))
+        collector.add(valueSelector(it))
         collector.toColumn(it.name)
     }.asDataFrame<T>()[0]
 }

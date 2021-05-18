@@ -86,7 +86,7 @@ fun <T, C> DataFrame<T>.getColumnPaths(selector: ColumnsSelector<T, C>): List<Co
 internal fun <T, C> DataFrame<T>.getGroupColumns(selector: ColumnsSelector<T, DataRow<C>>) =
     getColumnsWithPaths(selector).map { it.data.asGroup() }
 
-fun <T, C> DataFrame<T>.column(selector: ColumnSelector<T, C>) = get(selector).single()
+fun <T, C> DataFrame<T>.column(selector: ColumnSelector<T, C>): DataColumn<C> = get(selector)
 
 fun <T, C> DataFrame<T>.getColumnWithPath(selector: ColumnSelector<T, C>) = getColumnsWithPaths(selector).single()
 
@@ -137,6 +137,7 @@ interface DataFrame<out T> : DataFrameBase<T> {
         get<DataFrame<R>>(column) as FrameColumn<R>
 
     operator fun <C> get(selector: ColumnsSelector<T, C>): List<DataColumn<C>> = getColumns(false, selector)
+    operator fun <C> get(selector: ColumnSelector<T, C>): DataColumn<C> = getColumns(false, selector).single()
 
     operator fun get(indices: Iterable<Int>) = getRows(indices)
     operator fun get(mask: BooleanArray) = getRows(mask)

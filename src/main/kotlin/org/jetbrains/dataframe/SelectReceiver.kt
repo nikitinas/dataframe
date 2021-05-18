@@ -124,5 +124,7 @@ fun <C> Columns<*>.colsDfsOf(type: KType, predicate: (ColumnWithPath<C>) -> Bool
 inline fun <reified C> Columns<*>.colsDfsOf(noinline filter: (ColumnWithPath<C>) -> Boolean = { true }) = colsDfsOf(
     getType<C>(), filter)
 
-fun <C> Columns<*>.colsOf(type: KType, filter: (DataColumn<C>) -> Boolean = { true }): Columns<C> = colsInternal { it.isSubtypeOf(type) && filter(it.typed()) } as Columns<C>
+fun  Columns<*>.colsOf(type: KType): Columns<Any?> = colsOf(type) { true }
+
+fun <C> Columns<*>.colsOf(type: KType, filter: (DataColumn<C>) -> Boolean): Columns<C> = colsInternal { it.isSubtypeOf(type) && filter(it.typed()) } as Columns<C>
 inline fun <reified C> Columns<*>.colsOf(noinline filter: (DataColumn<C>) -> Boolean = { true }) = colsOf(getType<C>(), filter)

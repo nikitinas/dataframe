@@ -15,7 +15,7 @@ interface DataRowBase<out T> {
 }
 
 interface DataRow<out T>: DataRowBase<T> {
-    val owner: DataFrame<T>
+    fun df(): DataFrame<T>
 
     fun getRow(index: Int): DataRow<T>?
     override operator fun get(name: String): Any?
@@ -84,6 +84,7 @@ interface DataRow<out T>: DataRowBase<T> {
 }
 
 internal val AnyRow.values get() = values()
+internal val <T> DataRow<T>.owner: DataFrame<T> get() = df()
 
 val AnyRow.index @JvmName("getRowIndex") get() = index()
 val <T> DataRow<T>.prev: DataRow<T>? get() = prev()

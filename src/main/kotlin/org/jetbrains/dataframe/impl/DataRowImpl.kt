@@ -5,7 +5,9 @@ import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.io.renderToString
 
-internal open class DataRowImpl<T>(private val index: Int, override val owner: DataFrame<T>) : DataRow<T> {
+internal open class DataRowImpl<T>(private val index: Int, val owner: DataFrame<T>) : DataRow<T> {
+
+    override fun df() = owner
 
     override operator fun get(name: String): Any? {
         ColumnAccessTracker.registerColumnAccess(name)

@@ -55,7 +55,7 @@ internal fun renderValue(value: Any?) =
             else -> "${value.nrow()} rows"
         }
         is Double -> value.format(6)
-        else -> value.toString()
+        else -> escapeHTML(value.toString())
     }
 
 fun Double.format(digits: Int) = "%.${digits}f".format(this)

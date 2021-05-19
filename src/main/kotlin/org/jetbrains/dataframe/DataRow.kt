@@ -30,6 +30,8 @@ interface DataRow<out T>: DataRowBase<T> {
     operator fun get(first: Column, vararg other: Column) = owner.select(listOf(first) + other)[index]
     operator fun get(first: String, vararg other: String) = owner.select(listOf(first) + other)[index]
 
+    fun neighbours(relativeIndices: Iterable<Int>): Sequence<DataRow<T>> = relativeIndices.asSequence().mapNotNull { getRow(index + it) }
+
     fun <T> read(name: String) = get(name) as T
     fun size() = owner.ncol()
     fun values(): List<Any?>

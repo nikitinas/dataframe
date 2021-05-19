@@ -64,6 +64,16 @@ class ReadTests {
         empty.ncol() shouldBe 1
     }
 
+
+    @Test
+    fun `read big decimal`() {
+        val data = """
+            [[3452345234345, 7795.34000000], [12314123532, 7795.34000000]]
+        """.trimIndent()
+        val df = DataFrame.readJsonStr(data)
+        println(df.getColumn<List<Number>>("array")[0][1].javaClass)
+    }
+
     @Test
     fun `http error`() {
         val url = "https://api.binance.com/api/v3/klines?symbol=BTCUSDT"

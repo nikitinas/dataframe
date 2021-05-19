@@ -1610,4 +1610,15 @@ class DataFrameTests : BaseTest() {
         typed.select { allBefore(age) } shouldBe typed.select { name }
         typed.select { allUntil(age) } shouldBe typed.select { name and age }
     }
+
+    @Test
+    fun `cols of type`(){
+        val stringCols = typed.select { colsOf<String?>() }
+        stringCols.columnNames() shouldBe listOf("name", "city")
+    }
+
+    @Test
+    fun neighbours(){
+        typed[2].neighbours(-1..1).toList() shouldBe listOf(typed[1], typed[2], typed[3])
+    }
 }

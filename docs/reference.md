@@ -46,7 +46,7 @@
     * [select](#select)
     * [add](#add)
     * [remove](#remove)
-    * [cast](#cast)
+    * [convert](#convert)
     * [split](#split)
     * [merge](#merge)
     * [rename](#rename)
@@ -526,15 +526,16 @@ df.remove { columns }
 df - { columns }
 ```
 See [Column Selectors](#column-selectors) for column selection syntax
-### cast
-Changes the type of columns. Supports automatic type conversions between value types `Int`, `String`, `Double`, `Long`, `Short`, `Float`,`BigDecimal`
+### convert
+Changes the type of columns. Supports automatic type conversions between value types `Int`, `String`, `Double`, `Long`, `Short`, `Float`,`BigDecimal`, 'LocalDateTime', 'LocalDate', 'LocalTime'
 ```kotlin
-df.cast { age }.to<Double>()
+df.convert { age }.to<Double>()
 ```
 Helper functions for value types are also available
 ```kotlin
-df.cast { age }.toFloat()
-df.cast { all() }.toStr()
+df.convert { age }.toFloat()
+df.convert { all() }.toStr()
+df.convert { timestamp }.toDateTime()
 ``` 
 ### split
 Splits cell value into several values and spreads them horizontally or vertically.

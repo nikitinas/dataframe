@@ -3,7 +3,7 @@ package org.jetbrains.dataframe.io
 import io.kotest.matchers.shouldBe
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.allNulls
-import org.jetbrains.dataframe.cast
+import org.jetbrains.dataframe.convert
 import org.jetbrains.dataframe.dataFrameOf
 import org.jetbrains.dataframe.getType
 import org.junit.Test
@@ -35,7 +35,7 @@ class CsvTests {
         val df = dataFrameOf("col1", "col2")(
             1,null,
             2,null
-        ).cast("col2").to<String>()
+        ).convert("col2").to<String>()
 
         val str = StringWriter()
         df.writeCSV(str)

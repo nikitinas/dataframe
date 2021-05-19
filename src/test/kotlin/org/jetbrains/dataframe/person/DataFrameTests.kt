@@ -8,7 +8,6 @@ import io.kotest.matchers.shouldNotBe
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.named
 import org.jetbrains.dataframe.columns.typeClass
-import org.jetbrains.dataframe.impl.columns.getColumn
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.typed
 import org.jetbrains.dataframe.impl.trackColumnAccess
@@ -1204,7 +1203,7 @@ class DataFrameTests : BaseTest() {
 
         val toStr = typed.update { weight }.notNull { it.toString() }
         val weightStr = "weight".toColumnOf<String?>()
-        val parsed = toStr.cast { weightStr }.toInt()
+        val parsed = toStr.convert { weightStr }.toInt()
         parsed shouldBe typed
     }
 
@@ -1312,35 +1311,35 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun cast1() {
+    fun convert1() {
 
-        val res = typed.cast { age }.to<Double>()
+        val res = typed.convert { age }.to<Double>()
         res.age.typeClass shouldBe Double::class
         res["age"].all { it is Double } shouldBe true
     }
 
     @Test
-    fun cast2() {
+    fun convert2() {
 
-        val res = typed.cast { weight }.to<BigDecimal>()
+        val res = typed.convert { weight }.to<BigDecimal>()
         res.weight.typeClass shouldBe BigDecimal::class
         res["weight"].all { it == null || it is BigDecimal } shouldBe true
     }
 
     @Test
-    fun cast3() {
+    fun convert3() {
 
-        val res = typed.cast { all() }.to<String>()
+        val res = typed.convert { all() }.to<String>()
         res.columns().forEach { it.typeClass shouldBe String::class }
         res.columns().map { it.hasNulls() } shouldBe typed.columns().map { it.hasNulls() }
     }
 
     @Test
-    fun castToDate() {
+    fun convertToDate() {
 
         val time by columnOf("2020-01-06", "2020-01-07")
         val df = dataFrameOf(time)
-        val casted = df.cast(time).toDate()
+        val casted = df.convert(time).toDate()
         casted[time].type() shouldBe getType<LocalDate>()
     }
 

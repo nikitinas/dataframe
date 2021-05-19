@@ -120,7 +120,7 @@ class SpreadTests {
         spread["weight"].type() shouldBe getType<Int?>()
 
         val expected = modified.filter { key == "age" }.remove { key }.groupBy { name }.aggregate {
-            value.cast<Int>().toList() into "age"
+            value.convert<Int>().toList() into "age"
         }
 
         val actual = spread.select("name", "age")
@@ -198,7 +198,7 @@ class SpreadTests {
 
         val spread = typed.spread { key }.by { value }.map(valueConverter).into { it }
         val gathered = spread.remove("city").gather { colsOf<Double?>() }.mapNotNull { it.toInt() }.into("key", "value")
-        val expected = typed.filter { key != "city" }.cast { value }.to<Int>()
+        val expected = typed.filter { key != "city" }.convert { value }.to<Int>()
         gathered shouldBe expected
     }
 

@@ -70,7 +70,7 @@ fun <T, C, K, R> doGather(clause: GatherClause<T, C, K, R>, namesTo: String, val
         df = df.split { nameAndValuePairs }.by { it?.let { listOf(it.first, it.second)} ?: listOf(null, null) }.into(namesColumn, valuesColumn)
     }
 
-    df = df.cast(namesColumn.name()).to(keyColumnType)
+    df = df.convert(namesColumn.name()).to(keyColumnType)
 
     val valuesCol = df[valuesColumn.name()]
 
@@ -83,7 +83,7 @@ fun <T, C, K, R> doGather(clause: GatherClause<T, C, K, R>, namesTo: String, val
 
     }else {
         if(!valuesCol.isTable() && valueColumnType.jvmErasure != Any::class){
-            df = df.cast(valuesColumn.name()).to(valueColumnType)
+            df = df.convert(valuesColumn.name()).to(valueColumnType)
         }
     }
 

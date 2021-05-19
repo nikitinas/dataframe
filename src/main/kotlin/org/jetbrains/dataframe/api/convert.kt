@@ -1,42 +1,51 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.AnyCol
+import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.size
 import org.jetbrains.dataframe.columns.hasNulls
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.type
+import org.jetbrains.dataframe.columns.typeClass
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.columns.DataColumnInternal
 import org.jetbrains.dataframe.impl.columns.toColumns
+import org.jetbrains.dataframe.impl.columns.typed
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
+import java.util.Locale
+import java.util.TimeZone
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.withNullability
 
-fun <T> DataFrame<T>.cast(selector: ColumnsSelector<T, *>) = CastClause(this, selector)
-fun <T> DataFrame<T>.cast(vararg columns: KProperty<*>) = cast { columns.toColumns() }
-fun <T> DataFrame<T>.cast(vararg columns: String) = cast { columns.toColumns() }
-fun <T> DataFrame<T>.cast(vararg columns: Column) = cast { columns.toColumns() }
+fun <T, C> DataFrame<T>.convert(selector: ColumnsSelector<T, C>) = ConvertClause(this, selector)
+fun <T, C> DataFrame<T>.convert(vararg columns: KProperty<C>) = convert { columns.toColumns() }
+fun <T> DataFrame<T>.convert(vararg columns: String) = convert { columns.toColumns() }
+fun <T, C> DataFrame<T>.convert(vararg columns: ColumnReference<C>) = convert { columns.toColumns() }
 
-data class CastClause<T>(val df: DataFrame<T>, val selector: ColumnsSelector<T, *>) {
-    inline fun <reified C> to() = to(getType<C>())
+data class ConvertClause<T, C>(val df: DataFrame<T>, val selector: ColumnsSelector<T, C>) {
+    inline fun <reified D> to() = to(getType<D>())
 }
 
-fun <T> CastClause<T>.to(type: KType) = df.replace(selector).with { it.castTo(type) }
+fun <T> ConvertClause<T, *>.to(type: KType): DataFrame<T> = to { it.convertTo(type) }
 
-inline fun <reified C> AnyCol.cast(): DataColumn<C> = castTo(getType<C>()) as DataColumn<C>
+fun <T, C> ConvertClause<T, C>.to(columnConverter: (DataColumn<C>) -> AnyCol): DataFrame<T> = df.replace(selector).with { columnConverter(it) }
+
+inline fun <reified C> AnyCol.convert(): DataColumn<C> = convertTo(getType<C>()) as DataColumn<C>
 
 internal val convertersCache = mutableMapOf<Pair<KType, KType>, TypeConverter?>()
 
-fun AnyCol.castTo(newType: KType): AnyCol {
+fun AnyCol.convertTo(newType: KType): AnyCol {
     val from = type
     if (from == newType) return this
     if (!from.isSubtypeOf(newType)) {
@@ -84,6 +93,9 @@ internal fun createConverter(from: KType, to: KType): TypeConverter? {
             Short::class -> convert<Int> { it.toShort() }
             Long::class -> convert<Int> { it.toLong() }
             BigDecimal::class -> convert<Int> { it.toBigDecimal() }
+            LocalDateTime::class -> convert<Int> { it.toLong().toLocalDateTime(defaultTimeZone) }
+            LocalDate::class -> convert<Int> { it.toLong().toLocalDate(defaultTimeZone) }
+            LocalTime::class -> convert<Int> { it.toLong().toLocalTime(defaultTimeZone) }
             else -> null
         }
         fromClass == Double::class -> when(toClass){
@@ -100,6 +112,9 @@ internal fun createConverter(from: KType, to: KType): TypeConverter? {
             Short::class -> convert<Long> { it.toShort() }
             Int::class -> convert<Long> { it.toInt() }
             BigDecimal::class -> convert<Long> { it.toBigDecimal() }
+            LocalDateTime::class -> convert<Long> { it.toLocalDateTime(defaultTimeZone) }
+            LocalDate::class -> convert<Long> { it.toLocalDate(defaultTimeZone) }
+            LocalTime::class -> convert<Long> { it.toLocalTime(defaultTimeZone) }
             else -> null
         }
         fromClass == Float::class -> when (toClass) {
@@ -113,18 +128,43 @@ internal fun createConverter(from: KType, to: KType): TypeConverter? {
     }
 }
 
-fun <T> CastClause<T>.toInt() = to<Int>()
-fun <T> CastClause<T>.toDouble() = to<Double>()
-fun <T> CastClause<T>.toFloat() = to<Float>()
-fun <T> CastClause<T>.toStr() = to<String>()
-fun <T> CastClause<T>.toLong() = to<Long>()
-fun <T> CastClause<T>.toBigDecimal() = to<BigDecimal>()
-fun <T> CastClause<T>.toDate() = to<LocalDate>()
-fun <T> CastClause<T>.toTime() = to<LocalTime>()
-fun <T> CastClause<T>.toDateTime() = to<LocalDateTime>()
+internal fun Long.toLocalDateTime(zone: ZoneId) = LocalDateTime.ofInstant(Instant.ofEpochMilli(this), zone)
+internal fun Long.toLocalDate(zone: ZoneId) = toLocalDateTime(zone).toLocalDate()
+internal fun Long.toLocalTime(zone: ZoneId) = toLocalDateTime(zone).toLocalTime()
+
+internal val defaultTimeZone = TimeZone.getDefault().toZoneId()
+
+fun <T> ConvertClause<T, *>.toInt() = to<Int>()
+fun <T> ConvertClause<T, *>.toDouble() = to<Double>()
+fun <T> ConvertClause<T, *>.toFloat() = to<Float>()
+fun <T> ConvertClause<T, *>.toStr() = to<String>()
+fun <T> ConvertClause<T, *>.toLong() = to<Long>()
+fun <T> ConvertClause<T, *>.toBigDecimal() = to<BigDecimal>()
+
+fun <T> ConvertClause<T, *>.toDate(zone: ZoneId = defaultTimeZone) = to { it.toLocalDate(zone) }
+fun <T> ConvertClause<T, *>.toTime(zone: ZoneId = defaultTimeZone) = to { it.toLocalTime(zone) }
+fun <T> ConvertClause<T, *>.toDateTime(zone: ZoneId = defaultTimeZone) = to { it.toLocalDateTime(zone) }
 
 internal class StringParser<T : Any>(val type: KType, val parse: (String) -> T?) {
     fun toConverter(): TypeConverter = { parse(it as String) }
+}
+
+fun AnyCol.toLocalDate(zone: ZoneId = defaultTimeZone): DataColumn<LocalDate> = when(typeClass) {
+    Long::class -> typed<Long>().map { it.toLocalDate(zone) }
+    Int::class -> typed<Int>().map { it.toLong().toLocalDate(zone) }
+    else -> convertTo(getType<LocalDate>()).typed()
+}
+
+fun AnyCol.toLocalDateTime(zone: ZoneId = defaultTimeZone): DataColumn<LocalDateTime> = when(typeClass) {
+    Long::class -> typed<Long>().map { it.toLocalDateTime(zone) }
+    Int::class -> typed<Int>().map { it.toLong().toLocalDateTime(zone) }
+    else -> convertTo(getType<LocalDateTime>()).typed()
+}
+
+fun AnyCol.toLocalTime(zone: ZoneId = defaultTimeZone): DataColumn<LocalTime> = when(typeClass) {
+    Long::class -> typed<Long>().map { it.toLocalDateTime(zone).toLocalTime() }
+    Int::class -> typed<Int>().map { it.toLong().toLocalDateTime(zone).toLocalTime() }
+    else -> convertTo(getType<LocalTime>()).typed()
 }
 
 internal object Parsers {
@@ -152,7 +192,7 @@ internal object Parsers {
     }
 
     private fun String.toBooleanOrNull() =
-        when (toUpperCase()) {
+        when (uppercase(Locale.getDefault())) {
             "T" -> true
             "TRUE" -> true
             "YES" -> true
@@ -169,7 +209,7 @@ internal object Parsers {
         try { LocalTime.parse(this) } catch (_: Throwable) { null }
 
     private fun String.parseDouble() =
-        when (toUpperCase()) {
+        when (uppercase(Locale.getDefault())) {
             "NAN" -> Double.NaN
             "INF" -> Double.POSITIVE_INFINITY
             "-INF" -> Double.NEGATIVE_INFINITY

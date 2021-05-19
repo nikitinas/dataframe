@@ -9,9 +9,9 @@ import kotlin.reflect.KProperty1
 interface DataRowBase<out T> {
     operator fun get(name: String): Any?
     fun tryGet(name: String): Any?
-    fun getIndex(): Int
-    fun getPrev(): DataRow<T>?
-    fun getNext(): DataRow<T>?
+    fun index(): Int
+    fun prev(): DataRow<T>?
+    fun next(): DataRow<T>?
 }
 
 interface DataRow<out T>: DataRowBase<T> {
@@ -84,10 +84,10 @@ interface DataRow<out T>: DataRowBase<T> {
 }
 
 internal val AnyRow.values get() = values()
-val AnyRow.index @JvmName("getRowIndex") get() = getIndex()
 
-val <T> DataRow<T>.prev: DataRow<T>? get() = getPrev()
-val <T> DataRow<T>.next: DataRow<T>? get() = getNext()
+val AnyRow.index @JvmName("getRowIndex") get() = index()
+val <T> DataRow<T>.prev: DataRow<T>? get() = prev()
+val <T> DataRow<T>.next: DataRow<T>? get() = next()
 
 typealias Selector<T, R> = T.(T) -> R
 typealias RowSelector<T, R> = DataRow<T>.(DataRow<T>) -> R

@@ -23,7 +23,7 @@ interface Column<out T> : ColumnReference<T> {
             otherIndices.asIterable()
         )
     )
-    operator fun get(row: AnyRow) = get(row.getIndex())
+    operator fun get(row: AnyRow) = get(row.index())
 
     fun values(): Iterable<T>
 

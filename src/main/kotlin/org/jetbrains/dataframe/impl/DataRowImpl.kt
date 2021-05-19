@@ -17,7 +17,7 @@ internal open class DataRowImpl<T>(private val index: Int, override val owner: D
         return owner[column][index]
     }
 
-    override fun getIndex() = index
+    override fun index() = index
 
     override fun getRow(index: Int): DataRow<T>? =
         if (index >= 0 && index < owner.nrow()) DataRowImpl(index, owner) else null
@@ -47,11 +47,11 @@ internal open class DataRowImpl<T>(private val index: Int, override val owner: D
         return owner.tryGetColumn(name)?.get(index)
     }
 
-    override fun getPrev(): DataRow<T>? {
+    override fun prev(): DataRow<T>? {
         return if (index > 0) owner[index - 1] else null
     }
 
-    override fun getNext(): DataRow<T>? {
+    override fun next(): DataRow<T>? {
         return if (index < owner.nrow() - 1) owner[index + 1] else null
     }
 }

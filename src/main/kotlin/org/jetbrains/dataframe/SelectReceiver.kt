@@ -50,6 +50,27 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
 
     fun Columns<*>.allDfs() = colsDfs { !it.isGroup() }
 
+    // excluding current
+    fun DataFrameBase<*>.allAfter(colPath: ColumnPath) = children().let { var take = false; it.filter { if(take) true else { take = colPath == it.path; false} } }
+    fun DataFrameBase<*>.allAfter(colName: String) = allAfter(listOf(colName))
+    fun DataFrameBase<*>.allAfter(column: Column) = allAfter(column.path())
+
+    // including current
+    fun DataFrameBase<*>.allSince(colPath: ColumnPath) = children().let { var take = false; it.filter { if(take) true else { take = colPath == it.path; take} } }
+    fun DataFrameBase<*>.allSince(colName: String) = allSince(listOf(colName))
+    fun DataFrameBase<*>.allSince(column: Column) = allSince(column.path())
+
+    // excluding current
+    fun DataFrameBase<*>.allBefore(colPath: ColumnPath) = children().let { var take = true; it.filter { if(!take) false else { take = colPath != it.path; take} } }
+    fun DataFrameBase<*>.allBefore(colName: String) = allBefore(listOf(colName))
+    fun DataFrameBase<*>.allBefore(column: Column) = allBefore(column.path())
+
+    // including current
+    fun DataFrameBase<*>.allUntil(colPath: ColumnPath) = children().let { var take = true; it.filter { if(!take) false else { take = colPath != it.path; true} } }
+    fun DataFrameBase<*>.allUntil(colName: String) = allUntil(listOf(colName))
+    fun DataFrameBase<*>.allUntil(column: Column) = allUntil(column.path())
+
+
     fun DataFrameBase<*>.colGroups(filter: (ColumnGroup<*>) -> Boolean = { true }): Columns<AnyRow> = this.columns().filter { it.isGroup() && filter(it.asGroup()) }.map { it.asGroup() }.toColumnSet()
 
     fun <C> Columns<C>.children(predicate: (AnyCol) -> Boolean = {true} ) = transform { it.flatMap { it.children().filter { predicate(it.data) } } }

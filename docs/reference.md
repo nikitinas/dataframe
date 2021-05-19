@@ -1200,6 +1200,10 @@ dfs { condition } // traverse column tree and yield top-level columns that match
 dfsOf<Type>() // traverse column tree and yield columns of specific type
 dfsOf<Type> { condition } // traverse column tree and yield columns of specific type that match condition
 all() // all columns
+allAfter(column) // all columns that are located to the right from target column, excluding target column
+allSince(column) // all columns that are located to the right from target column, including target column
+allBefore(column) // all columns that are located to the left from target column, excluding target column
+allUntil(column) // all columns that are located to the left from target column, including target column
 ```
 ### Special column selectors
 ```

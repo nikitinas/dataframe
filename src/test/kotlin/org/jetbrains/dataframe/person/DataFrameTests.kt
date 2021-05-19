@@ -1602,4 +1602,12 @@ class DataFrameTests : BaseTest() {
         val col = df.getColumn<String>("name")
         col[0].substring(0, 3) shouldBe "Ali"
     }
+
+    @Test
+    fun `select all after`(){
+        typed.select { allAfter(age) } shouldBe typed.select { city and weight }
+        typed.select { allSince(age) } shouldBe typed.select { age and city and weight }
+        typed.select { allBefore(age) } shouldBe typed.select { name }
+        typed.select { allUntil(age) } shouldBe typed.select { name and age }
+    }
 }

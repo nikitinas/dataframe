@@ -1,6 +1,7 @@
 package org.jetbrains.dataframe.io
 
-import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.DataFrame
+import org.jetbrains.dataframe.RowColFormatter
 import org.jetbrains.dataframe.images.Image
 import org.jetbrains.dataframe.impl.truncate
 
@@ -46,5 +47,19 @@ data class DisplayConfiguration(
 ) {
     companion object {
         val DEFAULT = DisplayConfiguration()
+    }
+}
+
+fun escapeHTML(s: String): String {
+    return buildString {
+        for (c in s) {
+            if (c.toInt() > 127 || c == '"' || c == '\'' || c == '<' || c == '>' || c == '&') {
+                append("&#")
+                append(c.toInt())
+                append(';')
+            } else {
+                append(c)
+            }
+        }
     }
 }

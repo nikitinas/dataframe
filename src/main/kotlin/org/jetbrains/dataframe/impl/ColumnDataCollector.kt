@@ -13,6 +13,7 @@ import kotlin.reflect.full.withNullability
 interface DataCollector<T> {
 
     fun add(value: T)
+    val data: List<T?>
     val hasNulls: Boolean
     fun toColumn(name: String): DataColumn<T>
 }
@@ -21,7 +22,7 @@ internal abstract class DataCollectorBase<T>(initCapacity: Int): DataCollector<T
 
     override var hasNulls = false
 
-    private val data = ArrayList<T?>(initCapacity)
+    override val data = ArrayList<T?>(initCapacity)
 
     val values: List<T?>
         get() = data

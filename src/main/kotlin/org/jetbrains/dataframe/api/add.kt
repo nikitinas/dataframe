@@ -4,6 +4,7 @@ import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnAccessor
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.impl.DataRowImpl
 import kotlin.reflect.KProperty
 
 operator fun <T> DataFrame<T>.plus(col: AnyCol) = dataFrameOf(columns() + col).typed<T>()
@@ -18,7 +19,18 @@ fun <T> DataFrame<T>.add(column: AnyCol) = this + column
 
 fun <T> DataFrame<T>.add(name: String, data: AnyCol) = dataFrameOf(columns() + data.rename(name)).typed<T>()
 
-inline fun <reified R, T> DataFrame<T>.add(name: String, noinline expression: RowSelector<T, R>) =
+interface AddDataRow<out T>: DataRow<T> {
+    fun <C> AnyRow.added(): C
+}
+
+internal class AddDataRowImpl<T>(index: Int, owner: DataFrame<T>, private val container: List<*>): DataRowImpl<T>(index, owner), AddDataRow<T> {
+
+    override fun <C> AnyRow.added() = container[index] as C
+}
+
+typealias AddExpression<T, C> = AddDataRow<T>.(AddDataRow<T>) -> C
+
+inline fun <reified R, T> DataFrame<T>.add(name: String, noinline expression: AddExpression<T, R>) =
         (this + newColumn(name, expression))
 
 inline fun <reified R, T> DataFrame<T>.add(property: KProperty<R>, noinline expression: RowSelector<T, R>) =
@@ -27,7 +39,7 @@ inline fun <reified R, T> DataFrame<T>.add(property: KProperty<R>, noinline expr
 inline fun <reified R, T, G> GroupedDataFrame<T, G>.add(name: String, noinline expression: RowSelector<G, R>) =
         mapNotNullGroups { add(name, expression) }
 
-inline fun <reified R, T> DataFrame<T>.add(column: ColumnAccessor<R>, noinline expression: RowSelector<T, R>): DataFrame<T> {
+inline fun <reified R, T> DataFrame<T>.add(column: ColumnAccessor<R>, noinline expression: AddExpression<T, R>): DataFrame<T> {
     val col = newColumn(column.name(), expression)
     val path = column.path()
     if(path.size == 1) return this + col

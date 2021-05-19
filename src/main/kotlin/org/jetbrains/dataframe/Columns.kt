@@ -100,9 +100,20 @@ inline fun <reified T> ColumnReference<T>.withValues(values: Iterable<T>) =
 
 fun AnyColumn.toDataFrame() = dataFrameOf(listOf(this))
 
-inline fun <T, reified R> DataFrame<T>.newColumn(name: String, noinline expression: RowSelector<T, R>): DataColumn<R> {
+fun <T, R> computeValues(df: DataFrame<T>, expression: AddExpression<T, R>): Pair<Boolean, List<R>> {
     var nullable = false
-    val values = (0 until nrow()).map { get(it).let { expression(it, it) }.also { if (it == null) nullable = true } }
+    val list = ArrayList<R>(df.nrow())
+    df.indices().forEach {
+        val row = AddDataRowImpl(it, df, list)
+        val value = expression(row, row)
+        if (value == null) nullable = true
+        list.add(value)
+    }
+    return nullable to list
+}
+
+inline fun <T, reified R> DataFrame<T>.newColumn(name: String, noinline expression: AddExpression<T, R>): DataColumn<R> {
+    val (nullable, values) = computeValues(this, expression)
     if (R::class == DataFrame::class) return DataColumn.frames(name, values as List<AnyFrame?>) as DataColumn<R>
     return column(name, values, nullable)
 }

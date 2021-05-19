@@ -46,11 +46,15 @@ fun DataFrame.Companion.read(
     duplicate: Boolean = true,
     charset: Charset = Charsets.UTF_8
 ) =
-    readDelim(asStream(fileOrUrl), delimiter,
-        headers, nullStrings, isCompressed(fileOrUrl),
-        getCSVType(fileOrUrl), colTypes,
-        skipLines, readLines,
-        duplicate, charset)
+    catchHttpResponse(asURL(fileOrUrl)) {
+        readDelim(
+            it, delimiter,
+            headers, nullStrings, isCompressed(fileOrUrl),
+            getCSVType(fileOrUrl), colTypes,
+            skipLines, readLines,
+            duplicate, charset
+        )
+    }
 
 fun DataFrame.Companion.readCSV(
     fileOrUrl: String,
@@ -63,11 +67,15 @@ fun DataFrame.Companion.readCSV(
     duplicate: Boolean = true,
     charset: Charset = Charsets.UTF_8
 ) =
-    readDelim(asStream(fileOrUrl), delimiter,
-        headers, nullStrings, isCompressed(fileOrUrl),
-        CSVType.DEFAULT, colTypes,
-        skipLines, readLines,
-        duplicate, charset)
+    catchHttpResponse(asURL(fileOrUrl)) {
+        readDelim(
+            it, delimiter,
+            headers, nullStrings, isCompressed(fileOrUrl),
+            CSVType.DEFAULT, colTypes,
+            skipLines, readLines,
+            duplicate, charset
+        )
+    }
 
 fun DataFrame.Companion.readCSV(
     file: File,
@@ -114,11 +122,15 @@ fun DataFrame.Companion.readTSV(
     duplicate: Boolean = true,
     charset: Charset = Charsets.UTF_8
 ) =
-    readDelim(asStream(fileOrUrl), delimiter,
-        headers, nullStrings, isCompressed(fileOrUrl),
-        CSVType.TDF, colTypes,
-        skipLines, readLines,
-        duplicate, charset)
+    catchHttpResponse(asURL(fileOrUrl)) {
+        readDelim(
+            it, delimiter,
+            headers, nullStrings, isCompressed(fileOrUrl),
+            CSVType.TDF, colTypes,
+            skipLines, readLines,
+            duplicate, charset
+        )
+    }
 
 fun DataFrame.Companion.readTSV(
     file: File,
@@ -151,6 +163,12 @@ private fun asStream(fileOrUrl: String) = (if (isURL(fileOrUrl)) {
     File(fileOrUrl).toURI()
 }).toURL().openStream()
 
+private fun asURL(fileOrUrl: String): URL = (if (isURL(fileOrUrl)) {
+    URL(fileOrUrl).toURI()
+} else {
+    File(fileOrUrl).toURI()
+}).toURL()
+
 private fun getFormat(type: CSVType, delimiter: Char, headers: List<String>, duplicate: Boolean): CSVFormat =
     type.format.withDelimiter(delimiter).withHeader(*headers.toTypedArray()).withAllowDuplicateHeaderNames(duplicate)
 
@@ -166,7 +184,7 @@ fun DataFrame.Companion.readDelim(
     readLines: Int? = null,
     duplicate: Boolean = true,
     charset: Charset = defaultCharset
-) =
+): AnyFrame =
     if (isCompressed) {
         InputStreamReader(GZIPInputStream(inStream), charset)
     } else {

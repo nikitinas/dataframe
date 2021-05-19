@@ -36,20 +36,20 @@ fun DataFrame.Companion.readJson(path: String): AnyFrame {
 
 @Suppress("UNCHECKED_CAST")
 fun DataFrame.Companion.readJson(url: URL): AnyFrame =
-        readJson(Parser.default().parse(url.openStream()))
+        catchHttpResponse(url) { readJson(Parser.default().parse(it)) }
 
 fun DataFrame.Companion.readJsonStr(text: String) = readJson(Parser.default().parse(StringBuilder(text)))
 
 private fun readJson(parsed: Any?) = when (parsed) {
-    is JsonArray<*> -> fromList(parsed.value)
-    else -> fromList(listOf(parsed))
+    is JsonArray<*> -> fromJsonList(parsed.value)
+    else -> fromJsonList(listOf(parsed))
 }
 
 private val arrayColumnName = "array"
 
 internal val valueColumnName = "value"
 
-internal fun fromList(records: List<*>): AnyFrame {
+internal fun fromJsonList(records: List<*>): AnyFrame {
 
     fun AnyFrame.isSingleUnnamedColumn() = ncol == 1 && column(0).name.let { it  == valueColumnName || it == arrayColumnName }
 
@@ -96,7 +96,7 @@ internal fun fromList(records: List<*>): AnyFrame {
                     startIndices.add(values.size)
                     if (it is JsonArray<*>) values.addAll(it.value)
                 }
-                val parsed = fromList(values)
+                val parsed = fromJsonList(values)
                 when {
                     parsed.isSingleUnnamedColumn() -> {
                         val col = parsed.column(0)
@@ -118,7 +118,7 @@ internal fun fromList(records: List<*>): AnyFrame {
                     }
                 }
 
-                val parsed = fromList(values)
+                val parsed = fromJsonList(values)
                 when {
                     parsed.ncol == 0 -> DataColumn.create(colName, arrayOfNulls<Any?>(values.size).toList(), getType<Any?>())
                     parsed.isSingleUnnamedColumn() -> parsed.column(0).rename(colName)

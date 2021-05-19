@@ -5,16 +5,19 @@ import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.internal.schema.ColumnSchema
 import org.junit.Test
+import java.net.HttpURLConnection
+import java.net.URL
+import java.net.URLConnection
 
 class ReadTests {
 
     @Test
-    fun ghost(){
+    fun ghost() {
         DataFrame.read("data/ghost.json")
     }
 
     @Test
-    fun readJsonNulls(){
+    fun readJsonNulls() {
         val data = """
             [{"a":null, "b":1},{"a":null, "b":2}]
         """.trimIndent()
@@ -48,7 +51,7 @@ class ReadTests {
     }
 
     @Test
-    fun readFrameColumnEmptySlice(){
+    fun readFrameColumnEmptySlice() {
         val data = """
             [ [], [ {"a": [{"q":2},{"q":3}] } ] ]
         """.trimIndent()
@@ -59,5 +62,13 @@ class ReadTests {
         val empty = df[0][0] as AnyFrame
         empty.nrow() shouldBe 0
         empty.ncol() shouldBe 1
+    }
+
+    @Test
+    fun `http error`() {
+        val url = "https://api.binance.com/api/v3/klines?symbol=BTCUSDT"
+        val df = dataFrame(url)
+        df.nrow() shouldBe 1
+        df.columnNames() shouldBe listOf("code", "msg")
     }
 }

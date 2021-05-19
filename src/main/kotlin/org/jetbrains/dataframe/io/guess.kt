@@ -52,3 +52,7 @@ fun DataFrame.Companion.read(path: String): AnyFrame = when(guessFormat(path)) {
         readJson(path)
     }
 }
+
+fun URL.readDataFrame() = DataFrame.read(this)
+fun File.readDataFrame() = DataFrame.read(this)
+fun dataFrame(url: String) = DataFrame.read(url)

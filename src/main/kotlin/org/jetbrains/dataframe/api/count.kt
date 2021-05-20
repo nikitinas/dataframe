@@ -9,7 +9,7 @@ fun <T, G> GroupedDataFrame<T, G>.countInto(columnName: String) = aggregate {
     nrow() into columnName
 }
 
-fun <T, G> GroupedDataFrame<T, G>.count() = countInto("n")
+fun <T, G> GroupedDataFrame<T, G>.count() = countInto("count")
 
 fun AnyCol.count() = size()
 

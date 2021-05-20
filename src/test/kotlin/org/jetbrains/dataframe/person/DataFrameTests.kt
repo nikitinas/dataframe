@@ -1621,4 +1621,11 @@ class DataFrameTests : BaseTest() {
     fun neighbours(){
         typed[2].neighbours(-1..1).toList() shouldBe listOf(typed[1], typed[2], typed[3])
     }
+
+    @Test
+    fun `get row value by selector`(){
+        val selector: RowSelector<Person, Int> = { it.age * 2}
+        val added = typed.add("new") { it[selector] }
+        added shouldBe typed.add("new") { age * 2 }
+    }
 }

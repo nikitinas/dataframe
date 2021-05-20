@@ -12,6 +12,7 @@ import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.typed
 import org.jetbrains.dataframe.impl.trackColumnAccess
 import org.jetbrains.dataframe.io.print
+import org.jetbrains.dataframe.io.renderValue
 import org.junit.Test
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -608,8 +609,9 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun `groupBy meanOf`(){
-        typed.groupBy { name }.meanOf { age * 2 } shouldBe typed.groupBy { name }.aggregate { mean { age } * 2 into "mean" }
+    fun `groupBy meanOf`() {
+        typed.groupBy { name }.meanOf { age * 2 } shouldBe typed.groupBy { name }
+            .aggregate { mean { age } * 2 into "mean" }
     }
 
     @Test
@@ -1598,13 +1600,13 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun `get typed column by name`(){
+    fun `get typed column by name`() {
         val col = df.getColumn<String>("name")
         col[0].substring(0, 3) shouldBe "Ali"
     }
 
     @Test
-    fun `select all after`(){
+    fun `select all after`() {
         typed.select { allAfter(age) } shouldBe typed.select { city and weight }
         typed.select { allSince(age) } shouldBe typed.select { age and city and weight }
         typed.select { allBefore(age) } shouldBe typed.select { name }
@@ -1612,20 +1614,30 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun `cols of type`(){
+    fun `cols of type`() {
         val stringCols = typed.select { colsOf<String?>() }
         stringCols.columnNames() shouldBe listOf("name", "city")
     }
 
     @Test
-    fun neighbours(){
+    fun neighbours() {
         typed[2].neighbours(-1..1).toList() shouldBe listOf(typed[1], typed[2], typed[3])
     }
 
     @Test
-    fun `get row value by selector`(){
-        val selector: RowSelector<Person, Int> = { it.age * 2}
+    fun `get row value by selector`() {
+        val selector: RowSelector<Person, Int> = { it.age * 2 }
         val added = typed.add("new") { it[selector] }
         added shouldBe typed.add("new") { age * 2 }
+    }
+
+    @Test
+    fun `render nested data frames to string`() {
+        val rendered = typed.drop(1).groupBy { name }.groups.asIterable().joinToString("\n") { renderValue(it) }
+        rendered shouldBe """
+            [2 x 4]
+            [3 x 4]
+            [1 x 4] { name:Alice, age:20, weight:55 }
+        """.trimIndent()
     }
 }

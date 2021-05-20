@@ -49,11 +49,7 @@ internal fun AnyRow.renderToString(): String{
 
 internal fun renderValue(value: Any?) =
     when(value) {
-        is AnyFrame -> when{
-            value.isEmpty() -> ""
-            value.nrow() == 1 -> value[0].toString()
-            else -> "${value.nrow()} rows"
-        }
+        is AnyFrame -> "[${value.nrow()} x ${value.ncol()}]".let { if(value.nrow() == 1) it + " " + value[0].toString() else it}
         is Double -> value.format(6)
         else -> value.toString()
     }

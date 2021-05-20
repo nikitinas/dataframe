@@ -6,14 +6,14 @@ internal class ColumnAccessTracker {
 
     var isEnabled = false
 
-    val accessedColumns = mutableListOf<String>()
+    val accessedColumns = mutableSetOf<String>()
 
     fun <T> track(body: () -> T): List<String> {
         accessedColumns.clear()
         isEnabled = true
         body()
         isEnabled = false
-        return accessedColumns
+        return accessedColumns.toList()
     }
 
     fun registerAccess(columnName: String){

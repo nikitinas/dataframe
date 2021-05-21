@@ -21,6 +21,7 @@ repositories {
     mavenCentral()
     maven { url "https://jitpack.io" }
     maven { url "https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven" }
+    maven { url "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev" }
     maven { url jupyterApiTCRepo }
 }
 
@@ -38,6 +39,8 @@ dependencies {
 
     testImplementation "junit:junit:4.12"
     testImplementation "io.kotest:kotest-assertions-core:4.5.0"
+    testImplementation "org.jetbrains.kotlinx:kotlin-jupyter-kernel:$jupyterApiVersion"
+    testImplementation "org.jetbrains.kotlin:kotlin-scripting-jvm"
 
     // needed to work around https://youtrack.jetbrains.com/issue/KT-15064
     compileOnly "org.jetbrains.kotlin:kotlin-script-runtime:$kotlin_version"

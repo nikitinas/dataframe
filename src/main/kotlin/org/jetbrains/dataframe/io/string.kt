@@ -75,7 +75,7 @@ internal fun renderValue(value: Any?) =
     when(value) {
         is AnyFrame -> "[${value.nrow()} x ${value.ncol()}]".let { if(value.nrow() == 1) it + " " + value[0].toString() else it}
         is Double -> value.format(6)
-        else -> value.toString()
+        else -> escapeHTML(value.toString())
     }
 
 fun Double.format(digits: Int) = "%.${digits}f".format(this)

@@ -32,11 +32,10 @@ internal fun getRequiredMarkers(schema: DataFrameSchema, markers: Iterable<Marke
 
 internal val charsToQuote = """[ {}()<>'"/|.\\!?@:;%^&*#$-]""".toRegex()
 
-internal val patternToQuote = """[\d].*""".toRegex()
-
 internal fun String.needsQuoting(): Boolean {
-    return contains(charsToQuote)
-            || matches(patternToQuote)
+    return isBlank()
+            || first().isDigit()
+            || contains(charsToQuote)
             || HardKeywords.VALUES.contains(this)
             || ModifierKeywords.VALUES.contains(this)
 }

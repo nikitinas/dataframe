@@ -87,8 +87,6 @@ internal val AnyCol.type get() = type()
 internal val AnyCol.hasNulls get() = hasNulls()
 internal val AnyCol.typeClass get() = type.classifier as KClass<*>
 
-infix fun <T, C: Column<T>> C.named(name: String) = rename(name) as C
-
 internal fun guessValueType(values: List<Any?>): KType {
     var nullable = false
     val types = mutableSetOf<KClass<*>>()

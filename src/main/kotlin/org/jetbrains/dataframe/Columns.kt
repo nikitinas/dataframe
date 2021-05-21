@@ -208,6 +208,8 @@ fun StringCol.len() = map { it?.length }
 fun StringCol.lower() = map { it?.toLowerCase() }
 fun StringCol.upper() = map { it?.toUpperCase() }
 
+infix fun <T, C: Column<T>> C.named(name: String) = rename(name) as C
+
 infix fun <T> DataColumn<T>.eq(value: T): BooleanArray = isMatching { it == value }
 infix fun <T> DataColumn<T>.neq(value: T): BooleanArray = isMatching { it != value }
 

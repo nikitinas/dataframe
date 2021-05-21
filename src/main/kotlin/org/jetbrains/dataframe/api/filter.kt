@@ -11,6 +11,8 @@ fun <T> DataFrame<T>.filter(predicate: RowFilter<T>): DataFrame<T> =
             predicate(row, row)
         }.let { get(it) }
 
+fun <T> DataFrame<T>.filterNotNull() = filterNotNull { all() }
+
 fun <T> DataFrame<T>.filterNotNull(selector: ColumnsSelector<T, *>): DataFrame<T> {
     val cols = this[selector]
     return filter { row -> cols.all { col -> col[row] != null } }

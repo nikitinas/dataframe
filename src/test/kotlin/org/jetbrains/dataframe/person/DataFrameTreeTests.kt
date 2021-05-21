@@ -34,6 +34,7 @@ import org.jetbrains.dataframe.emptyDataFrame
 import org.jetbrains.dataframe.execute
 import org.jetbrains.dataframe.explode
 import org.jetbrains.dataframe.filter
+import org.jetbrains.dataframe.filterNotNull
 import org.jetbrains.dataframe.forEach
 import org.jetbrains.dataframe.frameColumn
 import org.jetbrains.dataframe.get
@@ -637,5 +638,10 @@ class DataFrameTreeTests : BaseTest() {
     @Test
     fun `check column path`(){
         typed2.getColumnPath { nameAndCity.name }.size shouldBe 2
+    }
+
+    @Test
+    fun `filter not null without arguments`(){
+        typed2.filterNotNull() shouldBe typed.filterNotNull {weight}.group {name and city}.into("nameAndCity")
     }
 }

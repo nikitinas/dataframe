@@ -6,6 +6,7 @@ import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.DataRowBase
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
+import org.jetbrains.dataframe.dataFrameOf
 import org.jetbrains.dataframe.filterNotNull
 import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
 import org.jetbrains.dataframe.impl.codeGen.InterfaceGenerationMode
@@ -155,5 +156,21 @@ class CodeGenerationTests : BaseTest(){
                 val weight: kotlin.Int?
             }
         """.trimIndent()
+    }
+
+    @Test
+    fun `column starts with number`(){
+        val df = dataFrameOf("1a", "-b", "?c")(1,2,3)
+        val repl = CodeGenerator.create()
+        val declarations = repl.generate(df.extractSchema(), "DataType", false, true, false).code.declarations
+        df.columnNames().forEach {
+            val matches = "`${it}`".toRegex().findAll(declarations).toList()
+            matches.size shouldBe 2
+        }
+    }
+
+    @Test
+    fun patterns() {
+        """^[\d]""".toRegex().matches("3fds")
     }
 }

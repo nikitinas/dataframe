@@ -8,7 +8,10 @@ import org.jetbrains.dataframe.internal.schema.DataFrameSchema
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.columns.type
+import org.jetbrains.dataframe.getType
+import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlin.reflect.full.isSubtypeOf
 
 internal fun String.truncate(limit: Int) = if (limit in 1 until length) {
     if (limit < 4) substring(0, limit)
@@ -41,6 +44,10 @@ internal fun renderType(column: ColumnSchema) =
     }
 
 internal fun renderType(type: KType): String{
+    if(type.classifier == List::class) {
+        val argument = type.arguments[0].type?.let { renderType(it) } ?: "*"
+        return "List<${argument}>"
+    }
     val result = type.toString()
     return if (result.startsWith("kotlin.")) result.substring(7)
     else result

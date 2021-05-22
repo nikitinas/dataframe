@@ -46,6 +46,30 @@ internal fun AnyRow.renderToString(): String{
         .map { "${it.first}:${renderValue(it.second)}" }.joinToString(prefix = "{ ", postfix = " }")
 }
 
+internal fun AnyRow.renderToStringTable(): String{
+    if(size() == 0) return ""
+    val pairs =  owner.columns().map {it.name() to renderValueForRowTable(it[index])}
+    val width = pairs.map { it.first.length + it.second.second}.maxOrNull()!! + 4
+    return pairs.joinToString("\n") {
+        it.first + " ".repeat(width - it.first.length - it.second.second) + it.second.first
+    }
+}
+
+internal fun renderCollectionName(value: Collection<*>) = when(value) {
+    is List -> "List"
+    is Map<*,*> -> "Map"
+    is Set -> "Set"
+    else -> value.javaClass.simpleName
+}
+
+internal fun renderValueForRowTable(value: Any?): Pair<String, Int> = when(value) {
+    is AnyFrame -> "DataFrame [${value.nrow()} x ${value.ncol()}]".let {
+        if(value.nrow() == 1) it + " " + value[0].toString() else it
+    } to "DataFrame".length
+    is AnyRow -> "DataRow $value" to "DataRow".length
+    is Collection<*> -> renderCollectionName(value).let { it + " " + value.toString() to it.length }
+    else -> renderValue(value).let { it to it.length }
+}
 
 internal fun renderValue(value: Any?) =
     when(value) {

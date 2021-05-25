@@ -32,7 +32,7 @@
     * [fillNulls](#fillNulls)
     * [nullToZero](#nullToZero)    
 * [Modify rows](#modify-rows)
-    * [filter](#filter)
+    * [filter/drop](#filter--drop)
     * [sortBy](#sortBy)
     * [distinct](#distinct)
     * [mergeRows](#mergeRows)
@@ -42,6 +42,7 @@
     * [shuffled](#shuffled)
     * [take/takeLast](#take--takelast)
     * [drop/dropLast](#drop--droplast)
+    * [dropNulls/dropNa](#dropNulls--dropNa)
 * [Modify columns](#modify-columns)
     * [select](#select)
     * [add](#add)
@@ -302,8 +303,10 @@ df.nullToZero { columns }
 ```
 ## Modify rows
 `DataFrame` is immutable, so all modification operations return a new instance
-### filter
+### filter / drop
 Filter rows by row predicate
+`filter` keeps rows that satisfy predicate
+`drop` removes rows that satisfy predicate (reverse to 'filter')
 
 String API:
 ```kotlin
@@ -492,6 +495,21 @@ Returns `DataFrame` containing all rows except first/last `n` rows
 ```kotlin
 df.drop(10)
 df.dropLast(20)
+```
+### dropNulls / dropNa
+`dropNulls` removes rows with `null` values
+```kotlin
+df.dropNulls() // remove rows containing null value in any column
+df.dropNulls(whereAllNull = true) // remove rows with null value in all columns
+df.dropNulls { col1 and col2 } // remove rows with null value in col1 or col2 columns
+df.dropNulls(whereAllNull = true) { col1 and col2 } // remove rows with null value in col1 and col2 columns
+```
+`dropNa` removes rows with `null` or `Double.NaN` values
+```kotlin
+df.dropNa() // remove rows containing null or Double.NaN in any column
+df.dropNa(whereAllNa = true) // remove rows with null or Double.NaN in all columns
+df.dropNa { col1 and col2 } // remove rows with null or Double.NaN in col1 or col2 columns
+df.dropNa(whereAllNa = true) { col1 and col2 } // remove rows with null or Double.NaN in col1 and col2 columns
 ```
 ## Modify columns
 Note that `DataFrame` object is immutable, so all modification operations return a new instance of `DataFrame`

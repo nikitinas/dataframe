@@ -143,7 +143,7 @@ class SpreadTests {
 
         val spread = typed.spread { key }.by { value }.into { it }
         val gathered = spread.gather { cols().drop(1) }.where { it != null }.into("key", "value")
-        gathered shouldBe typed.filterNotNull { value }
+        gathered shouldBe typed.dropNulls { value }
     }
 
     @Test

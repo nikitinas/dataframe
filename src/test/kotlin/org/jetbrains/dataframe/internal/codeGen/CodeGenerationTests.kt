@@ -7,7 +7,7 @@ import org.jetbrains.dataframe.DataRowBase
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.dataFrameOf
-import org.jetbrains.dataframe.filterNotNull
+import org.jetbrains.dataframe.dropNulls
 import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
 import org.jetbrains.dataframe.impl.codeGen.InterfaceGenerationMode
 import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
@@ -116,7 +116,7 @@ class CodeGenerationTests : BaseTest(){
     @Test
     fun `generate derived interface`() {
         val codeGen = CodeGenerator.create()
-        val schema = df.filterNotNull { all() }.extractSchema()
+        val schema = df.dropNulls().extractSchema()
         val code = codeGen.generate(schema, "ValidPerson", true, true, isOpen = true, listOf(MarkersExtractor.get<Person>())).code.declarations
         val expected = """
             @DataSchema

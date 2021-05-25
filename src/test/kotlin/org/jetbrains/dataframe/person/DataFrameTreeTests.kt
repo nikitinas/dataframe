@@ -24,17 +24,16 @@ import org.jetbrains.dataframe.columnList
 import org.jetbrains.dataframe.columnOf
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.toAccessor
 import org.jetbrains.dataframe.count
 import org.jetbrains.dataframe.dataFrameOf
 import org.jetbrains.dataframe.distinct
+import org.jetbrains.dataframe.dropNulls
 import org.jetbrains.dataframe.duplicate
 import org.jetbrains.dataframe.emptyDataFrame
 import org.jetbrains.dataframe.execute
 import org.jetbrains.dataframe.explode
 import org.jetbrains.dataframe.filter
-import org.jetbrains.dataframe.filterNotNull
 import org.jetbrains.dataframe.forEach
 import org.jetbrains.dataframe.frameColumn
 import org.jetbrains.dataframe.get
@@ -88,7 +87,6 @@ import org.jetbrains.dataframe.update
 import org.jetbrains.dataframe.with
 import org.jetbrains.dataframe.with2
 import org.jetbrains.dataframe.withNull
-import org.junit.Ignore
 import org.junit.Test
 
 class DataFrameTreeTests : BaseTest() {
@@ -636,12 +634,12 @@ class DataFrameTreeTests : BaseTest() {
     }
 
     @Test
-    fun `check column path`(){
+    fun `check column path`() {
         typed2.getColumnPath { nameAndCity.name }.size shouldBe 2
     }
 
     @Test
-    fun `filter not null without arguments`(){
-        typed2.filterNotNull() shouldBe typed.filterNotNull {weight}.group {name and city}.into("nameAndCity")
+    fun `filter not null without arguments`() {
+        typed2.dropNulls() shouldBe typed.dropNulls { weight }.group {name and city}.into("nameAndCity")
     }
 }

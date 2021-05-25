@@ -393,36 +393,62 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun `filterNotNull 1`() {
+    fun `drop nulls 1`() {
 
         fun AnyFrame.check() = rows().forEach { get("weight") shouldNotBe null }
 
-        typed.filterNotNull(typed.weight).check()
-        typed.filterNotNull { weight }.check()
-        typed.filterNotNull { it.weight }.check()
+        typed.dropNulls(typed.weight).check()
+        typed.dropNulls { weight }.check()
+        typed.dropNulls { it.weight }.check()
 
-        df.filterNotNull(weight).check()
-        df.filterNotNull { weight }.check()
+        df.dropNulls(weight).check()
+        df.dropNulls { weight }.check()
 
-        df.filterNotNull("weight").check()
+        df.dropNulls("weight").check()
     }
 
     @Test
-    fun `filterNotNull 2`() {
+    fun `drop where all null`() {
 
-        val expected = typed.rows().count { it.city != null && it.weight != null }
+        val filtered = typed.update { weight }.where { name == "Alice" }.withNull()
+        val expected = typed.nrow() - 1
+
         fun AnyFrame.check() = nrow() shouldBe expected
 
-        typed.filterNotNull(typed.weight, typed.city).check()
-        typed.filterNotNull { weight and city }.check()
-        typed.filterNotNull { it.weight and it.city }.check()
+        filtered.dropNulls(typed.weight, typed.city, whereAllNull = true).check()
+        filtered.dropNulls(whereAllNull = true) { weight and city }.check()
+        filtered.dropNulls(whereAllNull = true) { it.weight and it.city }.check()
 
-        df.filterNotNull(Person::weight, Person::city).check()
+        filtered.dropNulls(Person::weight, Person::city, whereAllNull = true).check()
 
-        df.filterNotNull(weight, city).check()
-        df.filterNotNull { weight and city }.check()
+        filtered.dropNulls(weight, city, whereAllNull = true).check()
+        filtered.dropNulls(whereAllNull = true) { weight and city }.check()
 
-        df.filterNotNull("weight", "city").check()
+        filtered.dropNulls("weight", "city", whereAllNull = true).check()
+    }
+
+    @Test
+    fun `drop where any null`() {
+
+        val filtered = typed.update { weight }.where { name == "Alice" }.withNull()
+        val expected = filtered.count { weight != null && city != null}
+
+        fun AnyFrame.check() = nrow() shouldBe expected
+
+        filtered.dropNulls(typed.weight, typed.city).check()
+        filtered.dropNulls { weight and city }.check()
+        filtered.dropNulls { it.weight and it.city }.check()
+
+        filtered.dropNulls(Person::weight, Person::city).check()
+
+        filtered.dropNulls(weight, city).check()
+        filtered.dropNulls { weight and city }.check()
+
+        filtered.dropNulls("weight", "city").check()
+
+        filtered.dropNulls().check()
+
+        filtered.select { weight and city }.dropNulls().check()
     }
 
     @Test
@@ -658,13 +684,13 @@ class DataFrameTests : BaseTest() {
 
         fun AnyRow?.check() = this!![name] shouldBe expected
 
-        typed.filterNotNull { weight }.minBy { weight!! }.check()
-        typed.filterNotNull { it.weight }.minBy { it.weight!! }.check()
+        typed.dropNulls { weight }.minBy { weight!! }.check()
+        typed.dropNulls { it.weight }.minBy { it.weight!! }.check()
 
-        df.filterNotNull(weight).minBy { weight()!! }.check()
+        df.dropNulls(weight).minBy { weight()!! }.check()
 
-        df.filterNotNull("weight").minBy { "weight"<Int>() }.check()
-        df.filterNotNull("weight").minBy("weight").check()
+        df.dropNulls("weight").minBy { "weight"<Int>() }.check()
+        df.dropNulls("weight").minBy("weight").check()
     }
 
     @Test
@@ -924,8 +950,8 @@ class DataFrameTests : BaseTest() {
 
         res.ncol() shouldBe selected.city.ndistinct()
         res.nrow() shouldBe selected.name.ndistinct()
-        val trueValuesCount = res.columns().drop(1).sumBy { it.typed<Boolean>().toList().count { it } }
-        trueValuesCount shouldBe selected.filterNotNull { city }.distinct().nrow()
+        val trueValuesCount = res.columns().drop(1).sumOf { it.typed<Boolean>().toList().count { it } }
+        trueValuesCount shouldBe selected.dropNulls { city }.distinct().nrow()
 
         val pairs = (1 until res.ncol()).flatMap { i ->
             val col = res.column(i).typed<Boolean>()
@@ -961,7 +987,7 @@ class DataFrameTests : BaseTest() {
         val spread = selected.spread { city }.into { it }
         val res = spread.gather { colsOf<Boolean>() }.where { it }.into("city")
         val sorted = res.sortBy { name and city }
-        sorted shouldBe selected.filterNotNull { city }.distinct().sortBy { name and city }
+        sorted shouldBe selected.dropNulls { city }.distinct().sortBy { name and city }
     }
 
     @Test
@@ -1638,5 +1664,31 @@ class DataFrameTests : BaseTest() {
             [3 x 4]
             [1 x 4] { name:Alice, age:20, weight:55 }
         """.trimIndent()
+    }
+
+    @Test
+    fun `drop where any na`(){
+        val updated = typed.update { weight }.with { if(name=="Alice") Double.NaN else it?.toDouble() }
+        val expected = updated.count { city != null && !(ndouble("weight")?.isNaN() ?: true) }
+
+        fun AnyFrame.check() = nrow() shouldBe expected
+
+        updated.dropNa { city and weight }.check()
+        updated.dropNa(city, weight).check()
+        updated.dropNa("city", "weight").check()
+        updated.dropNa(Person::city, Person::weight).check()
+    }
+
+    @Test
+    fun `drop where all na`(){
+        val updated = typed.update { weight }.with { if(name=="Alice") Double.NaN else it?.toDouble() }
+        val expected = updated.count { city != null || !(ndouble("weight")?.isNaN() ?: true) }
+
+        fun AnyFrame.check() = nrow() shouldBe expected
+
+        updated.dropNa(whereAllNa = true) { city and weight }.check()
+        updated.dropNa(city, weight, whereAllNa = true).check()
+        updated.dropNa("city", "weight", whereAllNa = true).check()
+        updated.dropNa(Person::city, Person::weight, whereAllNa = true).check()
     }
 }

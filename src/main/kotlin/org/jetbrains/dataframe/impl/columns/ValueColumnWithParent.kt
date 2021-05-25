@@ -7,9 +7,9 @@ import org.jetbrains.dataframe.columns.ValueColumn
 
 internal class ValueColumnWithParent<T>(override val parent: ColumnGroup<*>, override val source: ValueColumn<T>) : ColumnWithParent<T>, ValueColumn<T> by source {
 
-    override fun equals(other: Any?) = checkEquals(other)
+    override fun equals(other: Any?) = source.checkEquals(other)
 
-    override fun hashCode() = getHashCode()
+    override fun hashCode() = source.hashCode()
 
     override fun path() = super<ColumnWithParent>.path()
 

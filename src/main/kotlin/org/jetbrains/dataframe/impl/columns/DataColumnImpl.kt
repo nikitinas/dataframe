@@ -30,7 +30,9 @@ internal abstract class DataColumnImpl<T>(protected val values: List<T>, val nam
 
     override fun equals(other: Any?) = checkEquals(other)
 
-    override fun hashCode() = getHashCode()
+    private val hashCode by lazy { getHashCode() }
+
+    override fun hashCode() = hashCode
 
     override fun slice(indices: Iterable<Int>): DataColumn<T> {
         var nullable = false

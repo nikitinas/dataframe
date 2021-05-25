@@ -25,9 +25,9 @@ internal class ColumnGroupWithParent<T>(override val parent: MapColumnReference?
     override fun columns() = df.columns().map { it.addParent(this) }
     override fun column(columnIndex: Int) = df.column(columnIndex).addParent(this)
 
-    override fun equals(other: Any?) = checkEquals(other)
+    override fun equals(other: Any?) = source.checkEquals(other)
 
-    override fun hashCode() = getHashCode()
+    override fun hashCode() = source.hashCode()
 
     override fun resolveSingle(context: ColumnResolutionContext) = super<ColumnWithParent>.resolveSingle(context)
 

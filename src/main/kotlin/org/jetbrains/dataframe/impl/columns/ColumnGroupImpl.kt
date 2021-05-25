@@ -50,9 +50,9 @@ internal class ColumnGroupImpl<T>(override val df: DataFrame<T>, val name: Strin
         return name == g.name() && df == other.df
     }
 
-    override fun hashCode(): Int {
-        return name.hashCode() * 31 + df.hashCode()
-    }
+    private val hashCode by lazy { name.hashCode() * 31 + df.hashCode() }
+
+    override fun hashCode() = hashCode
 
     override fun tryGetColumn(columnName: String) = df.tryGetColumn(columnName)
 
@@ -67,4 +67,6 @@ internal class ColumnGroupImpl<T>(override val df: DataFrame<T>, val name: Strin
     override fun resolveSingle(context: ColumnResolutionContext): ColumnWithPath<DataRow<T>>? {
         return df.resolveSingle(context)
     }
+
+    override fun iterator() = df.iterator()
 }

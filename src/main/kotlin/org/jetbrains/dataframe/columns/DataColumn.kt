@@ -14,6 +14,7 @@ import org.jetbrains.dataframe.impl.columns.FrameColumnImpl
 import org.jetbrains.dataframe.impl.columns.ColumnGroupImpl
 import org.jetbrains.dataframe.impl.columns.ValueImplColumn
 import org.jetbrains.dataframe.impl.columns.addPath
+import org.jetbrains.dataframe.impl.columns.getHashCode
 import org.jetbrains.dataframe.internal.schema.DataFrameSchema
 import org.jetbrains.dataframe.toDataFrame
 import kotlin.reflect.KClass

@@ -35,6 +35,8 @@
     * [filter/drop](#filter--drop)
     * [sortBy](#sortBy)
     * [distinct](#distinct)
+        * [distinctBy](#distinctby)
+        * [distinctByExpr](#distinctbyexpr)
     * [mergeRows](#mergeRows)
     * [explode](#explode)
     * [append](#append)
@@ -364,6 +366,27 @@ Removes duplicate rows
 ```kotlin
 df.distinct()
 ```
+If columns are specified, `distinct` returns only selected columns (equivalent to `select { columns }.distint()`):
+```kotlin
+df.distinct { age and name }
+```
+#### distinctBy
+Returns `DataFrame` containing only rows having distinct values in given columns. 
+Among rows of the original `DataFrame` with equal keys, only the first one will be present in the resulting `DataFrame`.
+The rows in the resulting `DataFrame` are in the same order as they were in the original `DataFrame`.
+Resulting `DataFrame` have the same column schema as original `DataFrame`.
+```kotlin
+df.distinctBy { age and name }
+```
+#### distinctByExpr
+Returns `DataFrame` containing only rows having distinct keys returned by given [row expression](#row-expressions).
+Among rows of the original `DataFrame` with equal keys, only the first one will be present in the resulting `DataFrame`.
+The rows in the resulting `DataFrame` are in the same order as they were in the original `DataFrame`.
+Resulting `DataFrame` have the same column schema as original `DataFrame`.
+```kotlin
+df.distinctByExpr { name.take(3).lowercase() }
+```
+
 ### mergeRows
 Merges values in selected columns into lists grouped by other columns
 

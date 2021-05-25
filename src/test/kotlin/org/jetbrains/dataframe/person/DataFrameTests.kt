@@ -834,11 +834,18 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `distinct`() {
         typed.select { name and city }.distinct().nrow() shouldBe 6
+        val d = typed.distinct { name and city }
+        d.nrow() shouldBe 6
+        d.ncol() shouldBe 2
     }
 
     @Test
     fun `distinct by`() {
         typed.distinctBy { name }.nrow() shouldBe 3
+        typed.distinctBy { name and city }.nrow() shouldBe 6
+        typed.distinctByExpr { age / 10 }.nrow() shouldBe 4
+        typed.distinctBy { age / 10 }.nrow() shouldBe 4
+        typed.distinctByExpr { city?.get(0) }.nrow() shouldBe 5
     }
 
     @Test

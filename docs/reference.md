@@ -34,6 +34,8 @@
 * [Modify rows](#modify-rows)
     * [filter/drop](#filter--drop)
     * [sortBy](#sortBy)
+        * [sortByDesc](#sortbydesc)
+        * [sortWith](#sortwith)
     * [distinct](#distinct)
         * [distinctBy](#distinctby)
         * [distinctByExpr](#distinctbyexpr)
@@ -360,6 +362,21 @@ df.sortByDesc { name and age}
 To sort by a continuous range of columns use `cols` function
 ```kotlin
 df.sortBy { cols(0..2) }
+```
+#### sortByDesc
+Similar to [sortBy](#sortby), but uses reversed sort direction
+#### sortWith
+Sorts `DataFrame` with comparator
+```kotlin
+val comparator = Comparator { row1, rpw2 -> row1.age.compareTo(row2.age) }
+df.sortWith(comparator)
+
+df.sortWith { row1, row2 -> when {
+       row1.age < row2.age -> -1
+       row1.age > row2.age -> 1
+       else -> row1.name.compareTo(row2.name)
+    } 
+}
 ```
 ### distinct
 Removes duplicate rows

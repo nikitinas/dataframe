@@ -11,6 +11,7 @@ import org.jetbrains.dataframe.impl.columns.assertIsComparable
 import org.jetbrains.dataframe.impl.columns.toColumnSet
 import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.columns.typed
+import javax.xml.crypto.Data
 import kotlin.reflect.KProperty
 
 interface SortReceiver<out T> : SelectReceiver<T> {
@@ -31,6 +32,13 @@ fun <T> DataFrame<T>.sortBy(cols: Iterable<ColumnReference<Comparable<*>?>>) = s
 fun <T> DataFrame<T>.sortBy(vararg cols: ColumnReference<Comparable<*>?>) = sortBy { cols.toColumns() }
 fun <T> DataFrame<T>.sortBy(vararg cols: String) = sortBy { cols.toColumns() }
 fun <T> DataFrame<T>.sortBy(vararg cols: KProperty<Comparable<*>?>) = sortBy { cols.toColumns() }
+
+fun <T> DataFrame<T>.sortWith(comparator: Comparator<DataRow<T>>): DataFrame<T> {
+    val permutation = rows().sortedWith(comparator).asSequence().map { it.index }.asIterable()
+    return this[permutation]
+}
+
+fun <T> DataFrame<T>.sortWith(comparator: (DataRow<T>, DataRow<T>)->Int) = sortWith(Comparator(comparator))
 
 fun <T,C> DataFrame<T>.sortByDesc(selector: SortColumnsSelector<T, C>): DataFrame<T> {
     val set = selector.toColumns()
@@ -67,10 +75,12 @@ internal fun AnyCol.createComparator(nullsLast: Boolean): java.util.Comparator<I
 
     assertIsComparable()
 
-    return Comparator<Any?> { left, right ->
+    val valueComparator = Comparator<Any?> { left, right ->
         (left as Comparable<Any?>).compareTo(right)
-    }.let { if (nullsLast) nullsLast(it) else nullsFirst(it) }
-            .let { Comparator { left, right -> it.compare(get(left), get(right)) } }
+    }
+
+    val comparatorWithNulls = if (nullsLast) nullsLast(valueComparator) else nullsFirst(valueComparator)
+    return Comparator { left, right -> comparatorWithNulls.compare(get(left), get(right)) }
 }
 
 internal class SortReceiverImpl<T>(df: DataFrameBase<T>, allowMissingColumns: Boolean) : DataFrameReceiver<T>(df, allowMissingColumns), SortReceiver<T>

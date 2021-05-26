@@ -1698,4 +1698,21 @@ class DataFrameTests : BaseTest() {
         updated.dropNa("city", "weight", whereAllNa = true).check()
         updated.dropNa(Person::city, Person::weight, whereAllNa = true).check()
     }
+
+    @Test
+    fun sortWith() {
+        typed.sortWith { r1, r2 -> when{
+            r1.name < r2.name -> -1
+            r1.name > r2.name -> 1
+            else -> -r1.age.compareTo(r2.age)
+        } } shouldBe typed.sortBy { name and age.desc }
+
+        val comparator = Comparator<DataRow<Person>> { r1, r2 -> -r1.name.compareTo(r2.name)}
+        typed.sortWith(comparator) shouldBe typed.sortByDesc { name }
+    }
+
+    @Test
+    fun sortByDescDesc() {
+        typed.sortByDesc { name.desc and age } shouldBe typed.sortBy { name and age.desc }
+    }
 }

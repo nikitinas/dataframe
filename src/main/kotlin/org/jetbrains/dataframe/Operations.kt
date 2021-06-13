@@ -14,6 +14,7 @@ import org.jetbrains.dataframe.impl.columns.addPath
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.changePath
 import org.jetbrains.dataframe.impl.getOrPutEmpty
+import org.jetbrains.dataframe.impl.projectTo
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
@@ -22,6 +23,7 @@ import kotlin.reflect.full.allSuperclasses
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.superclasses
+import kotlin.reflect.full.withNullability
 import kotlin.reflect.jvm.jvmErasure
 
 fun rowNumber(columnName: String = "id") = AddRowNumberStub(columnName)
@@ -37,6 +39,15 @@ fun commonParent(classes: Iterable<KClass<*>>) = commonParents(classes).withMost
 fun commonParent(vararg classes: KClass<*>) = commonParent(classes.toList())
 
 fun Iterable<KClass<*>>.withMostSuperclasses() = maxByOrNull { it.allSuperclasses.size }
+
+fun Iterable<KClass<*>>.createType(nullable: Boolean, upperBound: KType? = null): KType = if(upperBound == null) (withMostSuperclasses() ?: Any::class).createStarProjectedType(nullable)
+    else {
+        val upperClass = upperBound.classifier as KClass<*>
+        val baseClass = filter { it.isSubclassOf(upperClass) }.withMostSuperclasses() ?: withMostSuperclasses()
+        if(baseClass == null) Any::class.createStarProjectedType(nullable)
+        else upperBound.projectTo(baseClass).withNullability(nullable)
+    }
+
 
 fun commonParents(vararg classes: KClass<*>) = commonParents(classes.toList())
 
@@ -139,12 +150,7 @@ internal fun Iterable<ColumnWithPath<*>>.colsDfs(): List<ColumnWithPath<*>> {
     return result
 }
 
-internal fun AnyFrame.collectTree() = columns().map { it.addPath(this) }.collectTree(DataColumn.empty()) { it }
-
 internal fun List<ColumnWithPath<*>>.collectTree() = collectTree(null) { it }
-
-internal fun <D> AnyFrame.collectTree(emptyData: D, createData: (AnyCol) -> D) =
-    columns().map { it.addPath(this) }.collectTree(emptyData, createData)
 
 internal fun <D> List<ColumnWithPath<*>>.collectTree(emptyData: D, createData: (AnyCol) -> D): TreeNode<D> {
 
@@ -238,11 +244,13 @@ internal fun <T> List<T>.splitByIndices(startIndices: Sequence<Int>, emptyToNull
     }
 }
 
-internal fun KClass<*>.createType(typeArgument: KType? = null, nullable: Boolean = false) =
-    if (typeArgument != null) createType(listOf(KTypeProjection.invariant(typeArgument)), nullable)
+internal fun KClass<*>.createTypeWithArgument(argument: KType? = null, nullable: Boolean = false): KType {
+    require(typeParameters.size == 1)
+    return if (argument != null) createType(listOf(KTypeProjection.invariant(argument)), nullable)
     else createStarProjectedType(nullable)
+}
 
-internal inline fun <reified T> createType(typeArgument: KType? = null) = T::class.createType(typeArgument)
+internal inline fun <reified T> createTypeWithArgument(typeArgument: KType? = null) = T::class.createTypeWithArgument(typeArgument)
 
 fun <T> FrameColumn<T>.union() = if (size > 0) values.union() else emptyDataFrame(0)
 

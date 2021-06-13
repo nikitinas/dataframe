@@ -42,7 +42,7 @@ fun <T, G> GroupedDataFrame<T, G>.mean(): DataFrame<T> {
         columns().filter { it.isSubtypeOf<Number?>() && !keyColumnNames.contains(it.name) }
             .forEach { col ->
                 if(!keyColumnNames.contains(col.name) && col.isNumber())
-                (col as DataColumn<Number?>).mean() into col.name()
+                    (col as DataColumn<Number?>).mean() into col.name()
             }
     }
 }

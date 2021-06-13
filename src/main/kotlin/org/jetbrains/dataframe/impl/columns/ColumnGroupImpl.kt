@@ -1,17 +1,16 @@
 package org.jetbrains.dataframe.impl.columns
 
 import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.createType
+import org.jetbrains.dataframe.createTypeWithArgument
 import org.jetbrains.dataframe.impl.renderSchema
 import java.lang.UnsupportedOperationException
 import kotlin.reflect.KType
 
-internal val anyRowType = createType<AnyRow>()
+internal val anyRowType = createTypeWithArgument<AnyRow>()
 
-internal class ColumnGroupImpl<T>(override val df: DataFrame<T>, val name: String) : ColumnGroup<T>, DataColumnInternal<DataRow<T>>,
+internal open class ColumnGroupImpl<T>(override val df: DataFrame<T>, val name: String) : ColumnGroup<T>, DataColumnInternal<DataRow<T>>,
     DataColumnGroup<T>, DataFrame<T> by df {
 
     override fun values() = df.rows()
@@ -64,9 +63,16 @@ internal class ColumnGroupImpl<T>(override val df: DataFrame<T>, val name: Strin
 
     override fun distinct() = ColumnGroupImpl(distinct, name)
 
-    override fun resolveSingle(context: ColumnResolutionContext): ColumnWithPath<DataRow<T>>? {
-        return df.resolveSingle(context)
-    }
+    override fun resolve(context: ColumnResolutionContext) = super<DataColumnInternal>.resolve(context)
+
+    override fun resolveSingle(context: ColumnResolutionContext) = super<DataColumnInternal>.resolveSingle(context)
 
     override fun iterator() = df.iterator()
+
+    override fun forceResolve() = ResolvingColumnGroup(df, name)
+}
+
+internal class ResolvingColumnGroup<T>(df: DataFrame<T>, name: String): ColumnGroupImpl<T>(df, name){
+
+    override fun resolveSingle(context: ColumnResolutionContext) = context.df.getColumn<DataRow<T>>(name, context.unresolvedColumnsPolicy)?.addPath(context.df)
 }

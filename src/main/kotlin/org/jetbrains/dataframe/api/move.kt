@@ -43,12 +43,17 @@ interface DataFrameForMove<T> : DataFrameBase<T> {
 
     fun path(vararg columns: String): List<String> = listOf(*columns)
 
-    fun SingleColumn<*>.addPath(vararg columns: String): ColumnPath = this.resolveSingle (ColumnResolutionContext(this@DataFrameForMove, UnresolvedColumnsPolicy.Create))!!.path + listOf(*columns)
+    fun SingleColumn<*>.addPath(columnPath: ColumnPath): ColumnPath
 
-    operator fun SingleColumn<*>.plus(column: String) = addPath(column)
+    operator fun SingleColumn<*>.plus(column: String) = addPath(listOf(column))
 }
 
-internal class MoveReceiver<T>(df: DataFrame<T>) : DataFrameReceiver<T>(df, false), DataFrameForMove<T>
+internal class MoveReceiver<T>(df: DataFrame<T>) : DataFrameReceiver<T>(df, false), DataFrameForMove<T> {
+
+    override fun SingleColumn<*>.addPath(path: ColumnPath): ColumnPath {
+        return this.resolveSingle (ColumnResolutionContext(this@MoveReceiver, UnresolvedColumnsPolicy.Create))!!.path + path
+    }
+}
 
 fun <T, C> MoveColsClause<T, C>.under(parentPath: DataFrameForMove<T>.(ColumnWithPath<C>) -> List<String>): DataFrame<T> {
     val receiver = MoveReceiver(df)

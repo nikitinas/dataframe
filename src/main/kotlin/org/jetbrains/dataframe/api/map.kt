@@ -29,13 +29,7 @@ fun <T, R> DataColumn<T>.map(type: KType?, transform: (T) -> R): DataColumn<R> {
 
 fun <T,G,R> GroupedDataFrame<T,G>.mapNotNullGroups(transform: DataFrame<G>.() -> DataFrame<R>?) = mapGroups { if(it == null) null else transform(it) }
 
-fun <T,G,R> GroupedDataFrame<T,G>.map(body: (key: DataRow<T>, group: DataFrame<G>?) -> R): List<R> =
-    keys.mapIndexed { index, row ->
-        val group = groups[index]
-        body(row, group)
-    }
-
-fun <T,G,R> GroupedDataFrame<T,G>.mapNotNull(body: (key: DataRow<T>, group: DataFrame<G>) -> R): List<R> =
+fun <T,G,R> GroupedDataFrame<T,G>.map(body: (key: DataRow<T>, group: DataFrame<G>) -> R): List<R> =
     keys.mapIndexedNotNull { index, row ->
         val group = groups[index]
         if(group == null) null

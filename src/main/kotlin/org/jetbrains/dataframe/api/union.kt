@@ -2,9 +2,9 @@ package org.jetbrains.dataframe
 
 import com.beust.klaxon.internal.firstNotNullResult
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.guessColumnType
 import org.jetbrains.dataframe.columns.hasNulls
 import org.jetbrains.dataframe.io.valueColumnName
-import org.jetbrains.dataframe.columns.type
 import org.jetbrains.dataframe.columns.values
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
@@ -21,68 +21,50 @@ internal fun merge(dataFrames: List<AnyFrame>): AnyFrame {
             .fold(emptyList<String>()) { acc, df -> acc + (df.columnNames() - acc) }
 
     val columns = columnNames.map { name ->
-        val list = mutableListOf<Any?>()
-        var nullable = false
-        val types = mutableSetOf<KType>()
 
-        // TODO: check not only the first column
-        val firstColumn = dataFrames.firstNotNullResult { it.tryGetColumn(name) }!!
-        if (firstColumn.isGroup()) {
-            val groupedDataFrames = dataFrames.map {
-                val column = it.tryGetColumn(name)
-                if (column != null)
-                    column.asFrame()
-                else
-                    emptyDataFrame(it.nrow())
+        val columns = dataFrames.map { it.tryGetColumn(name) }
+
+        if (columns.all { it == null || it.isGroup()}) {
+            val frames = columns.mapIndexed { index, col ->
+                col?.asFrame() ?: emptyDataFrame(dataFrames[index].nrow())
             }
-            val merged = merge(groupedDataFrames)
+            val merged = merge(frames)
             DataColumn.create(name, merged)
         } else {
 
-            val defaultValue = firstColumn.defaultValue()
-
-            dataFrames.forEach {
-                if (it.nrow() == 0) return@forEach
-                val column = it.tryGetColumn(name)
-                if (column != null) {
-                    nullable = nullable || column.hasNulls
-                    if (!column.hasNulls || column.values.any { it != null })
-                        types.add(column.type)
-                    list.addAll(column.values)
-                } else {
-                    if (it.nrow() > 0 && defaultValue == null) nullable = true
-                    for (row in (0 until it.nrow())) {
-                        list.add(defaultValue)
+            var nulls = false
+            val types = mutableSetOf<KType>()
+            var manyNulls = false
+            val defaultValue = columns.firstNotNullResult { it?.defaultValue() }
+            var hasMany = false
+            val list = columns.flatMapIndexed { index, col ->
+                if(col != null) {
+                    val type = col.type()
+                    if (type.classifier == Many::class) {
+                        val typeArgument = type.arguments[0].type
+                        if (typeArgument != null) {
+                            types.add(typeArgument)
+                            if (!manyNulls) manyNulls = typeArgument.isMarkedNullable
+                            hasMany = true
+                        }
+                    } else {
+                        types.add(type)
+                        if (!nulls) nulls = col.hasNulls
                     }
+                    col.toList()
+                }
+                else {
+                    val nrow = dataFrames[index].nrow()
+                    if(!nulls && nrow > 0 && defaultValue == null) nulls = true
+                    List(nrow) { defaultValue }
                 }
             }
 
-            if(types.any { it.classifier == DataFrame::class }){
-
-                // convert all values to dataframe and return table column
-                if(!types.all {it.classifier == DataFrame::class}){
-                    list.forEachIndexed { index, value ->
-                        list[index] = convertToDataFrame(value)
-                    }
-                }else if(nullable){
-                    list.forEachIndexed { index, value ->
-                        if(value == null)
-                            list[index] = DataFrame.empty()
-                    }
-                    nullable = false
-                }
-                DataColumn.create(name, list as List<AnyFrame>)
-            }else {
-                val baseType = baseType(types).withNullability(nullable)
-
-                if (baseType.classifier == List::class && !types.all { it.classifier == List::class })
-                    list.forEachIndexed { index, value ->
-                        if (value != null && value !is List<*>)
-                            list[index] = listOf(value)
-                    }
-
-                DataColumn.create(name, list, baseType, defaultValue)
-            }
+            val guessType = types.size > 1
+            val baseType = baseType(types)
+            val targetType = if(guessType || !hasMany) baseType.withNullability(nulls)
+                             else Many::class.createTypeWithArgument(baseType.withNullability(manyNulls))
+            guessColumnType(name, list, targetType, guessType, defaultValue)
         }
     }
     return dataFrameOf(columns)

@@ -9,7 +9,7 @@ inline fun <T, reified C> DataFrame<T>.mergeRows(noinline selector: ColumnsSelec
 
 fun <T, C> mergeRows(df: DataFrame<T>, selector: ColumnsSelector<T, C>, type: KType): DataFrame<T> {
 
-    val listType = List::class.createType(type)
+    val listType = List::class.createTypeWithArgument(type)
     return df.groupBy { except(selector) }.mapNotNullGroups {
         val updated = update(selector).suggestTypes(List::class to listType).with2 { row, column ->
             if(row.index > 0) null

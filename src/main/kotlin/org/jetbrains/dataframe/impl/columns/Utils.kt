@@ -116,10 +116,10 @@ internal fun Array<out ColumnPath>.toColumns(): Columns<Any?> = map { it.toColum
 internal fun <C> Iterable<Columns<C>>.toColumnSet(): Columns<C> = ColumnsList(asList())
 
 @JvmName("toColumnSetC")
-internal fun <C> Iterable<ColumnReference<C>>.toColumnSet(): Columns<C> = ColumnsList(map { it.toAccessor() })
+internal fun <C> Iterable<ColumnReference<C>>.toColumnSet(): Columns<C> = ColumnsList(toList())
 
 internal fun <C> Array<out KProperty<C>>.toColumns() = map { it.toColumnDef() }.toColumnSet()
-internal fun <T> Array<out ColumnReference<T>>.toColumns() = map { it.toAccessor() }.toColumnSet()
+internal fun <T> Array<out ColumnReference<T>>.toColumns() = asIterable().toColumnSet()
 internal fun  Iterable<String>.toColumns() = map { it.toColumnDef() }.toColumnSet()
 
 internal fun <T, C> ColumnsSelector<T, C>.toColumns(): Columns<C> = toColumns {

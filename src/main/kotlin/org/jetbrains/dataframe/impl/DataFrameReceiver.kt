@@ -13,11 +13,11 @@ import org.jetbrains.dataframe.impl.columns.ColumnGroupWithParent
 import org.jetbrains.dataframe.impl.columns.asGroup
 import java.lang.Exception
 
-internal fun <T> prepareForReceiver(df: DataFrameBase<T>) = DataFrameImpl<T>(df.columns().map { if(it.isGroup()) ColumnGroupWithParent(null, it.asGroup()) else it })
+internal fun <T> prepareForReceiver(df: DataFrame<T>) = DataFrameImpl<T>(df.columns().map { if(it.isGroup()) ColumnGroupWithParent(null, it.asGroup()) else it })
 
-internal abstract class DataFrameReceiverBase<T>(protected val source: DataFrameBase<T>): DataFrameBase<T> by source
+internal abstract class DataFrameReceiverBase<T>(protected val source: DataFrame<T>): DataFrame<T> by source
 
-internal abstract class DataFrameReceiver<T>(source: DataFrameBase<T>, private val allowMissingColumns: Boolean): DataFrameReceiverBase<T>(prepareForReceiver(source)) {
+internal abstract class DataFrameReceiver<T>(source: DataFrame<T>, private val allowMissingColumns: Boolean): DataFrameReceiverBase<T>(prepareForReceiver(source)) {
 
     override fun column(columnIndex: Int): AnyCol {
         if(allowMissingColumns && columnIndex < 0 || columnIndex >= ncol()) return MissingValueColumn<Any?>()

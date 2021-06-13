@@ -48,7 +48,7 @@ fun <T, C> doUpdate(clause: UpdateClause<T, C>, expression: (DataRow<T>, DataCol
             clause.toNull -> createDataCollector(nrow, srcColumn.type)
             clause.typeSuggestions != null -> createDataCollector(nrow, clause.typeSuggestions)
             clause.targetType != null -> createDataCollector(nrow, clause.targetType)
-            else -> error("Invalid state of UpdateClause: ${clause}")
+            else -> createDataCollector(nrow, srcColumn.type())
         }
         if(clause.filter == null)
             clause.df.forEach { row ->
@@ -78,7 +78,9 @@ fun <T, C, R> UpdateClause<T, C>.with(targetType: KType?, expression: RowCellSel
     else expression(row, currentValue)
 }
 
-inline infix fun <T, C, reified R> UpdateClause<T, C>.with(noinline expression: RowCellSelector<T, C, R>) = doUpdate(copy(filter = null, targetType = targetType ?: getType<R>())) { row, column ->
+inline infix fun <T, C, reified R> UpdateClause<T, C>.with(noinline expression: RowCellSelector<T, C, R>) = copy(targetType = targetType ?: getType<R>()).withExpression(expression)
+
+fun <T, C, R> UpdateClause<T, C>.withExpression(expression: RowCellSelector<T, C, R>) = doUpdate(copy(filter = null)) { row, column ->
     val currentValue = column[row.index]
     if (filter?.invoke(row, currentValue) == false)
         currentValue

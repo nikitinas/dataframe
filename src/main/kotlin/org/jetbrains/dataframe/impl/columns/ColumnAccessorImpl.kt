@@ -4,6 +4,7 @@ import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.ColumnResolutionContext
 import org.jetbrains.dataframe.columns.ColumnAccessor
+import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.isGroup
 
@@ -27,4 +28,6 @@ internal class ColumnAccessorImpl<T>(val path: ColumnPath) : ColumnAccessor<T> {
     }
 
     override fun rename(newName: String) = ColumnAccessorImpl<T>(path.dropLast(1) + newName)
+
+    override fun <C> get(column: ColumnReference<C>) = ColumnAccessorImpl<C>(path + column.path())
 }

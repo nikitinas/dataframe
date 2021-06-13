@@ -10,11 +10,11 @@ import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataFrameBase
 import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.DataRowBase
+import org.jetbrains.dataframe.Many
 import org.jetbrains.dataframe.add
 import org.jetbrains.dataframe.after
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.append
-import org.jetbrains.dataframe.asIterable
 import org.jetbrains.dataframe.at
 import org.jetbrains.dataframe.by
 import org.jetbrains.dataframe.colsDfsOf
@@ -31,12 +31,11 @@ import org.jetbrains.dataframe.distinct
 import org.jetbrains.dataframe.dropNulls
 import org.jetbrains.dataframe.duplicate
 import org.jetbrains.dataframe.emptyDataFrame
-import org.jetbrains.dataframe.execute
+import org.jetbrains.dataframe.emptyMany
 import org.jetbrains.dataframe.explode
 import org.jetbrains.dataframe.filter
 import org.jetbrains.dataframe.forEach
 import org.jetbrains.dataframe.frameColumn
-import org.jetbrains.dataframe.get
 import org.jetbrains.dataframe.getColumnPath
 import org.jetbrains.dataframe.getType
 import org.jetbrains.dataframe.group
@@ -57,7 +56,6 @@ import org.jetbrains.dataframe.isEmpty
 import org.jetbrains.dataframe.isGroup
 import org.jetbrains.dataframe.join
 import org.jetbrains.dataframe.map
-import org.jetbrains.dataframe.mapNotNull
 import org.jetbrains.dataframe.mapNotNullGroups
 import org.jetbrains.dataframe.max
 import org.jetbrains.dataframe.mergeRows
@@ -66,15 +64,14 @@ import org.jetbrains.dataframe.move
 import org.jetbrains.dataframe.moveTo
 import org.jetbrains.dataframe.moveToLeft
 import org.jetbrains.dataframe.moveToRight
+import org.jetbrains.dataframe.pivot
 import org.jetbrains.dataframe.plus
 import org.jetbrains.dataframe.print
 import org.jetbrains.dataframe.remove
 import org.jetbrains.dataframe.rename
 import org.jetbrains.dataframe.select
-import org.jetbrains.dataframe.single
 import org.jetbrains.dataframe.sortBy
 import org.jetbrains.dataframe.split
-import org.jetbrains.dataframe.spread
 import org.jetbrains.dataframe.subcolumn
 import org.jetbrains.dataframe.sumBy
 import org.jetbrains.dataframe.toDefinition
@@ -86,7 +83,9 @@ import org.jetbrains.dataframe.ungroup
 import org.jetbrains.dataframe.update
 import org.jetbrains.dataframe.with
 import org.jetbrains.dataframe.with2
+import org.jetbrains.dataframe.withIndex
 import org.jetbrains.dataframe.withNull
+import org.jetbrains.dataframe.wrapValues
 import org.junit.Test
 
 class DataFrameTreeTests : BaseTest() {
@@ -247,7 +246,7 @@ class DataFrameTreeTests : BaseTest() {
 
         val actual = typed2.move { nameAndCity.name }.into("name")
         actual.columnNames() shouldBe listOf("nameAndCity", "name", "age", "weight")
-        actual.getGroup("nameAndCity").columnNames() shouldBe listOf("city")
+        actual.getColumnGroup("nameAndCity").columnNames() shouldBe listOf("city")
     }
 
     @Test
@@ -286,66 +285,57 @@ class DataFrameTreeTests : BaseTest() {
     }
 
     @Test
-    fun spread() {
+    fun pivot() {
 
         val modified = df.append("Alice", 55, "Moscow", 100)
         val df2 = modified.move { name and city }.under("nameAndCity")
         val typed2 = df2.typed<GroupedPerson>()
 
-        val expected =
-            modified.typed<Person>().select { name and city and age }.groupBy { city }.sortBy { city.nullsLast }
-                .mapNotNull { key1, group ->
-                    val ages = group.groupBy { name }
-                    val cityName = key1.city ?: "null"
-                    val isList = ages.groups.asIterable().any { it!!.nrow() > 1 }
-                    ages.mapNotNull { key2, group ->
-                        val value = if (isList) group.age.toList() else group.age.single()
-                        (cityName to key2.name) to value
-                    }.sortedBy { it.first.second }
-                }.flatten()
-
-        val cities by columnGroup()
+        val expected = modified.typed<Person>().groupBy { name and city }.map { key, group ->
+            val value = if(key.city == "Moscow") group.age.toList().wrapValues()
+                        else group.age[0]
+            (key.name to key.city.toString()) to value
+        }.plus("Bob" to "Moscow" to emptyMany<Int>()).toMap()
 
         fun <T> DataFrame<T>.check() {
-            columnNames() shouldBe listOf("name", "cities")
+            print()
+            ncol() shouldBe 1 + typed2.nameAndCity.city.ndistinct()
             this[name] shouldBe typed.name.distinct()
-            val group = this[cities]
-            group.ncol() shouldBe typed.city.ndistinct()
-            group.columns().forEach {
-                if (it.name() == "Moscow") it.type() shouldBe getType<List<Int>?>()
+            val data = columns().drop(1)
+            data.forEach {
+                if (it.name() == "Moscow") it.type() shouldBe getType<Many<Int>>()
                 else it.type() shouldBe getType<Int?>()
             }
 
-            val actual = group.columns().sortedBy { it.name() }.flatMap { col ->
-                rows().sortedBy { it[name] }.map { row -> (col.name() to row[name]) to col[row.index] }
-                    .filter { it.second != null }
-            }
+            val actual = data.flatMap { col ->
+                val city = col.name()
+                map { row -> (row[name] to city) to col[row.index] }.filter { it.second != null }
+            }.toMap()
             actual shouldBe expected
         }
 
-        typed2.select { nameAndCity and age }.spread { nameAndCity.city }.by { age }.into("cities").check()
-        df2.select(nameAndCity, age).spread { it[nameAndCity][city] }.by(age).into(cities).check()
-        df2.select(GroupedPerson::nameAndCity, GroupedPerson::age)
-            .spread { it[GroupedPerson::nameAndCity][NameAndCity::city] }.by(GroupedPerson::age).into("cities").check()
-        df2.select("nameAndCity", "age").spread { it["nameAndCity"]["city"] }.by("age").into("cities").check()
+        typed2.pivot { nameAndCity.city }.withIndex { nameAndCity.name }.into { age }.check()
+        df2.pivot(nameAndCity[city]).withIndex { nameAndCity[name] }.into(age).check()
+        df2.pivot { it[GroupedPerson::nameAndCity][NameAndCity::city] }.withIndex { it[GroupedPerson::nameAndCity][NameAndCity::name] }.into(GroupedPerson::age).check()
+        df2.pivot { it["nameAndCity"]["city"] }.withIndex { it["nameAndCity"]["name"] }.into("age").check()
     }
 
     @Test
-    fun `spread grouped column`() {
+    fun `pivot grouped column`() {
         val grouped = typed.group { age and weight }.into("info")
-        val spread = grouped.spread { city }.by("info").execute()
-        spread.ncol() shouldBe typed.city.ndistinct() + 1
+        val pivoted = grouped.pivot { city }.withIndex { name }.into("info")
+        pivoted.ncol() shouldBe typed.city.ndistinct() + 1
 
         val expected =
             typed.rows().groupBy { it.name to (it.city ?: "null") }.mapValues { it.value.map { it.age to it.weight } }
-        val dataCols = spread.columns().drop(1)
+        val dataCols = pivoted.columns().drop(1)
 
         dataCols.forEach { (it.isGroup() || it.isTable()) shouldBe true }
 
-        val names = spread.name
+        val names = pivoted.name
         dataCols.forEach { col ->
             val city = col.name()
-            (0 until spread.nrow()).forEach { row ->
+            (0 until pivoted.nrow()).forEach { row ->
                 val name = names[row]
                 val value = col[row]
                 val expValues = expected[name to city]
@@ -402,7 +392,6 @@ class DataFrameTreeTests : BaseTest() {
         val info by columnGroup()
         val moved = typed.group { except(name) }.into(info)
         val actual = moved.select { except(info) }
-        actual.print()
         actual shouldBe typed.select { name }
     }
 
@@ -641,5 +630,11 @@ class DataFrameTreeTests : BaseTest() {
     @Test
     fun `filter not null without arguments`() {
         typed2.dropNulls() shouldBe typed.dropNulls { weight }.group {name and city}.into("nameAndCity")
+    }
+
+    @Test
+    fun `select group`() {
+        val groupCol = typed2[nameAndCity]
+        typed2.select { groupCol and age }.columnNames() shouldBe listOf("nameAndCity", "age")
     }
 }

@@ -7,6 +7,8 @@ interface ColumnAccessor<out T> : ColumnReference<T> {
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = this
 
+    operator fun <C> get(column: ColumnReference<C>): ColumnAccessor<C>
+
     override fun rename(newName: String): ColumnAccessor<T>
 
     fun <C> changeType() = this as ColumnAccessor<C>

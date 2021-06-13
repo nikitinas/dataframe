@@ -20,6 +20,11 @@ fun <T, C> DataFrame<T>.replace(vararg cols: KProperty<C>) = replace { cols.toCo
 fun <T> DataFrame<T>.replace(vararg cols: String) = replace { cols.toColumns() }
 fun <T, C> DataFrame<T>.replace(cols: Iterable<ColumnReference<C>>) = replace { cols.toColumnSet() }
 
+fun <T> DataFrame<T>.replaceAll(vararg valuePairs: Pair<Any?, Any?>, selector: ColumnsSelector<T, *> = { allDfs() }): DataFrame<T> {
+    val map = valuePairs.toMap()
+    return update(selector).withExpression { map[it] ?: it }
+}
+
 data class ReplaceCause<T, C>(val df: DataFrame<T>, val selector: ColumnsSelector<T, C>)
 
 fun <T, C> ReplaceCause<T, C>.with(vararg columns: AnyCol) = with(columns.toList())

@@ -1,5 +1,6 @@
 package org.jetbrains.dataframe
 
+import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.DataColumn
 import java.math.BigDecimal
 
@@ -11,6 +12,9 @@ operator fun DataColumn<Int>.unaryMinus() = map { -it }
 operator fun DataColumn<Int>.times(value: Int) = map {it * value }
 operator fun DataColumn<Int>.div(value: Int) = map { it / value }
 operator fun Int.div(column: DataColumn<Int>) = column.map { this / it }
+
+operator fun String.plus(column: AnyCol) = column.map { this + it.toString() }
+operator fun AnyCol.plus(str: String) = map { it.toString() + str }
 
 @JvmName("plusInt?")
 operator fun DataColumn<Int?>.plus(value: Int) = map { it?.plus(value) }

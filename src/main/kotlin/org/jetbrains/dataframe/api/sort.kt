@@ -83,7 +83,7 @@ internal fun AnyCol.createComparator(nullsLast: Boolean): java.util.Comparator<I
     return Comparator { left, right -> comparatorWithNulls.compare(get(left), get(right)) }
 }
 
-internal class SortReceiverImpl<T>(df: DataFrameBase<T>, allowMissingColumns: Boolean) : DataFrameReceiver<T>(df, allowMissingColumns), SortReceiver<T>
+internal class SortReceiverImpl<T>(df: DataFrame<T>, allowMissingColumns: Boolean) : DataFrameReceiver<T>(df, allowMissingColumns), SortReceiver<T>
 
 internal fun <T, C> DataFrame<T>.extractSortColumns(selector: SortColumnsSelector<T, C>, unresolvedColumnsPolicy: UnresolvedColumnsPolicy): List<SortDescriptorColumn<*>> {
     return selector.toColumns().resolve(ColumnResolutionContext(this, unresolvedColumnsPolicy))

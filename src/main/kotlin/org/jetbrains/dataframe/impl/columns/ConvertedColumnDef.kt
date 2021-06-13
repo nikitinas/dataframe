@@ -7,9 +7,13 @@ import org.jetbrains.dataframe.columns.SingleColumn
 import kotlin.reflect.KType
 
 internal class ConvertedColumnDef<C, R>(val source: ColumnReference<C>, val transform: (C) -> R, val type: KType?) :
-    SingleColumn<R> {
+    ColumnReference<R> {
 
     override fun resolveSingle(context: ColumnResolutionContext): ColumnWithPath<R>? {
         return source.resolveSingle(context)?.let { it.data.map(type, transform).addPath(it.path, context.df) }
     }
+
+    override fun name() = source.name()
+
+    override fun rename(newName: String) = ConvertedColumnDef(source.rename(newName), transform, type)
 }

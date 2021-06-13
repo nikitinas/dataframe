@@ -13,9 +13,11 @@ import org.jetbrains.dataframe.impl.removeAt
 
 fun <T> DataFrame<T>.insert(path: ColumnPath, column: AnyCol) = insertColumns(this, listOf(ColumnToInsert(path, column)))
 
+fun <T> DataFrame<T>.insert(column: AnyCol) = InsertClause(this, column)
+
 inline fun <T, reified R> DataFrame<T>.insert(noinline expression: RowSelector<T, R>) = insert("", expression)
 
-inline fun <T, reified R> DataFrame<T>.insert(name: String, noinline expression: RowSelector<T, R>) = InsertClause(this, newColumn(name, expression))
+inline fun <T, reified R> DataFrame<T>.insert(name: String, noinline expression: RowSelector<T, R>) = insert(newColumn(name, expression))
 
 data class InsertClause<T>(val df: DataFrame<T>, val column: AnyCol)
 
@@ -27,6 +29,8 @@ fun <T> InsertClause<T>.under(selector: ColumnSelector<T, *>) = under(df.getColu
 
 fun <T> InsertClause<T>.after(name: String) = df.add(column).move(column).after(name)
 fun <T> InsertClause<T>.after(selector: ColumnSelector<T, *>) = after(df.getColumnPath(selector))
+
+fun <T> InsertClause<T>.at(position: Int) = df.add(column).move(column).to(position)
 
 fun <T> InsertClause<T>.after(path: ColumnPath): DataFrame<T> {
     val colPath = path.removeAt(path.size - 1) + column.name()

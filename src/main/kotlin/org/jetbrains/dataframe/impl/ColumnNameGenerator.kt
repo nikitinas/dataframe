@@ -35,4 +35,6 @@ internal class ColumnNameGenerator(columnNames: List<String> = emptyList()) {
 
 internal fun AnyFrame.nameGenerator() = ColumnNameGenerator(columnNames())
 
+internal fun nameGenerator(vararg usedNames: String) = ColumnNameGenerator(usedNames.asList())
+
 internal fun <C> DataColumn<C>.ensureUniqueName(nameGenerator: ColumnNameGenerator) = rename(nameGenerator.addUnique(name()))

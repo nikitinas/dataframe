@@ -61,7 +61,7 @@
     * [ungroup](#ungroup)
     * [flatten](#flatten)
     * [gather](#gather)
-    * [spread](#spread)
+    * [pivot](#pivot)
 * [Merge `DataFrame`s](#merge-dataframes)
     * [add](#add-columns)
     * [union](#union)
@@ -75,8 +75,7 @@
     * [Column Statistics](#column-statistics)
 * [Working with `GroupedDataFrame`](#working-with-groupeddataframe)
     * [aggregate](#aggregate)
-    * [spread](#spread-inside-aggregate)
-    * [countBy](#countBy)
+    * [pivot](#pivot-inside-aggregate)
 * [Export `DataFrame`](#export-dataframe)
     * [writeCSV](#writecsv)
     * [writeClass](#writeclass)
@@ -791,7 +790,7 @@ df.flatten { a }
 ```
 ### gather
 Converts several columns into two `key-value` columns, where `key` is a name of original column and `value` is column data
-This is reverse to [spread](#spread)
+This is reverse to [pivot](#pivot)
 ```
 df.gather { columns }.into(keyColumnName)
 
@@ -837,11 +836,11 @@ Alice | Milan
 Bob | Paris
 Bob | Milan
 
-### spread
+### pivot
 Converts two key-value columns into several columns using values in `key` column as new column names and values in `value` column as new column values.
 This is reverse to [gather](#gather) 
 ```
-df.spread { keyColumn }.by { valueColumn }.into { keyTransform }
+df.pivot { keyColumns }.withIndex { indexColumns }.into { rowExpression }
 ```
 **Input**
 
@@ -855,7 +854,7 @@ df.spread { keyColumn }.by { valueColumn }.into { keyTransform }
 | Milan | 21 | 5
 
 ```kotlin
-df.spread { day }.by { temperature }.into { " Feb, $it" }
+df.pivot { day.map { "Feb, $it" } }.withIndex { city }.into { temperature }
 ```
 **Output**
 
@@ -1106,8 +1105,8 @@ df.aggregate { groups }.with {
     ...
 }
 ```
-### `spread` inside `aggregate`
-[spread](#spread) operation can also be used within [aggregate](#aggregate) with a slightly different syntax
+### `pivot` inside `aggregate`
+[pivot](#pivot) operation can also be used within [aggregate](#aggregate) with a slightly different syntax
 
 **Input**
 
@@ -1121,12 +1120,12 @@ Bob|Milan|2020-10-05
 
 ```kotlin
 df.groupBy { name }.aggregate {
-    spread { city }.with { max { date } } into { "$it last visit" }
+    pivot { city }.max { date }
 }
 ```
 or
 ```kotlin
-df.groupBy { name }.spread { city }.with { max { date } }.into { "$it visits" }
+df.groupBy { name }.pivot { city }.max { date }
 ```
 **Output**
 
@@ -1134,9 +1133,6 @@ name|London last visit|Paris last visit|Milan last visit
 ---|---|---|---
 Alice|2020-10-04|2020-10-03|null
 Bob|null|2020-10-02|2020-10-05
-### countBy
-[Spreads](#spread) column values into new columns and computes number of rows
-Equivalent of `spread { column }.with { nrow () }`
 
 **Input**
 

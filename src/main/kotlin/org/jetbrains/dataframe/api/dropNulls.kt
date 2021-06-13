@@ -1,5 +1,7 @@
 package org.jetbrains.dataframe
 
+import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.ValueColumn
 import org.jetbrains.dataframe.impl.columns.toColumnSet
 import org.jetbrains.dataframe.impl.columns.toColumns
 import kotlin.reflect.KProperty
@@ -15,3 +17,5 @@ fun <T> DataFrame<T>.dropNulls(vararg cols: KProperty<*>, whereAllNull: Boolean 
 fun <T> DataFrame<T>.dropNulls(vararg cols: String, whereAllNull: Boolean = false) = dropNulls(whereAllNull) { cols.toColumns() }
 fun <T> DataFrame<T>.dropNulls(vararg cols: Column, whereAllNull: Boolean = false) = dropNulls(whereAllNull) { cols.toColumns() }
 fun <T> DataFrame<T>.dropNulls(cols: Iterable<Column>, whereAllNull: Boolean = false) = dropNulls(whereAllNull) { cols.toColumnSet() }
+
+fun <T> DataColumn<T?>.dropNulls(): DataColumn<T> = filter { it != null } as DataColumn<T>

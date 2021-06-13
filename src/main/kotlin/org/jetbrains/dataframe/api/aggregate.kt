@@ -10,35 +10,59 @@ import org.jetbrains.dataframe.impl.createDataCollector
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 
-class GroupAggregateBuilder<T>(internal val df: DataFrame<T>): DataFrame<T> by df {
+internal class ValueWithDefault<T>(val value: T, val default: T)
 
-    private data class NamedValue(val path: ColumnPath, val value: Any?, val type: KType, val defaultValue: Any?)
+internal data class NamedValue(val path: ColumnPath, val value: Any?, val type: KType?, val defaultValue: Any?, val guessType: Boolean = false)
+
+class GroupAggregateBuilder<T>(internal val df: DataFrame<T>): DataFrame<T> by df {
 
     private val values = mutableListOf<NamedValue>()
 
-    internal fun toDataFrame() = values.map { it.path to guessColumnType(it.path.last(), listOf(it.value), it.type, it.defaultValue) }.let {
-        if(it.isEmpty()) emptyDataFrame(1)
-        else it.toDataFrame<T>()
+    internal fun child() = GroupAggregateBuilder(df).also { values.add(NamedValue(emptyList(), it, null, null)) }
+
+    internal fun NamedValue.toColumnWithPath() = path to guessColumnType(
+        path.last(),
+        listOf(value),
+        type,
+        guessType,
+        defaultValue
+    )
+
+    internal fun compute(): AnyFrame {
+
+        val allValues = mutableListOf<NamedValue>()
+        values.forEach {
+            if(it.value is GroupAggregateBuilder<*>){
+                it.value.values.forEach {
+                    allValues.add(it)
+                }
+            } else
+                allValues.add(it)
+        }
+        val columns = allValues.map { it.toColumnWithPath() }
+        return if (columns.isEmpty()) emptyDataFrame(1)
+        else columns.toDataFrame<T>()
     }
 
-    fun <R> addValue(path: ColumnPath, value: R, type: KType, default: R? = null) {
-        values.add(NamedValue(path, value, type, default))
+    fun <R> addValue(path: ColumnPath, value: R, type: KType? = null, default: R? = null, guessType: Boolean = false) {
+        when(value){
+            is ValueWithDefault<*> -> values.add(NamedValue(path, value.value, type, value.default, guessType))
+            is AggregatedPivot<*> -> {
+                value.aggregator.values.forEach {
+                    addValue(path + it.path, it.value, it.type, it.defaultValue, it.guessType)
+                }
+                value.aggregator.values.clear()
+            }
+            else -> values.add(NamedValue(path, value, type, default, guessType))
+        }
     }
 
     inline fun <reified R> addValue(columnName: String, value: R, default: R? = null) = addValue(listOf(columnName), value, getType<R>(), default)
 
-    fun <C> spread(selector: ColumnSelector<T, C>) = SpreadClause.inAggregator(this, selector)
-    fun <C> spread(column: ColumnReference<C>) = spread { column }
-    fun <C> spread(column: KProperty<C>) = spread(column.toColumnDef())
-    fun <C> spread(column: String) = spread(column.toColumnDef())
-
-    fun <C> countBy(selector: ColumnSelector<T, C>) = spread(selector).with { nrow() }.useDefault(0)
-    fun <C> countBy(column: ColumnReference<C>) = countBy { column }
-    fun <C> countBy(column: KProperty<C>) = countBy(column.toColumnDef())
-    fun countBy(column: String) = countBy(column.toColumnDef())
-
     inline infix fun <reified R> R.into(name: String)  = addValue(listOf(name), this, getType<R>())
-}typealias GroupAggregator<G> = GroupAggregateBuilder<G>.(GroupAggregateBuilder<G>) -> Unit
+}
+
+typealias GroupAggregator<G> = GroupAggregateBuilder<G>.(GroupAggregateBuilder<G>) -> Unit
 
 fun <T, G> GroupedDataFrame<T, G>.aggregate(body: GroupAggregator<G>) = doAggregate(plain(), { groups }, removeColumns = true, body)
 
@@ -59,7 +83,8 @@ internal fun <T, G> doAggregate(df: DataFrame<T>, selector: ColumnSelector<T, Da
         else {
             val builder = GroupAggregateBuilder(it)
             body(builder, builder)
-            builder.toDataFrame()
+            val row = builder.compute()
+            row
         }
     }.union()
 

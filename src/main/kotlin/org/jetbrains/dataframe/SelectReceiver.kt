@@ -103,11 +103,11 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
     fun <C> Columns<C>.takeLastWhile(predicate: Predicate<ColumnWithPath<C>>) = transform { it.takeLastWhile(predicate) }
     fun <C> Columns<C>.filter(predicate: Predicate<ColumnWithPath<C>>) = transform { it.filter(predicate) }
 
-    fun Columns<*>.numberCols(filter: (NumberCol) -> Boolean = { true }) = colsOf(filter)
-    fun Columns<*>.stringCols(filter: (StringCol) -> Boolean = { true }) = colsOf(filter)
-    fun Columns<*>.intCols(filter: (IntCol) -> Boolean = { true }) = colsOf(filter)
-    fun Columns<*>.doubleCols(filter: (DoubleCol) -> Boolean = { true }) = colsOf(filter)
-    fun Columns<*>.booleanCols(filter: (BooleanCol) -> Boolean = { true }) = colsOf(filter)
+    fun Columns<*>.numberCols(filter: (NumberCol) -> Boolean = { true }): Columns<Number?> = colsOf(filter)
+    fun Columns<*>.stringCols(filter: (StringCol) -> Boolean = { true }): Columns<String?> = colsOf(filter)
+    fun Columns<*>.intCols(filter: (IntCol) -> Boolean = { true }): Columns<Int?> = colsOf(filter)
+    fun Columns<*>.doubleCols(filter: (DoubleCol) -> Boolean = { true }): Columns<Double?> = colsOf(filter)
+    fun Columns<*>.booleanCols(filter: (BooleanCol) -> Boolean = { true }): Columns<Boolean?> = colsOf(filter)
 
     fun Columns<*>.nameContains(text: CharSequence) = cols { it.name.contains(text) }
     fun Columns<*>.nameContains(regex: Regex) = cols { it.name.contains(regex) }
@@ -126,9 +126,11 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
     infix fun <C> Columns<C>.except(selector: ColumnsSelector<T, *>): Columns<*> = except(selector.toColumns())
 
     operator fun <C> ColumnSelector<T, C>.invoke() = this(this@SelectReceiver, this@SelectReceiver)
+    operator fun <C> ColumnsSelector<T, C>.invoke() = this(this@SelectReceiver, this@SelectReceiver)
 
     operator fun <C> ColumnReference<C>.invoke(newName: String) = renamedReference(newName)
-    infix fun <C> DataColumn<C>.into(newName: String) = (this as ColumnReference<C>).renamedReference(newName)
+    infix fun <C> ColumnReference<C>.into(newName: String) = named(newName)
+    infix fun <C> ColumnReference<C>.named(newName: String) = renamedReference(newName)
 
     infix fun String.and(other: String) = toColumnDef() and other.toColumnDef()
     infix fun <C> String.and(other: Columns<C>) = toColumnDef() and other
@@ -136,8 +138,20 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
     infix fun <C> Columns<C>.and(other: KProperty<C>) = this and other.toColumnDef()
     infix fun <C> KProperty<C>.and(other: KProperty<C>) = toColumnDef() and other.toColumnDef()
     infix fun <C> Columns<C>.and(other: String) = this and other.toColumnDef()
+
+    operator fun <C> String.invoke(newColumnExpression: RowSelector<T, C>) = newGuessColumn(this, newColumnExpression)
+
+    infix fun <C> String.by(newColumnExpression: RowSelector<T, C>) = newGuessColumn(this, newColumnExpression)
+
+    fun DataFrameBase<*>.string(columnName: String) = getColumn<String>(columnName)
+    fun DataFrameBase<*>.int(columnName: String) = getColumn<Int>(columnName)
+    fun DataFrameBase<*>.bool(columnName: String) = getColumn<Boolean>(columnName)
+    fun DataFrameBase<*>.double(columnName: String) = getColumn<Double>(columnName)
+    fun DataFrameBase<*>.long(columnName: String) = getColumn<Long>(columnName)
 }
 
+internal fun <T,C> ColumnsSelector<T, C>.filter(predicate: (ColumnWithPath<C>) -> Boolean): ColumnsSelector<T, C> = { this@filter(it, it).filter(predicate) }
+//internal fun Columns<*>.filter(predicate: (AnyCol) -> Boolean) = transform { it.filter { predicate(it.data) } }
 internal fun Columns<*>.colsInternal(predicate: (AnyCol) -> Boolean) = transform { it.flatMap { it.children().filter { predicate(it.data) } } }
 internal fun Columns<*>.dfsInternal(predicate: (ColumnWithPath<*>) -> Boolean) = transform { it.filter { it.isGroup() }.flatMap { it.children().colsDfs().filter(predicate) } }
 
@@ -148,4 +162,4 @@ inline fun <reified C> Columns<*>.colsDfsOf(noinline filter: (ColumnWithPath<C>)
 fun  Columns<*>.colsOf(type: KType): Columns<Any?> = colsOf(type) { true }
 
 fun <C> Columns<*>.colsOf(type: KType, filter: (DataColumn<C>) -> Boolean): Columns<C> = colsInternal { it.isSubtypeOf(type) && filter(it.typed()) } as Columns<C>
-inline fun <reified C> Columns<*>.colsOf(noinline filter: (DataColumn<C>) -> Boolean = { true }) = colsOf(getType<C>(), filter)
+inline fun <reified C> Columns<*>.colsOf(noinline filter: (DataColumn<C>) -> Boolean = { true }): Columns<C> = colsOf(getType<C>(), filter)

@@ -14,7 +14,7 @@ internal class GroupedDataFrameImpl<T, G>(val df: DataFrame<T>, override val gro
 
         val keySize = key.size
         val filtered = df.filter { it.values.subList(0, keySize) == key }
-        return filtered[groups].values.union().typed<T>()
+        return filtered.frameColumn(groups.name()).values.union().typed<T>()
     }
 
     override fun <R> mapGroups(transform: Selector<DataFrame<G>?, DataFrame<R>?>) =

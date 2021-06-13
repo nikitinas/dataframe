@@ -5,6 +5,7 @@ import org.jetbrains.dataframe.columns.AnyColumn
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnWithPath
+import org.jetbrains.dataframe.columns.guessColumnType
 import org.jetbrains.dataframe.impl.ColumnNameGenerator
 import org.jetbrains.dataframe.impl.DataFrameImpl
 import org.jetbrains.dataframe.impl.asList
@@ -12,6 +13,7 @@ import org.jetbrains.dataframe.impl.columns.ColumnWithParent
 import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
+import kotlin.reflect.KType
 import kotlin.reflect.full.declaredMembers
 import kotlin.reflect.full.withNullability
 import kotlin.reflect.jvm.javaField
@@ -212,8 +214,22 @@ class DataFrameBuilder(private val header: List<String>) {
 
 internal fun Iterable<KClass<*>>.commonParent() = commonParents(this).withMostSuperclasses() ?: Any::class
 
-internal fun Iterable<KClass<*>>.commonType(nullable: Boolean) = commonParent().createStarProjectedType(nullable)
+internal fun Iterable<KClass<*>>.commonType(nullable: Boolean, upperBound: KType? = null) = commonParents(this).createType(nullable, upperBound)
 
 fun Map<String, Iterable<Any?>>.toDataFrame(): AnyFrame {
     return map { DataColumn.create(it.key, it.value.asList()) }.toDataFrame()
+}
+
+@JvmName("toDataFrameColumnPathAny?")
+fun Map<ColumnPath, Iterable<Any?>>.toDataFrame(): AnyFrame {
+    return map { it.key to DataColumn.create(it.key.last(), it.value.asList()) }.toDataFrame<Unit>()
+}
+
+@JvmName("toDataFrameColumnPathAny?")
+fun Iterable<Pair<ColumnPath, Iterable<Any?>>>.toDataFrame(): AnyFrame {
+    return map { it.first to guessColumnType(it.first.last(), it.second.asList()) }.toDataFrame<Unit>()
+}
+
+fun Iterable<Pair<String, Iterable<Any?>>>.toDataFrame(): AnyFrame {
+    return map { listOf(it.first) to guessColumnType(it.first, it.second.asList()) }.toDataFrame<Unit>()
 }

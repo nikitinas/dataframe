@@ -35,12 +35,12 @@ import kotlin.reflect.typeOf
 
 enum class UnresolvedColumnsPolicy { Fail, Skip, Create }
 
-class ColumnResolutionContext(val df: DataFrameBase<*>, val unresolvedColumnsPolicy: UnresolvedColumnsPolicy) {
+class ColumnResolutionContext(val df: DataFrame<*>, val unresolvedColumnsPolicy: UnresolvedColumnsPolicy) {
 
     val allowMissingColumns = unresolvedColumnsPolicy == UnresolvedColumnsPolicy.Skip
 }
 
-fun <TD, T : DataFrameBase<TD>, C> Selector<T, Columns<C>>.toColumns(createReceiver: (ColumnResolutionContext) -> T): Columns<C> =
+fun <TD, T : DataFrame<TD>, C> Selector<T, Columns<C>>.toColumns(createReceiver: (ColumnResolutionContext) -> T): Columns<C> =
     createColumnSet {
         val receiver = createReceiver(it)
         val columnSet = this(receiver, receiver)
@@ -52,10 +52,10 @@ fun <C> createColumnSet(resolver: (ColumnResolutionContext) -> List<ColumnWithPa
         override fun resolve(context: ColumnResolutionContext) = resolver(context)
     }
 
-inline fun <C, reified R> ColumnReference<C>.map(noinline transform: (C) -> R): SingleColumn<R> =
+inline fun <C, reified R> ColumnReference<C>.map(noinline transform: (C) -> R): ColumnReference<R> =
     map(getType<R>(), transform)
 
-fun <C, R> ColumnReference<C>.map(targetType: KType?, transform: (C) -> R): SingleColumn<R> =
+fun <C, R> ColumnReference<C>.map(targetType: KType?, transform: (C) -> R): ColumnReference<R> =
     ConvertedColumnDef(this, transform, targetType)
 
 typealias Column = ColumnReference<*>
@@ -112,10 +112,15 @@ fun <T, R> computeValues(df: DataFrame<T>, expression: AddExpression<T, R>): Pai
     return nullable to list
 }
 
-inline fun <T, reified R> DataFrame<T>.newColumn(name: String, noinline expression: AddExpression<T, R>): DataColumn<R> {
-    val (nullable, values) = computeValues(this, expression)
+inline fun <T, reified R> DataFrameBase<T>.newColumn(name: String, noinline expression: AddExpression<T, R>): DataColumn<R> {
+    val (nullable, values) = computeValues(this as DataFrame<T>, expression)
     if (R::class == DataFrame::class) return DataColumn.frames(name, values as List<AnyFrame?>) as DataColumn<R>
     return column(name, values, nullable)
+}
+
+fun <T, R> DataFrameBase<T>.newGuessColumn(name: String, expression: AddExpression<T, R>): DataColumn<R> {
+    val (_, values) = computeValues(this as DataFrame<T>, expression)
+    return guessColumnType(name, values) as DataColumn<R>
 }
 
 class ColumnDelegate<T>(private val parent: MapColumnReference? = null) {
@@ -156,16 +161,19 @@ fun <T> column(parent: MapColumnReference): ColumnDelegate<T> = ColumnDelegate(p
 fun <T> column(parent: MapColumnReference, name: String): ColumnAccessor<T> =
     ColumnAccessorImpl(parent.path() + name)
 
-inline fun <reified T> columnOf(vararg values: T) = column(values.asIterable())
+inline fun <reified T> columnOf(vararg values: T): DataColumn<T> = column(values.asIterable())
 
-fun columnOf(vararg values: AnyColumn): DataColumn<AnyRow> = DataColumn.create("", dataFrameOf(values.asIterable())) as DataColumn<AnyRow>
+fun columnOf(vararg values: AnyColumn): DataColumn<AnyRow> = columnOf(values.asIterable())
 
-fun columnOf(vararg frames: AnyFrame?) = columnOf(frames.asIterable())
+fun <T> columnOf(vararg frames: DataFrame<T>?): FrameColumn<T> = columnOf(frames.asIterable())
 
-fun <T> columnOf(frames: Iterable<DataFrame<T>?>) = DataColumn.create("", frames.toList())
+fun columnOf(columns: Iterable<AnyColumn>): DataColumn<AnyRow> = DataColumn.create("", dataFrameOf(columns)) as DataColumn<AnyRow>
+
+fun <T> columnOf(frames: Iterable<DataFrame<T>?>): FrameColumn<T> = DataColumn.create("", frames.toList())
 
 inline fun <reified T> column(values: Iterable<T>): DataColumn<T> = when {
     values.all { it is AnyCol } -> DataColumn.create("", (values as Iterable<AnyCol>).toDataFrame()) as DataColumn<T>
+    values.all { it == null || it is AnyFrame} -> DataColumn.frames("", values.map { it as? AnyFrame }) as DataColumn<T>
     else -> DataColumn.create("", values.toList(), getType<T>())
 }
 
@@ -205,10 +213,10 @@ fun <T> ValueColumn<T>.toDefinition() = column<T>(name)
 operator fun AnyColumn.plus(other: AnyColumn) = dataFrameOf(listOf(this, other))
 
 fun StringCol.len() = map { it?.length }
-fun StringCol.lower() = map { it?.toLowerCase() }
-fun StringCol.upper() = map { it?.toUpperCase() }
+fun StringCol.lowercase() = map { it?.lowercase() }
+fun StringCol.uppercase() = map { it?.uppercase() }
 
-infix fun <T, C: Column<T>> C.named(name: String) = rename(name) as C
+infix fun <T, C: ColumnReference<T>> C.named(name: String) = rename(name) as C
 
 infix fun <T> DataColumn<T>.eq(value: T): BooleanArray = isMatching { it == value }
 infix fun <T> DataColumn<T>.neq(value: T): BooleanArray = isMatching { it != value }
@@ -234,12 +242,13 @@ fun <T> Column<T>.firstOrNull(predicate: (T)->Boolean) = values.firstOrNull(pred
 fun <T> Column<T>.last() = get(size-1)
 fun <T> DataColumn<T>.lastOrNull() = if(size > 0) last() else null
 
-fun <C> DataColumn<C>.allNulls() = size == 0 || (hasNulls && ndistinct == 1)
+fun <C> DataColumn<C>.allNulls() = size == 0 || all { it == null }
 
 fun AnyCol.isSubtypeOf(type: KType) = this.type.isSubtypeOf(type) && (!this.type.isMarkedNullable || type.isMarkedNullable)
 inline fun <reified T> AnyCol.isSubtypeOf() = isSubtypeOf(getType<T>())
 inline fun <reified T> AnyCol.isType() = type() == getType<T>()
 
 fun AnyCol.isNumber() = isSubtypeOf<Number?>()
+fun AnyCol.isComparable() = isSubtypeOf<Comparable<*>>()
 
 fun AnyCol.guessType() = DataColumn.create(name, toList())

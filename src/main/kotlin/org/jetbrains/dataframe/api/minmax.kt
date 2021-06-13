@@ -18,8 +18,10 @@ fun <T, D : Comparable<D>> DataFrame<T>.min(col: ColumnReference<D?>): D? = get(
 fun <T, D : Comparable<D>> DataFrame<T>.min(selector: RowSelector<T, D?>): D? = rows().asSequence().map { selector(it, it) }.filterNotNull().minOrNull()
 fun <T> DataFrame<T>.min(col: String): Any? = get(col).minUnsafe()
 
-inline fun <T, G, reified R : Comparable<R>> GroupedDataFrame<T, G>.min(resultColumnName: String = "min", noinline selector: RowSelector<G, R?>) = aggregate { min(selector) into resultColumnName }
-inline fun <T, G, reified R : Comparable<R>> GroupedDataFrame<T, G>.max(resultColumnName: String = "max", noinline selector: RowSelector<G, R?>) = aggregate { max(selector) into resultColumnName }
+inline fun <T, G, reified R : Comparable<R>> GroupedDataFrame<T, G>.min(resultColumnName: String = "min", noinline selector: RowSelector<G, R?>) =
+    aggregate { min(selector) into resultColumnName }
+inline fun <T, G, reified R : Comparable<R>> GroupedDataFrame<T, G>.max(resultColumnName: String = "max", noinline selector: RowSelector<G, R?>) =
+    aggregate { max(selector) into resultColumnName }
 
 fun <T, G> GroupedDataFrame<T, G>.min(column: String) = aggregate { min(column) into column }
 fun <T, G> GroupedDataFrame<T, G>.max(column: String) = aggregate { max(column) into column }

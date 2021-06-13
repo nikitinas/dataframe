@@ -28,3 +28,5 @@ interface ColumnReference<out C> : SingleColumn<C> {
 internal val ColumnReference<*>.name get() = name()
 
 internal fun <C> ColumnReference<C>.renamedReference(newName: String): ColumnReference<C> = RenamedColumnReference(this, newName)
+
+internal fun ColumnReference<*>.shortPath() = listOf(name)

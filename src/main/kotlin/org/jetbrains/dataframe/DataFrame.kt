@@ -20,7 +20,7 @@ import org.jetbrains.dataframe.impl.put
 import org.jetbrains.dataframe.impl.toIndices
 import kotlin.reflect.KProperty
 
-internal open class SelectReceiverImpl<T>(df: DataFrameBase<T>, allowMissingColumns: Boolean) :
+internal open class SelectReceiverImpl<T>(df: DataFrame<T>, allowMissingColumns: Boolean) :
     DataFrameReceiver<T>(df, allowMissingColumns), SelectReceiver<T>
 
 data class DataFrameSize(val ncol: Int, val nrow: Int) {
@@ -90,18 +90,11 @@ fun <T, C> DataFrame<T>.column(selector: ColumnSelector<T, C>): DataColumn<C> = 
 
 fun <T, C> DataFrame<T>.getColumnWithPath(selector: ColumnSelector<T, C>) = getColumnsWithPaths(selector).single()
 
-@JvmName("getColumnForSpread")
-internal fun <T, C> DataFrame<T>.getColumn(selector: SpreadColumnSelector<T, C>) =
-    DataFrameForSpreadImpl(this).let { selector(it, it) }.let {
-        this[it]
-    }
-
 internal fun <T> DataFrame<T>.getColumns(columnNames: Array<out String>) = columnNames.map { this[it] }
 
-internal fun <T, C> DataFrame<T>.getColumns(columnNames: Array<out KProperty<C>>) =
-    columnNames.map { this[it.name] as ColumnReference<C> }
-
 internal fun <T> DataFrame<T>.getColumns(columnNames: List<String>): List<AnyCol> = columnNames.map { this[it] }
+
+internal fun <T, C> DataFrame<T>.getColumns(selector: ColumnsSelector<T, C>): List<DataColumn<C>> = get(selector)
 
 internal fun <T> DataFrame<T>.new(columns: Iterable<AnyCol>) = dataFrameOf(columns).typed<T>()
 
@@ -157,8 +150,8 @@ interface DataFrame<out T> : DataFrameBase<T> {
     fun getColumnIndex(name: String): Int
     fun getColumnIndex(col: AnyCol) = getColumnIndex(col.name())
 
-    fun <R> tryGetColumn(column: ColumnReference<R>): DataColumn<R>? =
-        tryGetColumn(column.path()) as? DataColumn<R>
+    fun <R> tryGetColumn(column: ColumnReference<R>): DataColumn<R>? = column.resolveSingle(ColumnResolutionContext(this, UnresolvedColumnsPolicy.Skip))?.data
+//        tryGetColumn(column.path()) as? DataColumn<R>
 
     override fun tryGetColumn(columnName: String): AnyCol? =
         getColumnIndex(columnName).let { if (it != -1) column(it) else null }
@@ -169,7 +162,6 @@ interface DataFrame<out T> : DataFrameBase<T> {
             ?.tryGetColumn(path.last())
 
     fun tryGetColumnGroup(name: String) = tryGetColumn(name) as? ColumnGroup<*>
-    fun getColumnGroup(name: String) = tryGetColumnGroup(name)!!
 
     operator fun get(first: Column, vararg other: Column) = select(listOf(first) + other)
     operator fun get(first: String, vararg other: String) = select(listOf(first) + other)
@@ -216,6 +208,24 @@ fun <T> AnyFrame.typed(): DataFrame<T> = this as DataFrame<T>
 fun <T> DataFrameBase<*>.typed(): DataFrameBase<T> = this as DataFrameBase<T>
 
 fun <T> DataRow<T>.toDataFrame(): DataFrame<T> = owner[index..index]
+
+fun <T> Iterable<DataRow<T>>.toDataFrame(): DataFrame<T> {
+    var uniqueDf: DataFrame<T>? = null
+    for(row in this) {
+        if(uniqueDf == null) uniqueDf = row.df()
+        else {
+            if(uniqueDf !== row.df())
+            {
+                uniqueDf = null
+                break
+            }
+        }
+    }
+    return if(uniqueDf != null) {
+        val permutation = map { it.index }
+        uniqueDf[permutation]
+    } else map { it.toDataFrame() }.union()
+}
 
 fun <T> DataFrame<T>.forwardIterable() = object : Iterable<DataRow<T>> {
     override fun iterator() =

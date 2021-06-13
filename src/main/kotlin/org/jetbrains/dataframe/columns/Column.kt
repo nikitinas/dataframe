@@ -4,6 +4,7 @@ import org.jetbrains.dataframe.AnyRow
 import org.jetbrains.dataframe.ColumnKind
 import org.jetbrains.dataframe.headPlusIterable
 import org.jetbrains.dataframe.impl.asList
+import org.jetbrains.dataframe.impl.columns.DataColumnInternal
 import kotlin.reflect.KProperty
 
 /**
@@ -45,7 +46,7 @@ interface Column<out T> : ColumnReference<T> {
 
     fun toSet(): Set<T>
 
-    operator fun getValue(thisRef: Any?, property: KProperty<*>) = rename(property.name)
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): Column<T> = (this as DataColumnInternal<*>).rename(property.name).forceResolve() as Column<T>
 }
 
 typealias AnyColumn = Column<*>

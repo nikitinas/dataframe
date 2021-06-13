@@ -15,8 +15,8 @@ interface DataFrameBase<out T>: SingleColumn<DataRow<T>> {
     operator fun get(columnName: String): AnyCol
     fun tryGetColumn(columnName: String): AnyCol?
 
-    fun getGroup(columnName: String) = get(columnName).asGroup()
-    fun getGroup(columnPath: ColumnPath): ColumnGroup<*> = get(columnPath).asGroup()
+    fun getColumnGroup(columnName: String) = get(columnName).asGroup()
+    fun getColumnGroup(columnPath: ColumnPath): ColumnGroup<*> = get(columnPath).asGroup()
 
     fun frameColumn(columnName: String): FrameColumn<*> = get(columnName).asTable()
     fun frameColumn(columnPath: ColumnPath): FrameColumn<*> = get(columnPath).asTable()
@@ -24,6 +24,10 @@ interface DataFrameBase<out T>: SingleColumn<DataRow<T>> {
     operator fun <R> get(column: ColumnReference<R>): DataColumn<R>
     operator fun <R> get(column: ColumnReference<DataRow<R>>): ColumnGroup<R>
     operator fun <R> get(column: ColumnReference<DataFrame<R>>): FrameColumn<R>
+
+    operator fun <R> get(column: KProperty<R>) = get(column.name) as DataColumn<R>
+    operator fun <R> get(column: KProperty<DataRow<R>>) = get(column.name) as ColumnGroup<R>
+    operator fun <R> get(column: KProperty<DataFrame<R>>) = get(column.name) as FrameColumn<R>
 
     fun <R> getColumn(name: String) = get(name) as DataColumn<R>
 

@@ -3,6 +3,7 @@ package org.jetbrains.dataframe.impl.columns.missing
 import org.jetbrains.dataframe.ColumnResolutionContext
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.ColumnGroup
+import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.impl.columns.DataColumnInternal
 import kotlin.reflect.KType
 
@@ -42,4 +43,6 @@ internal abstract class MissingDataColumn<T> : DataColumnInternal<T> {
     override fun rename(newName: String) = throw UnsupportedOperationException()
 
     override fun addParent(parent: ColumnGroup<*>) = throw UnsupportedOperationException()
+
+    override fun forceResolve() = throw UnsupportedOperationException()
 }

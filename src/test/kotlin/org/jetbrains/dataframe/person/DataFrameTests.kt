@@ -1152,7 +1152,7 @@ class DataFrameTests : BaseTest() {
     fun `merge cols with conversion`() {
         val pivoted = typed.groupBy { name }.pivot { city }.count()
         val res = pivoted.merge { intCols() }.by { it.filterNotNull().sum() }.into("cities")
-        val expected = typed.select { name and city }.groupBy { name }.countInto("cities")
+        val expected = typed.select { name and city }.groupBy { name }.count("cities")
         res shouldBe expected
     }
 
@@ -1307,7 +1307,7 @@ class DataFrameTests : BaseTest() {
 
         val d = typed.groupBy { name }.aggregate {
             val row = select { age and weight }.mean()
-            addValue("mean", row)
+            yield("mean", row)
         }
         d.ncol() shouldBe 2
         d["mean"].isGroup() shouldBe true
@@ -1324,7 +1324,7 @@ class DataFrameTests : BaseTest() {
 
         val d = typed.groupBy { name }.aggregate {
             val row = select { age and weight }
-            addValue("info", row)
+            yield("info", row)
         }
         d.ncol() shouldBe 2
         d["info"].isTable() shouldBe true

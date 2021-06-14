@@ -28,17 +28,6 @@ fun <T> DataFrame<T>.std(): DataRow<T> {
     }.asDataFrame<T>()[0]
 }
 
-fun <T, G> GroupedDataFrame<T, G>.std(): DataFrame<T> {
-
-    val keyColumnNames = keys.columnNames().toSet()
-    return aggregate {
-        columns().filter { (it.type.classifier!! as KClass<*>).isSubclassOf(Number::class) && !keyColumnNames.contains(it.name()) }
-            .forEach { col ->
-                (col as DataColumn<Number?>).std() into col.name
-            }
-    }
-}
-
 fun <T : Number> Iterable<T>.std(clazz: KClass<T>) = when (clazz) {
     Double::class -> (this as Iterable<Double>).std()
     Float::class -> (this as Iterable<Float>).std()

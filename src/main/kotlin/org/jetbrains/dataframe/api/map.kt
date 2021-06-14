@@ -8,7 +8,7 @@ import org.jetbrains.dataframe.impl.columns.typed
 import org.jetbrains.dataframe.impl.createDataCollector
 import kotlin.reflect.KType
 
-fun <T> DataFrame<T>.map(body: TypedColumnsFromDataRowBuilder<T>.() -> Unit): AnyFrame {
+fun <T> DataFrame<T>.mapColumns(body: TypedColumnsFromDataRowBuilder<T>.() -> Unit): AnyFrame {
     val builder = TypedColumnsFromDataRowBuilder(this)
     body(builder)
     return dataFrameOf(builder.columns)

@@ -22,31 +22,6 @@ fun <T, C : Number> DataFrame<T>.mean(col: ColumnReference<C?>, skipNa: Boolean 
 fun <T, C : Number> DataFrame<T>.mean(col: KProperty<C?>, skipNa: Boolean = true): Double = get(col).mean(skipNa)
 fun <T, C: Number> DataFrame<T>.mean(skipNa: Boolean = true, selector: ColumnSelector<T, C?>): Double = this[selector].mean(skipNa)
 
-inline fun <T, G, reified R : Number> GroupedDataFrame<T, G>.meanOf(
-    columnName: String = "mean", skipNa: Boolean = true,
-    noinline selector: RowSelector<G, R?>
-) = aggregate { meanOf(skipNa, selector) into columnName }
-
-inline fun <T, G, reified R : Number> GroupedDataFrame<T, G>.mean(
-    skipNa: Boolean = true,
-    noinline selector: ColumnSelector<G, R?>
-) = aggregate {
-    val col = this[selector]
-    col.mean(skipNa) into col.name()
-}
-
-fun <T, G> GroupedDataFrame<T, G>.mean(): DataFrame<T> {
-
-    val keyColumnNames = keys.columnNames().toSet()
-    return aggregate {
-        columns().filter { it.isSubtypeOf<Number?>() && !keyColumnNames.contains(it.name) }
-            .forEach { col ->
-                if(!keyColumnNames.contains(col.name) && col.isNumber())
-                    (col as DataColumn<Number?>).mean() into col.name()
-            }
-    }
-}
-
 fun <T : Number> Sequence<T?>.mean(clazz: KClass<T>, skipNa: Boolean = true): Double {
 
     return if (skipNa) {

@@ -7,7 +7,7 @@ import org.jetbrains.dataframe.impl.columns.isTable
 
 typealias GroupKey = List<Any?>
 
-interface GroupedDataFrame<out T, out G> {
+interface GroupedDataFrame<out T, out G>: AggregatableGroupBy<G> {
 
     val groups: FrameColumn<G>
 
@@ -26,7 +26,7 @@ interface GroupedDataFrame<out T, out G> {
 }
 
 internal fun <T, G> DataFrame<T>.toGrouped(groupedColumnName: String): GroupedDataFrame<T, G> =
-    GroupedDataFrameImpl(this, this[groupedColumnName] as FrameColumn<G>)
+    GroupedDataFrameImpl(this, this[groupedColumnName] as FrameColumn<G>) { none() }
 
 internal fun <T> DataFrame<T>.toGrouped(): GroupedDataFrame<T, T> {
 

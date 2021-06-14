@@ -3,8 +3,11 @@ package org.jetbrains.dataframe.impl
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.columns.FrameColumn
+import org.jetbrains.dataframe.impl.columns.toColumns
 
-internal class GroupedDataFrameImpl<T, G>(val df: DataFrame<T>, override val groups: FrameColumn<G>): GroupedDataFrame<T, G> {
+internal class GroupedDataFrameImpl<T, G>(val df: DataFrame<T>, override val groups: FrameColumn<G>, private val keyColumnsInGroups: ColumnsSelector<G, *>): GroupedDataFrame<T, G> {
+
+    override fun <R> aggregateBase(body: BaseAggregator<G, R>) = aggregate(body as GroupAggregator<G>).typed<G>() // TODO: check returned type argument
 
     override val keys by lazy { df - groups }
 
@@ -23,4 +26,6 @@ internal class GroupedDataFrameImpl<T, G>(val df: DataFrame<T>, override val gro
     override fun plain() = df
 
     override fun toString() = df.toString()
+
+    override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all().except(keyColumnsInGroups.toColumns()) }
 }

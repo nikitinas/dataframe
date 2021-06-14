@@ -28,90 +28,16 @@ fun <T> GroupAggregateBuilder<T>.pivot(columns: ColumnsSelector<T, *>) = GroupAg
 fun <T> GroupAggregateBuilder<T>.pivot(vararg columns: Column) = pivot { columns.toColumns() }
 fun <T> GroupAggregateBuilder<T>.pivot(vararg columns: String) = pivot { columns.toColumns() }
 
-inline fun <T, reified C> PivotClause<T>.valueOf(crossinline expression: RowSelector<T, C>): DataFrame<T> {
-    val type = getType<C>()
-    return aggregate {
-        if (nrow() == 1) {
-            val row = get(0)
-            yield(expression(row, row), type)
-        } else yield(map { expression(it) }.wrapValues(), getListType(type))
-    }
-}
-
 // TODO: add  overloads
-internal fun <T, V> PivotClause<T>.withColumn(column: DataFrame<T>.(DataFrame<T>) -> DataColumn<V>) = aggregate {
+internal fun <T, V> Aggregatable<T>.withColumn(column: DataFrame<T>.(DataFrame<T>) -> DataColumn<V>) = aggregateBase {
     val data = column(this)
     yieldOneOrMany(data.toList(), data.type())
 }
 
-fun <T, V> PivotAggregateBuilder<T>.yieldOneOrMany(values: List<V>, type: KType) = yieldOneOrMany(emptyList(), values, type)
+fun <T, P:AggregatablePivot<T>> P.withGrouping(group: MapColumnReference) = withGrouping(group.path()) as P
+fun <T, P:AggregatablePivot<T>> P.withGrouping(groupName: String) = withGrouping(listOf(groupName)) as P
 
-internal fun <T, V> PivotAggregateBuilder<T>.yieldOneOrMany(path: ColumnPath, values: List<V>, type: KType) {
-    if (values.size == 1) yield(path, values[0], type)
-    else yield(path, values.wrapValues(), getListType(type))
-}
-
-interface PivotClause<T> {
-    fun <R> aggregate(body: PivotAggregator<T, R>): DataFrame<T>
-
-    fun groupByValue(flag: Boolean = true): PivotClause<T>
-    fun withGrouping(groupPath: ColumnPath): PivotClause<T>
-
-    fun into(column: Column) = value(column)
-    fun into(column: String) = value(column)
-    fun into(column: KProperty<*>) = value(column.name)
-
-    fun matches() = matches(true, false)
-    fun <R> matches(yes: R, no: R) = aggregate { yes default no }
-
-    fun <V> value(column: ColumnReference<V>) = withColumn { it[column] }
-    fun value(column: String) = withColumn<T, Any?> { it.getColumn(column) }
-    fun <V> value(column: ColumnSelector<T, V>) = withColumn { it[column] }
-
-    fun values(selector: ColumnsSelector<T, *>) = aggregate {
-        get(selector).forEach { col -> yieldOneOrMany(col.shortPath(), col.toList(), col.type()) }
-    }
-
-    fun values() = values(remainingColumnsSelector())
-
-    fun remainingColumnsSelector(): ColumnsSelector<T, *>
-
-    fun count() = aggregate { nrow() default 0 }
-
-    // TODO: add missing overloads
-    fun <R: Comparable<R>> max(columns: ColumnsSelector<T, R?>) = aggregate(columns, DataColumn<R?>::max)
-    fun max() = max(remainingColumns { it.isComparable() } as ColumnsSelector<T, Comparable<Any?>> )
-    fun <R: Comparable<R>> maxOf(selector: RowSelector<T, R>) = aggregate { maxBy(selector) }
-
-    fun <R: Comparable<R>> min(columns: ColumnsSelector<T, R?>) = aggregate(columns, DataColumn<R?>::min)
-    fun min() = min(remainingColumns { it.isComparable() } as ColumnsSelector<T, Comparable<Any?>> )
-    fun <R: Comparable<R>> minOf(selector: RowSelector<T, R>) = aggregate { minBy(selector) }
-
-    fun <R: Number> sum(columns: ColumnsSelector<T, R>) = aggregate(columns, DataColumn<R>::sum)
-    fun sum() = sum(remainingColumns { it.isNumber() } as ColumnsSelector<T, Number> )
-
-    fun <R: Number> mean(skipNa: Boolean = true, columns: ColumnsSelector<T, R>) = aggregate(columns) { it.mean(skipNa) }
-    fun mean(skipNa: Boolean = true) = mean(skipNa, remainingColumns { it.isNumber() } as ColumnsSelector<T, Number> )
-}
-
-internal inline fun <T> PivotClause<T>.remainingColumns(crossinline predicate: (AnyCol) -> Boolean): ColumnsSelector<T, Any?> = remainingColumnsSelector().filter { predicate(it.data) }
-
-internal fun <T, C, R> PivotClause<T>.aggregate(columns: ColumnsSelector<T, C>, aggregator: (DataColumn<C>)->R) = aggregate {
-    val cols = get(columns)
-    val isSingleColumn = cols.size == 1
-    get(columns).forEach { col -> yield(if(isSingleColumn) emptyList() else col.shortPath(), aggregator(col), col.type(), col.defaultValue()) }
-}
-
-fun <T, P:PivotClause<T>> P.withGrouping(group: MapColumnReference) = withGrouping(group.path()) as P
-fun <T, P:PivotClause<T>> P.withGrouping(groupName: String) = withGrouping(listOf(groupName)) as P
-
-// TODO: add overloads
-inline fun <T, reified R: Number> PivotClause<T>.sumOf(crossinline selector: RowSelector<T, R>) = aggregate { sumBy(selector) }
-
-// TODO: add overloads
-inline fun <T, reified R: Number> PivotClause<T>.meanOf(skipNa: Boolean = true, crossinline selector: RowSelector<T, R>): DataFrame<T> = aggregate { meanOf(skipNa, selector) }
-
-inline fun <T, reified V> PivotClause<T>.into(noinline selector: RowSelector<T, V>): DataFrame<T> {
+inline fun <T, reified V> AggregatablePivot<T>.into(noinline selector: RowSelector<T, V>): DataFrame<T> {
     val type = getType<V>()
     return aggregate {
         val values = map {
@@ -128,7 +54,7 @@ data class GroupedFramePivot<T>(
     internal val columns: ColumnsSelector<T, *>,
     internal val groupValues: Boolean = false,
     internal val groupPath: ColumnPath = emptyList()
-) : PivotClause<T> {
+) : AggregatablePivot<T> {
     override fun <R> aggregate(body: PivotAggregator<T, R>): DataFrame<T> {
         return df.aggregate {
             aggregatePivot(this, columns, groupValues, groupPath, body)
@@ -138,7 +64,7 @@ data class GroupedFramePivot<T>(
     override fun groupByValue(flag: Boolean) = copy(groupValues = flag)
     override fun withGrouping(groupPath: ColumnPath) = copy(groupPath = groupPath)
 
-    override fun remainingColumnsSelector(): ColumnsSelector<T, *> = { all().except(columns.toColumns()) }
+    override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all().except(columns.toColumns()) }
 }
 
 data class DataFramePivot<T>(
@@ -147,7 +73,7 @@ data class DataFramePivot<T>(
     internal val index: ColumnsSelector<T, *>? = null,
     internal val groupValues: Boolean = false,
     internal val groupPath: ColumnPath = emptyList()
-) : PivotClause<T> {
+) : AggregatablePivot<T> {
 
     override fun groupByValue(flag: Boolean) = copy(groupValues = flag)
     override fun withGrouping(groupPath: ColumnPath) = copy(groupPath = groupPath)
@@ -172,7 +98,7 @@ data class DataFramePivot<T>(
                 val result = body(builder, builder)
                 val hasResult = result != Unit
                 val values = if (builder.values.isEmpty())
-                    if (hasResult) listOf(NamedValue(emptyList(), result, null, null))
+                    if (hasResult) listOf(NamedValue.create(emptyList(), result, null, null))
                     else emptyList()
                 else builder.values
                 val columnData = mutableListOf<Any?>()
@@ -182,7 +108,7 @@ data class DataFramePivot<T>(
                     val name = if (it.path.isEmpty()) "" else it.path.last()
                     val index = valueNameIndex[name] ?: run {
                         val newIndex = rows.size
-                        rows.add(RowData(name, it.type, it.defaultValue))
+                        rows.add(RowData(name, it.type, it.default))
                         valueNameIndex[name] = newIndex
                         newIndex
                     }
@@ -219,7 +145,7 @@ data class DataFramePivot<T>(
         }
     }
 
-    override fun remainingColumnsSelector(): ColumnsSelector<T, *> = { all().except(index?.toColumns()?.and(columns.toColumns()) ?: columns.toColumns()) }
+    override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all().except(index?.toColumns()?.and(columns.toColumns()) ?: columns.toColumns()) }
 }
 
 class AggregatedPivot<T>(private val df: DataFrame<T>, internal var aggregator: GroupAggregateBuilder<T>) :
@@ -230,7 +156,7 @@ data class GroupAggregatorPivot<T>(
     internal val columns: ColumnsSelector<T, *>,
     internal val groupValues: Boolean = false,
     internal val groupPath: ColumnPath = emptyList()
-) : PivotClause<T> {
+) : AggregatablePivot<T> {
 
     override fun groupByValue(flag: Boolean) = copy(groupValues = flag)
     override fun withGrouping(groupPath: ColumnPath) = copy(groupPath = groupPath)
@@ -241,7 +167,7 @@ data class GroupAggregatorPivot<T>(
         return AggregatedPivot(aggregator.df, childAggregator)
     }
 
-    override fun remainingColumnsSelector(): ColumnsSelector<T, *> = { all().except(columns.toColumns()) }
+    override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all().except(columns.toColumns()) }
 }
 
 internal fun <T, R> aggregatePivot(
@@ -262,12 +188,12 @@ internal fun <T, R> aggregatePivot(
 
         val values = builder.values
         when {
-            values.size == 1 && values[0].path.isEmpty() -> aggregator.addValue(groupPath + path, values[0].value, values[0].type, guessType = true)
-            values.isEmpty() -> aggregator.addValue(groupPath + path, if (hasResult) result else null, guessType = true)
+            values.size == 1 && values[0].path.isEmpty() -> aggregator.yield(values[0].copy(path = groupPath + path))
+            values.isEmpty() -> aggregator.yield(groupPath + path, if (hasResult) result else null, null, null, true)
             else -> {
                 values.forEach {
                     val targetPath = groupPath + if (groupValues) it.path + path else path + it.path
-                    aggregator.addValue(targetPath, it.value, it.type, it.defaultValue, it.guessType)
+                    aggregator.yield(targetPath, it.value, it.type, it.default, it.guessType)
                 }
             }
         }
@@ -276,21 +202,38 @@ internal fun <T, R> aggregatePivot(
 
 internal val defaultPivotIndexName = "index"
 
+typealias BaseAggregator<T, R> = AggregateReceiver<T>.(AggregateReceiver<T>) -> R
+
 typealias PivotAggregator<T, R> = PivotAggregateBuilder<T>.(PivotAggregateBuilder<T>) -> R
 
-class PivotAggregateBuilder<T>(internal val df: DataFrame<T>) : DataFrame<T> by df {
+data class ValueWithName(val value: Any?, val name: String)
+
+@Suppress("DataClassPrivateConstructor")
+data class NamedValue private constructor(val path: ColumnPath, val value: Any?, val type: KType?, val default: Any?, val guessType: Boolean = false) {
+    companion object {
+        fun create(path: ColumnPath, value: Any?, type: KType?, defaultValue: Any?, guessType: Boolean = false): NamedValue = when(value){
+            is ValueWithDefault<*> -> create(path, value.value, type, value.default, guessType)
+            is ValueWithName -> create(path.replaceLast(value.name), value.value, type, defaultValue, guessType)
+            else -> NamedValue(path, value, type, defaultValue, guessType)
+        }
+        fun aggregator(builder: GroupAggregateBuilder<*>) = NamedValue(emptyList(), builder, null, null, false)
+    }
+}
+
+interface PivotAggregateReceiver<T>: AggregateReceiver<T> {
+
+    override fun <C, R> yieldSingleColumn(col: DataColumn<C>, value: R) =  yield(value, col.type(), col.defaultValue())
+
+    override fun <R> yield(path: ColumnPath, value: R, type: KType?, default: R?) = yield(path, value, type, default, true)
+
+    override fun <R> yield(value: R, type: KType?, default: R?) = yield(emptyList(), value, type, default)
+}
+
+class PivotAggregateBuilder<T>(internal val df: DataFrame<T>) : PivotAggregateReceiver<T>, DataFrame<T> by df {
 
     internal val values = mutableListOf<NamedValue>()
 
-    fun <R> yield(path: ColumnPath, value: R, type: KType? = null, default: R? = null) {
-        values.add(NamedValue(path, value, type, default, true))
-    }
-
-    fun <R> yield(value: R, type: KType? = null, default: R? = null) {
-        values.add(NamedValue(emptyList(), value, type, default, true))
-    }
-
-    infix fun <R> R.default(defaultValue: R): Any = ValueWithDefault(this, defaultValue)
+    override fun yield(value: NamedValue) { values.add(value) }
 
     inline infix fun <reified R> R.into(name: String) = yield(listOf(name), this, getType<R>())
 }

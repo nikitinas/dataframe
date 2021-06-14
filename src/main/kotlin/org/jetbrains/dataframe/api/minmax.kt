@@ -18,14 +18,6 @@ fun <T, D : Comparable<D>> DataFrame<T>.min(col: ColumnReference<D?>): D? = get(
 fun <T, D : Comparable<D>> DataFrame<T>.min(selector: RowSelector<T, D?>): D? = rows().asSequence().map { selector(it, it) }.filterNotNull().minOrNull()
 fun <T> DataFrame<T>.min(col: String): Any? = get(col).minUnsafe()
 
-inline fun <T, G, reified R : Comparable<R>> GroupedDataFrame<T, G>.min(resultColumnName: String = "min", noinline selector: RowSelector<G, R?>) =
-    aggregate { min(selector) into resultColumnName }
-inline fun <T, G, reified R : Comparable<R>> GroupedDataFrame<T, G>.max(resultColumnName: String = "max", noinline selector: RowSelector<G, R?>) =
-    aggregate { max(selector) into resultColumnName }
-
-fun <T, G> GroupedDataFrame<T, G>.min(column: String) = aggregate { min(column) into column }
-fun <T, G> GroupedDataFrame<T, G>.max(column: String) = aggregate { max(column) into column }
-
 internal fun <T> DataColumn<T?>.minUnsafe(): T? {
     val casted = assertIsComparable() as DataColumn<Comparable<Any>?>
     return casted.min() as T?
@@ -59,3 +51,6 @@ fun <T: Comparable<T>> DataColumn<T?>.max() = asSequence().filterNotNull().maxOr
 
 internal fun DataColumn<Number?>.minNumber() = asIterable().filterNotNull().min(typeClass)
 internal fun DataColumn<Number?>.maxNumber() = asIterable().filterNotNull().max(typeClass)
+
+internal fun <T:Comparable<T>> Iterable<T?>.min(): T? = filterNotNull().minOrNull()
+internal fun <T:Comparable<T>> Iterable<T?>.max(): T? = filterNotNull().maxOrNull()

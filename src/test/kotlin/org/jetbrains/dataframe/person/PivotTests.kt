@@ -85,6 +85,10 @@ class PivotTests {
         res.ncol() shouldBe 1 + typed.key.ndistinct()
         res.nrow() shouldBe typed.name.ndistinct()
 
+        res["age"].type() shouldBe getType<Int>()
+        res["city"].type() shouldBe getType<String>()
+        res["weight"].type() shouldBe getType<Int?>()
+
         val expected = typed.map { (name to key) to value }.toMap()
         val actual = res.columns().subList(1, res.ncol()).flatMap {
             val columnName = it.name()
@@ -93,9 +97,6 @@ class PivotTests {
 
         actual shouldBe expected
 
-        res["age"].type() shouldBe getType<Int>()
-        res["city"].type() shouldBe getType<String>()
-        res["weight"].type() shouldBe getType<Int?>()
 
         typed.pivot { key }.withIndex { name }.into { value } shouldBe res
         df.pivot { key }.withIndex { name }.into { value } shouldBe res

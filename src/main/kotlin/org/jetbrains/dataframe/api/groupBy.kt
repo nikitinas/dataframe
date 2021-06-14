@@ -52,7 +52,7 @@ fun <T> DataFrame<T>.groupBy(cols: ColumnsSelector<T, *>): GroupedDataFrame<T, T
     val groupedColumn = DataColumn.create(columnForGroupedData.name(), sorted, startIndices, false)
 
     val df = keyColumnsDf + groupedColumn
-    return GroupedDataFrameImpl(df, groupedColumn)
+    return GroupedDataFrameImpl(df, groupedColumn, cols)
 }
 
 inline fun <T, reified R> DataFrame<T>.groupByNew(name: String = "key", noinline expression: RowSelector<T, R?>) =

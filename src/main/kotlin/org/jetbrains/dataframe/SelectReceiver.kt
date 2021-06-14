@@ -48,6 +48,8 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
 
     fun DataFrameBase<*>.all(): Columns<*> = ColumnsList(children())
 
+    fun none(): Columns<*> = ColumnsList<Any?>(emptyList())
+
     fun Columns<*>.allDfs() = colsDfs { !it.isGroup() }
 
     // excluding current
@@ -123,7 +125,7 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
     infix fun <C> Columns<C>.except(other: Columns<*>): Columns<*> =
         createColumnSet { resolve(it).allColumnsExcept(other.resolve(it)) }
 
-    infix fun <C> Columns<C>.except(selector: ColumnsSelector<T, *>): Columns<*> = except(selector.toColumns())
+    infix fun <C> Columns<C>.except(selector: ColumnsSelector<T, *>): Columns<C> = except(selector.toColumns()) as Columns<C>
 
     operator fun <C> ColumnSelector<T, C>.invoke() = this(this@SelectReceiver, this@SelectReceiver)
     operator fun <C> ColumnsSelector<T, C>.invoke() = this(this@SelectReceiver, this@SelectReceiver)

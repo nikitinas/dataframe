@@ -31,6 +31,8 @@ typealias Predicate<T> = (T) -> Boolean
 
 typealias ColumnPath = List<String>
 
+internal fun ColumnPath.replaceLast(name: String) = if(size < 2) listOf(name) else dropLast(1) + name
+
 typealias DataFrameSelector<T, R> = DataFrame<T>.(DataFrame<T>) -> R
 
 typealias ColumnsSelector<T, C> = SelectReceiver<T>.(SelectReceiver<T>) -> Columns<C>
@@ -190,14 +192,14 @@ interface DataFrame<out T> : DataFrameBase<T> {
     fun single() = rows().single()
     fun single(predicate: RowSelector<T, Boolean>) = rows().single { predicate(it, it) }
 
-    fun <R> map(selector: RowSelector<T, R>) = rows().map { selector(it, it) }
-
     fun <R> mapIndexed(action: (Int, DataRow<T>) -> R) = rows().mapIndexed(action)
 
     fun <R> mapIndexedNotNull(action: (Int, DataRow<T>) -> R?) = rows().mapIndexedNotNull(action)
 
     operator fun iterator() = rows().iterator()
 }
+
+inline fun <T, R> DataFrame<T>.map(selector: RowSelector<T, R>) = rows().map { selector(it, it) }
 
 fun AnyFrame.size() = DataFrameSize(ncol(), nrow())
 

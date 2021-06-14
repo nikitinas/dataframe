@@ -10,7 +10,7 @@ import org.jetbrains.dataframe.impl.columns.addPath
 import org.jetbrains.dataframe.io.renderToString
 import java.lang.IllegalArgumentException
 
-internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T> {
+internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T>, AggregatableDataFrame<T> {
 
     private val nrow: Int = columns.firstOrNull()?.size ?: 0
 
@@ -52,8 +52,7 @@ internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T> {
 
     override fun set(columnName: String, value: AnyCol) {
 
-        if(value.size != nrow())
-            throw IllegalArgumentException("Invalid column size for column '$columnName'. Expected: ${nrow()}, actual: ${value.size}")
+        require(value.size == nrow()) { "Invalid column size for column '$columnName'. Expected: ${nrow()}, actual: ${value.size}" }
 
         val renamed = value.rename(columnName)
         val index = getColumnIndex(columnName)
@@ -63,4 +62,11 @@ internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T> {
     }
 
     override fun columns() = columns
+
+    override fun <R> aggregateBase(body: BaseAggregator<T, R>): DataFrame<T> {
+
+        return this
+    }
+
+    override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { none() }
 }

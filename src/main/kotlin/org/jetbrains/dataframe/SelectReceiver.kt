@@ -50,7 +50,7 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
 
     fun none(): Columns<*> = ColumnsList<Any?>(emptyList())
 
-    fun Columns<*>.allDfs() = colsDfs { !it.isGroup() }
+    fun Columns<*>.dfs() = colsDfs { !it.isGroup() }
 
     // excluding current
     fun DataFrameBase<*>.allAfter(colPath: ColumnPath) = children().let { var take = false; it.filter { if(take) true else { take = colPath == it.path; false} } }
@@ -118,7 +118,8 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
 
     infix fun <C> Columns<C>.and(other: Columns<C>): Columns<C> = ColumnsList(this, other)
 
-    fun <C> Columns<C>.except(vararg other: Columns<*>) = except(other.toList().toColumnSet())
+    fun <C> Columns<C>.except(vararg other: Columns<*>) = except(other.toColumns())
+    fun <C> Columns<C>.except(vararg other: String) = except(other.toColumns())
 
     fun <C> Columns<C?>.withoutNulls(): Columns<C> = transform { it.filter { !it.hasNulls } } as Columns<C>
 

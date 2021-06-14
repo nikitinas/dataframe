@@ -72,7 +72,7 @@ internal fun <T> insertColumns(
         if (subTree != null) {
             // assert that new columns go directly under current column so they have longer paths
             val invalidPath = subTree.firstOrNull { it.insertionPath.size == childDepth }
-            assert(invalidPath == null) { "Can't insert column `" + invalidPath!!.insertionPath.joinToString(".") + "`. Column with this path already exists" }
+            assert(invalidPath == null) { "Can not insert column `" + invalidPath!!.insertionPath.joinToString(".") + "` because column with this path already exists in DataFrame" }
             val group = it as? ColumnGroup<*>
             assert(group != null) { "Can not insert columns under a column '${it.name()}', because it is not a column group" }
             val newDf = insertColumns(group!!.df, subTree, treeNode?.get(it.name()), childDepth)

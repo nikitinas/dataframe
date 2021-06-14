@@ -204,7 +204,7 @@ class PivotTests {
             group.columnNames() shouldBe typed.key.distinct().values()
         }
 
-        val leafColumns = pivoted.getColumnsWithPaths { all().drop(1).allDfs() }
+        val leafColumns = pivoted.getColumnsWithPaths { all().drop(1).dfs() }
         leafColumns.size shouldBe typed.name.ndistinct() * typed.key.ndistinct()
         leafColumns.forEach { it.path.size shouldBe 2 }
 
@@ -233,7 +233,7 @@ class PivotTests {
         pivoted.ncol() shouldBe typed.name.ndistinct() + 1
         pivoted.nrow() shouldBe 2
         pivoted[defaultPivotIndexName].values() shouldBe listOf("value", "type")
-        val cols = pivoted.getColumns { all().drop(1).allDfs() }
+        val cols = pivoted.getColumns { all().drop(1).dfs() }
         cols.size shouldBe typed.name.ndistinct() * typed.key.ndistinct()
         cols.forEach {
             it.typeClass shouldBe Any::class
@@ -378,5 +378,29 @@ class PivotTests {
         val pivoted = typed.drop(1).pivot { key }.withIndex { name }.matches("yes", "no")
         pivoted.sumBy { values.count { it == "yes" } } shouldBe typed.nrow() - 1
         pivoted.sumBy { values.count { it == "no" } } shouldBe 1
+    }
+
+    @Test
+    fun `pivot aggregate into`() {
+        val pivoted = typed.pivot { key }.withIndex { name }.aggregate {
+            value.first() into "value"
+        }
+        pivoted.columns().drop(1).forEach {
+            it.kind() shouldBe ColumnKind.Group
+            it.asGroup().columnNames() shouldBe listOf("value")
+        }
+    }
+
+    @Test
+    fun `pivot aggregate several into`() {
+        val pivoted = typed.pivot { key }.withIndex { name }.aggregate {
+            value.first() into "first value"
+            value.last() into "last value"
+            "unused"
+        }
+        pivoted.columns().drop(1).forEach {
+            it.kind() shouldBe ColumnKind.Group
+            it.asGroup().columnNames() shouldBe listOf("first value", "last value")
+        }
     }
 }

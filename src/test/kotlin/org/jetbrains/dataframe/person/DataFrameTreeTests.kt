@@ -461,7 +461,7 @@ class DataFrameTreeTests : BaseTest() {
     @Test
     fun `group cols`() {
 
-        val joined = typed2.move { allDfs() }.into { path(it.path.joinToString(".")) }
+        val joined = typed2.move { dfs() }.into { path(it.path.joinToString(".")) }
         val grouped = joined.group { nameContains(".") }.into { it.name.substringBefore(".") }
         val expected = typed2.rename { nameAndCity.all() }.into { it.path.joinToString(".") }
         grouped shouldBe expected

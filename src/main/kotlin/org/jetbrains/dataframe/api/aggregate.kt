@@ -7,6 +7,7 @@ import org.jetbrains.dataframe.columns.guessColumnType
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.shortPath
 import org.jetbrains.dataframe.columns.values
+import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.createDataCollector
 import org.jetbrains.dataframe.impl.getListType
 import kotlin.reflect.KProperty
@@ -22,9 +23,9 @@ interface Aggregatable<out T> {
     fun value(column: String) = withColumn<T, Any?> { it.getColumn(column) }
     fun <V> value(column: ColumnSelector<T, V>) = withColumn { it[column] }
 
-    fun values(selector: ColumnsSelector<T, *>) = aggregateBase {
-        get(selector).forEach { col -> yieldOneOrMany(col.shortPath(), col.toList(), col.type()) }
-    }
+    fun values(vararg columns: Column) = values { columns.toColumns() }
+    fun values(vararg columns: String) = values { columns.toColumns() }
+    fun values(columns: ColumnsSelector<T, *>) = yieldOneOrManyBy(columns) { it.toList() }
 
     fun values() = values(remainingColumnsSelector())
 
@@ -45,6 +46,10 @@ interface Aggregatable<out T> {
     fun std() = sum(remainingColumns { it.isNumber() } as ColumnsSelector<T, Number> )
 
     fun remainingColumnsSelector(): ColumnsSelector<*, *>
+}
+
+interface AggregatableDataFrame<T> : Aggregatable<T> {
+
 }
 
 interface AggregatableGroupBy<out T> : Aggregatable<T> {
@@ -91,15 +96,6 @@ interface AggregatablePivot<T>: Aggregatable<T> {
     fun <R: Number> std(columns: ColumnsSelector<T, R?>) = aggregateAll(columns, { it.std() }, { it.std() })
 }
 
-interface GroupAggregateReceiver<T> : AggregateReceiver<T> {
-
-    override fun <C, R> yieldSingleColumn(col: DataColumn<C>, value: R) = yield(col.shortPath(), value, col.type(), col.defaultValue())
-
-    override fun <R> yield(path: ColumnPath, value: R, type: KType?, default: R?) = yield(path, value, type, default, false)
-
-    override fun <R> yield(value: R, type: KType?, default: R?) = yield(listOf("value"), value, type, default)
-}
-
 inline fun <T, reified R: Number> AggregatablePivot<T>.sumOf(crossinline selector: RowSelector<T, R>) = aggregate { sumBy(selector) }
 inline fun <T, reified R: Number> AggregatableGroupBy<T>.sumOf(resultName: String = "sum", crossinline selector: RowSelector<T, R>) = aggregateValue(resultName) { sumBy(selector) }
 
@@ -125,9 +121,9 @@ inline fun <T, reified C> AggregatableGroupBy<T>.valueOf(name: String, crossinli
 internal fun <T, V> AggregateReceiver<T>.yieldOneOrMany(values: List<V>, type: KType) = yieldOneOrMany(emptyList(), values, type)
 
 @PublishedApi
-internal fun <T, V> AggregateReceiver<T>.yieldOneOrMany(path: ColumnPath, values: List<V>, type: KType) {
-    if (values.size == 1) yield(path, values[0], type)
-    else yield(path, values.wrapValues(), getListType(type))
+internal fun <T, V> AggregateReceiver<T>.yieldOneOrMany(path: ColumnPath, values: List<V>, type: KType, default: V? = null) {
+    if (values.size == 1) yield(path, values[0], type, default)
+    else yield(path, values.wrapValues(), getListType(type), default)
 }
 
 @PublishedApi
@@ -155,12 +151,19 @@ internal fun <T, C, R> Aggregatable<T>.aggregateAll(path: ColumnPath, columns: C
         yield(path, resultAggregator(cols.map(columnAggregator)))
 }
 
+internal fun <T, C, R> Aggregatable<T>.yieldOneOrManyBy(columns: ColumnsSelector<T, C>, aggregator: (DataColumn<C>)->List<R>) = aggregateBase {
+    val cols = get(columns)
+    val isSingle = cols.size == 1
+    cols.forEach { col ->
+        yieldOneOrMany(if(isSingle) pathForSingleColumn(col) else col.shortPath(), aggregator(col), col.type(), col.defaultValue())
+    }
+}
+
 internal fun <T, C, R> Aggregatable<T>.aggregateBy(columns: ColumnsSelector<T, C>, aggregator: (DataColumn<C>)->R) = aggregateBase {
     val cols = get(columns)
     val isSingleColumn = cols.size == 1
     get(columns).forEach { col ->
-        if(isSingleColumn) yieldSingleColumn(col, aggregator(col))
-        else yield(col.shortPath(), aggregator(col), col.type(), col.defaultValue())
+        yield(if(isSingleColumn) pathForSingleColumn(col) else col.shortPath(), aggregator(col), col.type(), col.defaultValue())
     }
 }
 
@@ -168,25 +171,39 @@ internal inline fun <T> Aggregatable<T>.remainingColumns(crossinline predicate: 
 
 interface AggregateReceiver<out T>: DataFrame<T> {
 
-    fun yield(value: NamedValue)
+    fun yield(value: NamedValue): NamedValue
 
     fun <R> yield(path: ColumnPath, value: R, type: KType?, default: R?, guessType: Boolean) = yield(NamedValue.create(path, value, type, default, guessType))
 
-    fun <R> yield(path: ColumnPath, value: R, type: KType? = null, default: R? = null)
+    fun <R> yield(path: ColumnPath, value: R, type: KType? = null, default: R? = null): NamedValue
 
-    fun <R> yield(value: R, type: KType? = null, default: R? = null)
+    fun pathForSingleColumn(column: AnyCol): ColumnPath
 
-    fun <C, R> yieldSingleColumn(col: DataColumn<C>, value: R)
+    fun <R> yield(value: R, type: KType? = null, default: R? = null): NamedValue
 
-    infix fun <R> R.default(defaultValue: R): Any = ValueWithDefault(this, defaultValue)
+    infix fun <R> R.default(defaultValue: R): Any = when(this) {
+        is NamedValue -> this.also { it.default = defaultValue }
+        else -> ValueWithDefault(this, defaultValue)
+    }
 }
 
-class GroupAggregateBuilder<T>(internal val df: DataFrame<T>): GroupAggregateReceiver<T>, DataFrame<T> by df {
+abstract class GroupReceiver<T> : AggregateReceiver<T> {
+
+    override fun pathForSingleColumn(column: AnyCol) = column.shortPath()
+
+    override fun <R> yield(path: ColumnPath, value: R, type: KType?, default: R?) = yield(path, value, type, default, false)
+
+    override fun <R> yield(value: R, type: KType?, default: R?) = yield(listOf("value"), value, type, default)
+
+    inline infix fun <reified R> R.into(name: String)  = yield(listOf(name), this, getType<R>())
+}
+
+internal class GroupReceiverImpl<T>(internal val df: DataFrame<T>): GroupReceiver<T>(), DataFrame<T> by df {
 
     private val values = mutableListOf<NamedValue>()
 
-    internal fun child(): GroupAggregateBuilder<T> {
-        val child = GroupAggregateBuilder(df)
+    internal fun child(): GroupReceiverImpl<T> {
+        val child = GroupReceiverImpl(df)
         values.add(NamedValue.aggregator(child))
         return child
     }
@@ -203,7 +220,7 @@ class GroupAggregateBuilder<T>(internal val df: DataFrame<T>): GroupAggregateRec
 
         val allValues = mutableListOf<NamedValue>()
         values.forEach {
-            if(it.value is GroupAggregateBuilder<*>){
+            if(it.value is GroupReceiverImpl<*>){
                 it.value.values.forEach {
                     allValues.add(it)
                 }
@@ -215,11 +232,7 @@ class GroupAggregateBuilder<T>(internal val df: DataFrame<T>): GroupAggregateRec
         else columns.toDataFrame<T>()
     }
 
-    inline fun <reified R> yield(columnName: String, value: R, default: R? = null) = yield(listOf(columnName), value, getType<R>(), default)
-
-    inline infix fun <reified R> R.into(name: String)  = yield(listOf(name), this, getType<R>())
-
-    override fun yield(value: NamedValue) {
+    override fun yield(value: NamedValue): NamedValue {
         when(value.value) {
             is AggregatedPivot<*> -> {
                 value.value.aggregator.values.forEach {
@@ -229,20 +242,21 @@ class GroupAggregateBuilder<T>(internal val df: DataFrame<T>): GroupAggregateRec
             }
             else -> values.add(value)
         }
+        return value
     }
 }
 
-typealias GroupAggregator<G> = GroupAggregateBuilder<G>.(GroupAggregateBuilder<G>) -> Unit
+typealias GroupAggregator<G> = GroupReceiver<G>.(GroupReceiver<G>) -> Unit
 
-fun <T, G> GroupedDataFrame<T, G>.aggregate(body: GroupAggregator<G>) = doAggregate(plain(), { groups }, removeColumns = true, body)
+fun <T, G> GroupedDataFrame<T, G>.aggregate(body: GroupAggregator<G>) = aggregateGroupBy(plain(), { groups }, removeColumns = true, body)
 
 data class AggregateClause<T, G>(val df: DataFrame<T>, val selector: ColumnSelector<T, DataFrame<G>>){
-    fun with(body: GroupAggregator<G>) = doAggregate(df, selector, removeColumns = false, body)
+    fun with(body: GroupAggregator<G>) = aggregateGroupBy(df, selector, removeColumns = false, body)
 }
 
 fun <T, G> DataFrame<T>.aggregate(selector: ColumnSelector<T, DataFrame<G>>) = AggregateClause(this, selector)
 
-internal fun <T, G> doAggregate(df: DataFrame<T>, selector: ColumnSelector<T, DataFrame<G>?>, removeColumns: Boolean, body: GroupAggregator<G>): DataFrame<T> {
+internal fun <T, G> aggregateGroupBy(df: DataFrame<T>, selector: ColumnSelector<T, DataFrame<G>?>, removeColumns: Boolean, body: GroupAggregator<G>): DataFrame<T> {
 
     val column = df.column(selector)
 
@@ -251,7 +265,7 @@ internal fun <T, G> doAggregate(df: DataFrame<T>, selector: ColumnSelector<T, Da
     val groupedFrame = column.values.map {
         if(it == null) null
         else {
-            val builder = GroupAggregateBuilder(it)
+            val builder = GroupReceiverImpl(it)
             body(builder, builder)
             val row = builder.compute()
             row

@@ -1,5 +1,6 @@
 package org.jetbrains.dataframe.impl
 
+import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.Predicate
 import java.math.BigDecimal
 import kotlin.reflect.KClass
@@ -77,3 +78,5 @@ fun <T> Iterable<T>.asList() = when (this) {
 }
 
 internal fun <T> Iterable<T>.anyNull() = any { it == null }
+
+internal fun emptyPath(): ColumnPath = emptyList<String>()

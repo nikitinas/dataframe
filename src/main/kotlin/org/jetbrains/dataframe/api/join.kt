@@ -121,8 +121,8 @@ fun <A, B> DataFrame<A>.join(
         val leftCol = leftJoinColumns[i]
         val rightCol = rightJoinColumns[i]
         if (leftCol.isGroup() && rightCol.isGroup()) {
-            val allLeftChildren = getColumnsWithPaths { leftCol.allDfs() }
-            val allRightChildren = other.getColumnsWithPaths { rightCol.allDfs() }
+            val allLeftChildren = getColumnsWithPaths { leftCol.dfs() }
+            val allRightChildren = other.getColumnsWithPaths { rightCol.dfs() }
             val matchedPaths = allLeftChildren.map { it.path }.intersect(allRightChildren.map { it.path })
             val matchedLeftColumns = allLeftChildren.filter { matchedPaths.contains(it.path) }
             val matchedRightColumns = allRightChildren.filter { matchedPaths.contains(it.path) }
@@ -180,7 +180,7 @@ fun <A, B> DataFrame<A>.join(
         outputRowsCount += rightUnmatchedCount
     }
 
-    val leftColumns = getColumnsWithPaths { allDfs() }
+    val leftColumns = getColumnsWithPaths { dfs() }
 
     val rightJoinColumnPaths = allRightJoinColumns.map { it.path to it.data }.toMap()
 

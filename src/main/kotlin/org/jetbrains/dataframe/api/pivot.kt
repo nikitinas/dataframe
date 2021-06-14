@@ -4,12 +4,10 @@ import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.guessColumnType
-import org.jetbrains.dataframe.columns.shortPath
 import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.columns.toColumns
-import org.jetbrains.dataframe.impl.getListType
+import org.jetbrains.dataframe.impl.emptyPath
 import org.jetbrains.dataframe.impl.nameGenerator
-import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 
 fun <T> DataFrame<T>.pivot(columns: ColumnsSelector<T, *>) = DataFramePivot(this, columns)
@@ -24,9 +22,9 @@ fun <T> GroupedDataFrame<*, T>.pivot(columns: ColumnsSelector<T, *>) = GroupedFr
 fun <T> GroupedDataFrame<*, T>.pivot(vararg columns: Column) = pivot { columns.toColumns() }
 fun <T> GroupedDataFrame<*, T>.pivot(vararg columns: String) = pivot { columns.toColumns() }
 
-fun <T> GroupAggregateBuilder<T>.pivot(columns: ColumnsSelector<T, *>) = GroupAggregatorPivot(this, columns)
-fun <T> GroupAggregateBuilder<T>.pivot(vararg columns: Column) = pivot { columns.toColumns() }
-fun <T> GroupAggregateBuilder<T>.pivot(vararg columns: String) = pivot { columns.toColumns() }
+fun <T> GroupReceiver<T>.pivot(columns: ColumnsSelector<T, *>) = GroupAggregatorPivot(this, columns)
+fun <T> GroupReceiver<T>.pivot(vararg columns: Column) = pivot { columns.toColumns() }
+fun <T> GroupReceiver<T>.pivot(vararg columns: String) = pivot { columns.toColumns() }
 
 // TODO: add  overloads
 internal fun <T, V> Aggregatable<T>.withColumn(column: DataFrame<T>.(DataFrame<T>) -> DataColumn<V>) = aggregateBase {
@@ -94,7 +92,7 @@ data class DataFramePivot<T>(
             val data = df.groupBy(columns).map { key, group ->
                 val keyValue = key.values()
                 val path = keyValue.map { it.toString() }
-                val builder = PivotAggregateBuilder(group)
+                val builder = PivotReceiverImpl(group)
                 val result = body(builder, builder)
                 val hasResult = result != Unit
                 val values = if (builder.values.isEmpty())
@@ -148,11 +146,11 @@ data class DataFramePivot<T>(
     override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all().except(index?.toColumns()?.and(columns.toColumns()) ?: columns.toColumns()) }
 }
 
-class AggregatedPivot<T>(private val df: DataFrame<T>, internal var aggregator: GroupAggregateBuilder<T>) :
+internal class AggregatedPivot<T>(private val df: DataFrame<T>, internal var aggregator: GroupReceiverImpl<T>) :
     DataFrame<T> by df
 
 data class GroupAggregatorPivot<T>(
-    internal val aggregator: GroupAggregateBuilder<T>,
+    internal val aggregator: GroupReceiver<T>,
     internal val columns: ColumnsSelector<T, *>,
     internal val groupValues: Boolean = false,
     internal val groupPath: ColumnPath = emptyList()
@@ -161,7 +159,10 @@ data class GroupAggregatorPivot<T>(
     override fun groupByValue(flag: Boolean) = copy(groupValues = flag)
     override fun withGrouping(groupPath: ColumnPath) = copy(groupPath = groupPath)
 
-    override fun <R> aggregate(body: PivotAggregator<T, R>): AggregatedPivot<T> {
+    override fun <R> aggregate(body: PivotAggregator<T, R>): DataFrame<T> {
+
+        require(aggregator is GroupReceiverImpl<T>)
+
         val childAggregator = aggregator.child()
         aggregatePivot(childAggregator, columns, groupValues, groupPath, body)
         return AggregatedPivot(aggregator.df, childAggregator)
@@ -171,7 +172,7 @@ data class GroupAggregatorPivot<T>(
 }
 
 internal fun <T, R> aggregatePivot(
-    aggregator: GroupAggregateBuilder<T>,
+    aggregator: GroupReceiver<T>,
     columns: ColumnsSelector<T, *>,
     groupValues: Boolean,
     groupPath: ColumnPath,
@@ -182,7 +183,7 @@ internal fun <T, R> aggregatePivot(
 
         val keyValue = key.values()
         val path = keyValue.map { it.toString() }
-        val builder = PivotAggregateBuilder(group!!)
+        val builder = PivotReceiverImpl(group!!)
         val result = body(builder, builder)
         val hasResult = result != null && result != Unit
 
@@ -204,36 +205,36 @@ internal val defaultPivotIndexName = "index"
 
 typealias BaseAggregator<T, R> = AggregateReceiver<T>.(AggregateReceiver<T>) -> R
 
-typealias PivotAggregator<T, R> = PivotAggregateBuilder<T>.(PivotAggregateBuilder<T>) -> R
+typealias PivotAggregator<T, R> = PivotReceiver<T>.(PivotReceiver<T>) -> R
 
 data class ValueWithName(val value: Any?, val name: String)
 
 @Suppress("DataClassPrivateConstructor")
-data class NamedValue private constructor(val path: ColumnPath, val value: Any?, val type: KType?, val default: Any?, val guessType: Boolean = false) {
+data class NamedValue private constructor(val path: ColumnPath, val value: Any?, val type: KType?, var default: Any?, val guessType: Boolean = false) {
     companion object {
         fun create(path: ColumnPath, value: Any?, type: KType?, defaultValue: Any?, guessType: Boolean = false): NamedValue = when(value){
             is ValueWithDefault<*> -> create(path, value.value, type, value.default, guessType)
             is ValueWithName -> create(path.replaceLast(value.name), value.value, type, defaultValue, guessType)
             else -> NamedValue(path, value, type, defaultValue, guessType)
         }
-        fun aggregator(builder: GroupAggregateBuilder<*>) = NamedValue(emptyList(), builder, null, null, false)
+        fun aggregator(builder: GroupReceiver<*>) = NamedValue(emptyPath(), builder, null, null, false)
     }
 }
 
-interface PivotAggregateReceiver<T>: AggregateReceiver<T> {
+abstract class PivotReceiver<T>: AggregateReceiver<T> {
 
-    override fun <C, R> yieldSingleColumn(col: DataColumn<C>, value: R) =  yield(value, col.type(), col.defaultValue())
+    override fun pathForSingleColumn(column: AnyCol) = emptyPath()
 
     override fun <R> yield(path: ColumnPath, value: R, type: KType?, default: R?) = yield(path, value, type, default, true)
 
-    override fun <R> yield(value: R, type: KType?, default: R?) = yield(emptyList(), value, type, default)
+    override fun <R> yield(value: R, type: KType?, default: R?) = yield(emptyPath(), value, type, default)
+
+    inline infix fun <reified R> R.into(name: String) = yield(listOf(name), this, getType<R>())
 }
 
-class PivotAggregateBuilder<T>(internal val df: DataFrame<T>) : PivotAggregateReceiver<T>, DataFrame<T> by df {
+internal class PivotReceiverImpl<T>(internal val df: DataFrame<T>) : PivotReceiver<T>(), DataFrame<T> by df {
 
     internal val values = mutableListOf<NamedValue>()
 
-    override fun yield(value: NamedValue) { values.add(value) }
-
-    inline infix fun <reified R> R.into(name: String) = yield(listOf(name), this, getType<R>())
+    override fun yield(value: NamedValue) = value.also { values.add(it) }
 }

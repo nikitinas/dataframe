@@ -1307,7 +1307,7 @@ class DataFrameTests : BaseTest() {
 
         val d = typed.groupBy { name }.aggregate {
             val row = select { age and weight }.mean()
-            yield("mean", row)
+            row into "mean"
         }
         d.ncol() shouldBe 2
         d["mean"].isGroup() shouldBe true
@@ -1324,7 +1324,7 @@ class DataFrameTests : BaseTest() {
 
         val d = typed.groupBy { name }.aggregate {
             val row = select { age and weight }
-            yield("info", row)
+            row into "info"
         }
         d.ncol() shouldBe 2
         d["info"].isTable() shouldBe true

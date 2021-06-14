@@ -21,6 +21,7 @@ import org.jetbrains.dataframe.columns.BaseColumn
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.ValueColumn
+import org.jetbrains.dataframe.columns.toAccessor
 import org.jetbrains.dataframe.columns.type
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.getType
@@ -109,6 +110,7 @@ internal fun <A, B> Columns<A>.transform(transform: (List<ColumnWithPath<A>>) ->
     return TransformedColumns(this, transform)
 }
 
+internal fun Array<out Columns<*>>.toColumns(): Columns<Any?> = ColumnsList(this.asList())
 internal fun Array<out String>.toColumns(): Columns<Any?> = map { it.toColumnDef() }.toColumnSet()
 internal fun Array<out ColumnPath>.toColumns(): Columns<Any?> = map { it.toColumnDef() }.toColumnSet()
 internal fun <C> Iterable<Columns<C>>.toColumnSet(): Columns<C> = ColumnsList(asList())

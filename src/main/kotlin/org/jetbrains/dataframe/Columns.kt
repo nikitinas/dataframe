@@ -9,18 +9,15 @@ import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.Columns
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.Column
+import org.jetbrains.dataframe.columns.BaseColumn
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.columns.SingleColumn
 import org.jetbrains.dataframe.columns.StringCol
 import org.jetbrains.dataframe.columns.ValueColumn
 import org.jetbrains.dataframe.columns.guessColumnType
 import org.jetbrains.dataframe.columns.size
 import org.jetbrains.dataframe.columns.type
-import org.jetbrains.dataframe.columns.hasNulls
 import org.jetbrains.dataframe.columns.name
-import org.jetbrains.dataframe.columns.ndistinct
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.columns.ConvertedColumnDef
@@ -204,7 +201,7 @@ inline fun <reified T> column(name: String, values: List<T>): DataColumn<T> = wh
 inline fun <reified T> column(name: String, values: List<T>, hasNulls: Boolean): DataColumn<T> =
     DataColumn.create(name, values, getType<T>().withNullability(hasNulls))
 
-fun <C> Column<C>.single() = values.single()
+fun <C> BaseColumn<C>.single() = values.single()
 
 fun <T> FrameColumn<T>.toDefinition() = frameColumn<T>(name)
 fun <T> ColumnGroup<T>.toDefinition() = columnGroup<T>(name)
@@ -235,11 +232,11 @@ infix fun <T> DataColumn<T>.isMatching(predicate: Predicate<T>): BooleanArray = 
     predicate(this[it])
 }
 
-fun <T> Column<T>.first() = get(0)
-fun <T> Column<T>.firstOrNull() = if(size > 0) first() else null
-fun <T> Column<T>.first(predicate: (T)->Boolean) = values.first(predicate)
-fun <T> Column<T>.firstOrNull(predicate: (T)->Boolean) = values.firstOrNull(predicate)
-fun <T> Column<T>.last() = get(size-1)
+fun <T> BaseColumn<T>.first() = get(0)
+fun <T> BaseColumn<T>.firstOrNull() = if(size > 0) first() else null
+fun <T> BaseColumn<T>.first(predicate: (T)->Boolean) = values.first(predicate)
+fun <T> BaseColumn<T>.firstOrNull(predicate: (T)->Boolean) = values.firstOrNull(predicate)
+fun <T> BaseColumn<T>.last() = get(size-1)
 fun <T> DataColumn<T>.lastOrNull() = if(size > 0) last() else null
 
 fun <C> DataColumn<C>.allNulls() = size == 0 || all { it == null }

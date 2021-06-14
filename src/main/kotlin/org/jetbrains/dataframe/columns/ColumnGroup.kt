@@ -5,7 +5,7 @@ import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataRow
 import kotlin.reflect.KProperty
 
-interface ColumnGroup<out T> : Column<DataRow<T>>, DataFrame<T> {
+interface ColumnGroup<out T> : BaseColumn<DataRow<T>>, DataFrame<T> {
 
     val df: DataFrame<T>
 

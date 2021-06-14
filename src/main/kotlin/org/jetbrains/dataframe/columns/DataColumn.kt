@@ -20,7 +20,6 @@ import org.jetbrains.dataframe.impl.columns.addPath
 import org.jetbrains.dataframe.internal.schema.DataFrameSchema
 import org.jetbrains.dataframe.manyOf
 import org.jetbrains.dataframe.toDataFrame
-import org.jetbrains.dataframe.wrapValues
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -34,7 +33,7 @@ import kotlin.reflect.full.withNullability
  * All column extension functions that clash with [DataFrame] API (such as filter, forEach, map etc.) are defined for this interface,
  * because [ColumnGroup] doesn't inherit from it
  */
-interface DataColumn<out T> : Column<T> {
+interface DataColumn<out T> : BaseColumn<T> {
 
     companion object {
 

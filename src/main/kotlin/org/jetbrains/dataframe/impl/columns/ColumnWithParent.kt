@@ -2,7 +2,7 @@ package org.jetbrains.dataframe.impl.columns
 
 import org.jetbrains.dataframe.ColumnResolutionContext
 import org.jetbrains.dataframe.MapColumnReference
-import org.jetbrains.dataframe.columns.Column
+import org.jetbrains.dataframe.columns.BaseColumn
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.ColumnWithPath
 
@@ -10,7 +10,7 @@ internal interface ColumnWithParent<out C> : ColumnReference<C> {
 
     val parent: MapColumnReference?
 
-    val source: Column<C>
+    val source: BaseColumn<C>
 
     override fun path() = parent?.path()?.plus(name()) ?: listOf(name())
 

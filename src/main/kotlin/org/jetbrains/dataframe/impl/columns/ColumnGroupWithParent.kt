@@ -3,8 +3,7 @@ package org.jetbrains.dataframe.impl.columns
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.ColumnWithPath
-import org.jetbrains.dataframe.columns.Column
+import org.jetbrains.dataframe.columns.BaseColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
 import kotlin.reflect.KProperty
 
@@ -14,7 +13,7 @@ internal class ColumnGroupWithParent<T>(override val parent: MapColumnReference?
 
     override fun getValue(thisRef: Any?, property: KProperty<*>): DataColumnGroup<T> = source.getValue(thisRef, property) as DataColumnGroup<T>
 
-    private fun <T> Column<T>.addParent(parent: ColumnGroup<*>) = (this as DataColumnInternal<T>).addParent(parent)
+    private fun <T> BaseColumn<T>.addParent(parent: ColumnGroup<*>) = (this as DataColumnInternal<T>).addParent(parent)
 
     override fun get(columnName: String): AnyCol {
         val col = df[columnName]

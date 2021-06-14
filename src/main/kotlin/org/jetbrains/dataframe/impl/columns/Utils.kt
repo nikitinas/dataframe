@@ -17,12 +17,10 @@ import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.Columns
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.Column
+import org.jetbrains.dataframe.columns.BaseColumn
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.columns.SingleColumn
 import org.jetbrains.dataframe.columns.ValueColumn
-import org.jetbrains.dataframe.columns.toAccessor
 import org.jetbrains.dataframe.columns.type
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.getType
@@ -38,7 +36,7 @@ import org.jetbrains.dataframe.typed
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.isSubtypeOf
 
-internal fun <T> Column<T>.checkEquals(other: Any?): Boolean {
+internal fun <T> BaseColumn<T>.checkEquals(other: Any?): Boolean {
     if (this === other) return true
 
     if (this !is AnyCol) return false
@@ -62,14 +60,14 @@ internal fun <C> TreeNode<ColumnPosition>.toColumnWithPath(df: DataFrameBase<*>)
 @JvmName("toColumnWithPathAnyCol")
 internal fun <C> TreeNode<DataColumn<C>>.toColumnWithPath(df: DataFrameBase<*>) = data.addPath(pathFromRoot(), df)
 
-internal fun <T> Column<T>.addPath(path: ColumnPath, df: DataFrameBase<*>): ColumnWithPath<T> =
+internal fun <T> BaseColumn<T>.addPath(path: ColumnPath, df: DataFrameBase<*>): ColumnWithPath<T> =
     ColumnWithPathImpl(this as DataColumn<T>, path, df)
 
 internal fun <T> ColumnWithPath<T>.changePath(path: ColumnPath): ColumnWithPath<T> = data.addPath(path, df)
 
-internal fun <T> Column<T>.addParentPath(path: ColumnPath, df: DataFrameBase<*>) = addPath(path + name, df)
+internal fun <T> BaseColumn<T>.addParentPath(path: ColumnPath, df: DataFrameBase<*>) = addPath(path + name, df)
 
-internal fun <T> Column<T>.addPath(df: DataFrameBase<*>): ColumnWithPath<T> = addPath(listOf(name), df)
+internal fun <T> BaseColumn<T>.addPath(df: DataFrameBase<*>): ColumnWithPath<T> = addPath(listOf(name), df)
 
 internal fun ColumnPath.depth() = size - 1
 

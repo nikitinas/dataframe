@@ -50,8 +50,8 @@ interface DataFrameForMove<T> : DataFrameBase<T> {
 
 internal class MoveReceiver<T>(df: DataFrame<T>) : DataFrameReceiver<T>(df, false), DataFrameForMove<T> {
 
-    override fun SingleColumn<*>.addPath(path: ColumnPath): ColumnPath {
-        return this.resolveSingle (ColumnResolutionContext(this@MoveReceiver, UnresolvedColumnsPolicy.Create))!!.path + path
+    override fun SingleColumn<*>.addPath(columnPath: ColumnPath): ColumnPath {
+        return this.resolveSingle (this@MoveReceiver, UnresolvedColumnsPolicy.Create)!!.path + columnPath
     }
 }
 

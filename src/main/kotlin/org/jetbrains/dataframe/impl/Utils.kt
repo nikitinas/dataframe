@@ -79,4 +79,6 @@ fun <T> Iterable<T>.asList() = when (this) {
 
 internal fun <T> Iterable<T>.anyNull() = any { it == null }
 
-internal fun emptyPath(): ColumnPath = emptyList<String>()
+internal fun emptyPath(): ColumnPath = emptyList()
+
+internal fun pathOf(name: String): ColumnPath = listOf(name)

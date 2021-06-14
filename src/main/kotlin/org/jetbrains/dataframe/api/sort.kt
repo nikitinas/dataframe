@@ -11,7 +11,6 @@ import org.jetbrains.dataframe.impl.columns.assertIsComparable
 import org.jetbrains.dataframe.impl.columns.toColumnSet
 import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.columns.typed
-import javax.xml.crypto.Data
 import kotlin.reflect.KProperty
 
 interface SortReceiver<out T> : SelectReceiver<T> {
@@ -57,7 +56,7 @@ fun <T, G, C> GroupedDataFrame<T, G>.sortBy(selector: SortColumnsSelector<G, C>)
 
 internal fun <T, C> DataFrame<T>.doSortBy(selector: SortColumnsSelector<T, C>, unresolvedColumnsPolicy: UnresolvedColumnsPolicy = UnresolvedColumnsPolicy.Fail): DataFrame<T> {
 
-    val columns = extractSortColumns(selector, unresolvedColumnsPolicy)
+    val columns = getSortColumns(selector, unresolvedColumnsPolicy)
 
     val compChain = columns.map {
         when (it.direction) {
@@ -83,14 +82,23 @@ internal fun AnyCol.createComparator(nullsLast: Boolean): java.util.Comparator<I
     return Comparator { left, right -> comparatorWithNulls.compare(get(left), get(right)) }
 }
 
-internal class SortReceiverImpl<T>(df: DataFrame<T>, allowMissingColumns: Boolean) : DataFrameReceiver<T>(df, allowMissingColumns), SortReceiver<T>
+@JvmName("toColumnSetForSort")
+internal fun <T, C> SortColumnsSelector<T, C>.toColumns(): Columns<C> = toColumns {
 
-internal fun <T, C> DataFrame<T>.extractSortColumns(selector: SortColumnsSelector<T, C>, unresolvedColumnsPolicy: UnresolvedColumnsPolicy): List<SortDescriptorColumn<*>> {
-    return selector.toColumns().resolve(ColumnResolutionContext(this, unresolvedColumnsPolicy))
+    class SortReceiverImpl<T>(df: DataFrame<T>, allowMissingColumns: Boolean) : DataFrameReceiver<T>(df, allowMissingColumns), SortReceiver<T>
+
+    SortReceiverImpl(
+        it.df.typed(),
+        it.allowMissingColumns
+    )
+}
+
+internal fun <T, C> DataFrame<T>.getSortColumns(selector: SortColumnsSelector<T, C>, unresolvedColumnsPolicy: UnresolvedColumnsPolicy): List<SortColumnDescriptor<*>> {
+    return selector.toColumns().resolve(this, unresolvedColumnsPolicy)
             .map {
                 when (val col = it.data) {
-                    is SortDescriptorColumn<*> -> col
-                    else -> SortDescriptorColumn(col)
+                    is SortColumnDescriptor<*> -> col
+                    else -> SortColumnDescriptor(col)
                 }
             }
 }
@@ -102,7 +110,7 @@ fun SortDirection.reversed() = when (this) {
     SortDirection.Desc -> SortDirection.Asc
 }
 
-class SortDescriptorColumn<C>(val column: DataColumn<C>, val direction: SortDirection = SortDirection.Asc, val nullsLast: Boolean = false) : DataColumn<C> by column
+class SortColumnDescriptor<C>(val column: DataColumn<C>, val direction: SortDirection = SortDirection.Asc, val nullsLast: Boolean = false) : DataColumn<C> by column
 
 internal fun <T, G> GroupedDataFrame<T, G>.doSortBy(selector: SortColumnsSelector<G, *>): GroupedDataFrame<T, G> {
 
@@ -120,16 +128,16 @@ internal fun <C> Columns<C>.addFlag(flag: SortFlag) = ColumnsWithSortFlag(this, 
 internal fun <C> ColumnWithPath<C>.addFlag(flag: SortFlag): ColumnWithPath<C> {
     val col = data
     return when (col) {
-        is SortDescriptorColumn -> {
+        is SortColumnDescriptor -> {
             when (flag) {
-                SortFlag.Reversed -> SortDescriptorColumn(col.column, col.direction.reversed(), col.nullsLast)
-                SortFlag.NullsLast -> SortDescriptorColumn(col.column, col.direction, true)
+                SortFlag.Reversed -> SortColumnDescriptor(col.column, col.direction.reversed(), col.nullsLast)
+                SortFlag.NullsLast -> SortColumnDescriptor(col.column, col.direction, true)
             }
         }
         else -> {
             when (flag) {
-                SortFlag.Reversed -> SortDescriptorColumn(col, SortDirection.Desc)
-                SortFlag.NullsLast -> SortDescriptorColumn(col, SortDirection.Asc, true)
+                SortFlag.Reversed -> SortColumnDescriptor(col, SortDirection.Desc)
+                SortFlag.NullsLast -> SortColumnDescriptor(col, SortDirection.Asc, true)
             }
         }
     }.addPath(path, df)

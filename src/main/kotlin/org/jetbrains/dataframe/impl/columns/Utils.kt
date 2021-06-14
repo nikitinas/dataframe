@@ -11,7 +11,6 @@ import org.jetbrains.dataframe.DataFrameBase
 import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.SelectReceiverImpl
 import org.jetbrains.dataframe.SortColumnsSelector
-import org.jetbrains.dataframe.SortReceiverImpl
 import org.jetbrains.dataframe.UnresolvedColumnsPolicy
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.Columns
@@ -124,14 +123,6 @@ internal fun  Iterable<String>.toColumns() = map { it.toColumnDef() }.toColumnSe
 
 internal fun <T, C> ColumnsSelector<T, C>.toColumns(): Columns<C> = toColumns {
     SelectReceiverImpl(
-        it.df.typed(),
-        it.allowMissingColumns
-    )
-}
-
-@JvmName("toColumnSetForSort")
-internal fun <T, C> SortColumnsSelector<T, C>.toColumns(): Columns<C> = toColumns {
-    SortReceiverImpl(
         it.df.typed(),
         it.allowMissingColumns
     )

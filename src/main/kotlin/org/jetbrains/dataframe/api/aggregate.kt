@@ -2,18 +2,59 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
+import org.jetbrains.dataframe.columns.ColumnWithPath
+import org.jetbrains.dataframe.columns.Columns
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.guessColumnType
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.shortPath
 import org.jetbrains.dataframe.columns.values
+import org.jetbrains.dataframe.impl.DataFrameReceiver
 import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.createDataCollector
 import org.jetbrains.dataframe.impl.getListType
+import org.jetbrains.dataframe.impl.pathOf
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 
 internal class ValueWithDefault<T>(val value: T, val default: T)
+
+internal class AggregateColumnWithOptions<C> private constructor(val columns: Columns<C>, private val default: C? = null, private val newPath: ColumnPath? = null): Columns<C> {
+
+    override fun resolve(context: ColumnResolutionContext): List<ColumnWithPath<C>> {
+        val resolved = columns.resolve(context)
+        if(resolved.size == 1) return listOf(AggregateColumnDescriptor(resolved[0], default, newPath))
+        else return resolved.map {
+            AggregateColumnDescriptor(it, default, newPath?.plus(it.name))
+        }
+    }
+
+    companion object {
+
+        fun <C> withDefault(src: Columns<C>, default: C?): Columns<C> = when(src){
+            is AggregateColumnWithOptions<C> -> AggregateColumnWithOptions(src.columns, default, src.newPath)
+            else -> AggregateColumnWithOptions(src, default, null)
+        }
+
+        fun <C> withPath(src: Columns<C>, newPath: ColumnPath): Columns<C> = when(src){
+            is AggregateColumnWithOptions<C> -> AggregateColumnWithOptions(src.columns, src.default, newPath)
+            else -> AggregateColumnWithOptions(src, null, newPath)
+        }
+    }
+}
+
+interface AggregateSelectReceiver<out T> : SelectReceiver<T> {
+
+    infix fun <C> Columns<C>.default(defaultValue: C): Columns<C> = AggregateColumnWithOptions.withDefault(this, defaultValue)
+
+    fun path(vararg names: String): ColumnPath = names.asList()
+
+    infix fun <C> Columns<C>.into(name: String): Columns<C> = AggregateColumnWithOptions.withPath(this, pathOf(name))
+
+    infix fun <C> Columns<C>.into(path: ColumnPath): Columns<C> = AggregateColumnWithOptions.withPath(this, path)
+}
+
+typealias AggregateColumnsSelector<T, C> = AggregateSelectReceiver<T>.(AggregateSelectReceiver<T>) -> Columns<C>
 
 interface Aggregatable<out T> {
 
@@ -25,15 +66,15 @@ interface Aggregatable<out T> {
 
     fun values(vararg columns: Column) = values { columns.toColumns() }
     fun values(vararg columns: String) = values { columns.toColumns() }
-    fun values(columns: ColumnsSelector<T, *>) = yieldOneOrManyBy(columns) { it.toList() }
+    fun values(columns: AggregateColumnsSelector<T, *>) = yieldOneOrManyBy(columns) { it.toList() }
 
     fun values() = values(remainingColumnsSelector())
 
     // TODO: add missing overloads
-    fun <R: Comparable<R>> maxBy(columns: ColumnsSelector<T, R?>) = aggregateBy(columns, DataColumn<R?>::max)
+    fun <R: Comparable<R>> maxBy(columns: AggregateColumnsSelector<T, R?>) = aggregateBy(columns, DataColumn<R?>::max)
     fun max() = maxBy(remainingColumns { it.isComparable() } as ColumnsSelector<T, Comparable<Any?>> )
 
-    fun <R: Comparable<R>> minBy(columns: ColumnsSelector<T, R?>) = aggregateBy(columns, DataColumn<R?>::min)
+    fun <R: Comparable<R>> minBy(columns: AggregateColumnsSelector<T, R?>) = aggregateBy(columns, DataColumn<R?>::min)
     fun min() = minBy(remainingColumns { it.isComparable() } as ColumnsSelector<T, Comparable<Any?>> )
 
     fun <R: Number> mean(skipNa: Boolean = true, columns: ColumnsSelector<T, R?>) = aggregateBy(columns) { it.mean(skipNa) }
@@ -42,7 +83,7 @@ interface Aggregatable<out T> {
     fun <R: Number> sum(columns: ColumnsSelector<T, R>) = aggregateBy(columns, DataColumn<R>::sum)
     fun sum() = sum(remainingColumns { it.isNumber() } as ColumnsSelector<T, Number> )
 
-    fun <R: Number> stdBy(columns: ColumnsSelector<T, R>) = aggregateBy(columns, DataColumn<R>::std)
+    fun <R: Number> stdBy(columns: AggregateColumnsSelector<T, R>) = aggregateBy(columns, DataColumn<R>::std)
     fun std() = sum(remainingColumns { it.isNumber() } as ColumnsSelector<T, Number> )
 
     fun remainingColumnsSelector(): ColumnsSelector<*, *>
@@ -151,19 +192,44 @@ internal fun <T, C, R> Aggregatable<T>.aggregateAll(path: ColumnPath, columns: C
         yield(path, resultAggregator(cols.map(columnAggregator)))
 }
 
-internal fun <T, C, R> Aggregatable<T>.yieldOneOrManyBy(columns: ColumnsSelector<T, C>, aggregator: (DataColumn<C>)->List<R>) = aggregateBase {
-    val cols = get(columns)
-    val isSingle = cols.size == 1
-    cols.forEach { col ->
-        yieldOneOrMany(if(isSingle) pathForSingleColumn(col) else col.shortPath(), aggregator(col), col.type(), col.defaultValue())
+internal class AggregateColumnDescriptor<C>(val column: ColumnWithPath<C>, val default: C? = null, val newPath: ColumnPath? = null) : ColumnWithPath<C> by column
+
+@JvmName("toColumnSetForAggregate")
+internal fun <T, C> AggregateColumnsSelector<T, C>.toColumns(): Columns<C> = toColumns {
+
+    class AggregateSelectReceiverImpl<T>(df: DataFrame<T>) : DataFrameReceiver<T>(df, true), AggregateSelectReceiver<T>
+
+    AggregateSelectReceiverImpl(it.df.typed())
+}
+
+internal fun <T, C> DataFrame<T>.getAggregateColumns(selector: AggregateColumnsSelector<T, C>): List<AggregateColumnDescriptor<C>> {
+    val columns = selector.toColumns().resolve(this, UnresolvedColumnsPolicy.Create)
+    return columns.map {
+        when (val col = it) {
+            is AggregateColumnDescriptor<*> -> col as AggregateColumnDescriptor<C>
+            else -> AggregateColumnDescriptor(it, null, null)
+        }
     }
 }
 
-internal fun <T, C, R> Aggregatable<T>.aggregateBy(columns: ColumnsSelector<T, C>, aggregator: (DataColumn<C>)->R) = aggregateBase {
-    val cols = get(columns)
-    val isSingleColumn = cols.size == 1
-    get(columns).forEach { col ->
-        yield(if(isSingleColumn) pathForSingleColumn(col) else col.shortPath(), aggregator(col), col.type(), col.defaultValue())
+internal fun <T, C> AggregateReceiver<T>.getPath(col: AggregateColumnDescriptor<C>, isSingle: Boolean) =
+    col.newPath ?: if(isSingle) pathForSingleColumn(col.data) else col.data.shortPath()
+
+internal fun <T, C, R> Aggregatable<T>.yieldOneOrManyBy(columns: AggregateColumnsSelector<T, C>, aggregator: (DataColumn<C>)->List<R>) = aggregateBase {
+    val cols = getAggregateColumns(columns)
+    val isSingle = cols.size == 1
+    cols.forEach { col ->
+        val path = getPath(col, isSingle)
+        yieldOneOrMany(path, aggregator(col.data), col.type, col.default)
+    }
+}
+
+internal fun <T, C, R> Aggregatable<T>.aggregateBy(columns: AggregateColumnsSelector<T, C>, aggregator: (DataColumn<C>)->R) = aggregateBase {
+    val cols = getAggregateColumns(columns)
+    val isSingle = cols.size == 1
+    cols.forEach { col ->
+        val path = getPath(col, isSingle)
+        yield(path, aggregator(col.data), col.type, col.default)
     }
 }
 
@@ -267,8 +333,7 @@ internal fun <T, G> aggregateGroupBy(df: DataFrame<T>, selector: ColumnSelector<
         else {
             val builder = GroupReceiverImpl(it)
             body(builder, builder)
-            val row = builder.compute()
-            row
+            builder.compute()
         }
     }.union()
 

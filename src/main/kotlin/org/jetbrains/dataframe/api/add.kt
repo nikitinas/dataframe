@@ -46,11 +46,11 @@ inline fun <reified R, T> DataFrame<T>.add(column: ColumnAccessor<R>, noinline e
     return insert(path, col)
 }
 
-fun <T> DataFrame<T>.add(body: TypedColumnsFromDataRowBuilder<T>.() -> Unit) =
-    with(TypedColumnsFromDataRowBuilder(this)) {
-        body(this)
-        dataFrameOf(this@add.columns() + columns).typed<T>()
-    }
+fun <T> DataFrame<T>.add(body: TypedColumnsFromDataRowBuilder<T>.() -> Unit): DataFrame<T> {
+    val builder = TypedColumnsFromDataRowBuilder(this)
+    body(builder)
+    return dataFrameOf(this@add.columns() + builder.columns).typed<T>()
+}
 
 operator fun <T> DataFrame<T>.plus(body: TypedColumnsFromDataRowBuilder<T>.() -> Unit) = add(body)
 

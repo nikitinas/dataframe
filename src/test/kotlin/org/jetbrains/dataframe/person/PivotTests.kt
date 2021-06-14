@@ -403,4 +403,17 @@ class PivotTests {
             it.asGroup().columnNames() shouldBe listOf("first value", "last value")
         }
     }
+
+    @Test
+    fun `pivot two value columns into one name`(){
+        val type by typed.newColumn { value?.javaClass?.kotlin ?: Unit::class }
+        val pivoted = (typed + type).pivot { key }.withIndex { name }.values { value and (type default Any::class) into "data"}
+        pivoted.columns().drop(1).forEach {
+            val group = it.asGroup()
+            group.columnNames() shouldBe listOf("data")
+            group["data"].asGroup().columnNames() shouldBe listOf("value", "type")
+            group["data"]["type"].hasNulls() shouldBe false
+        }
+        pivoted.print()
+    }
 }

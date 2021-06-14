@@ -3,8 +3,10 @@ package org.jetbrains.dataframe
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.ColumnWithPath
+import org.jetbrains.dataframe.columns.Columns
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.FrameColumn
+import org.jetbrains.dataframe.columns.SingleColumn
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.size
 import org.jetbrains.dataframe.columns.values
@@ -298,3 +300,9 @@ internal fun <C> List<ColumnWithPath<C>>.shortenPaths(): List<ColumnWithPath<C>>
 }
 
 fun AnyFrame.toMap(): Map<String, List<Any?>> = columns().associateBy({ it.name }, { it.toList() })
+
+internal fun <C> Columns<C>.resolve(df: DataFrame<*>, unresolvedColumnsPolicy: UnresolvedColumnsPolicy) =
+    resolve(ColumnResolutionContext(df, unresolvedColumnsPolicy))
+
+internal fun <C> SingleColumn<C>.resolveSingle(df: DataFrame<*>, unresolvedColumnsPolicy: UnresolvedColumnsPolicy) =
+    resolveSingle(ColumnResolutionContext(df, unresolvedColumnsPolicy))

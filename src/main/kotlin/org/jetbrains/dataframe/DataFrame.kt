@@ -75,7 +75,7 @@ internal fun <T, C> DataFrame<T>.getColumns(
 internal fun <T, C> DataFrame<T>.getColumnsWithPaths(
     unresolvedColumnsPolicy: UnresolvedColumnsPolicy,
     selector: ColumnsSelector<T, C>
-): List<ColumnWithPath<C>> = selector.toColumns().resolve(ColumnResolutionContext(this, unresolvedColumnsPolicy))
+): List<ColumnWithPath<C>> = selector.toColumns().resolve(this, unresolvedColumnsPolicy)
 
 fun <T, C> DataFrame<T>.getColumnsWithPaths(selector: ColumnsSelector<T, C>): List<ColumnWithPath<C>> =
     getColumnsWithPaths(UnresolvedColumnsPolicy.Fail, selector)
@@ -83,7 +83,7 @@ fun <T, C> DataFrame<T>.getColumnsWithPaths(selector: ColumnsSelector<T, C>): Li
 fun <T, C> DataFrame<T>.getColumnPath(selector: ColumnSelector<T, C>): ColumnPath = getColumnPaths(selector).single()
 
 fun <T, C> DataFrame<T>.getColumnPaths(selector: ColumnsSelector<T, C>): List<ColumnPath> =
-    selector.toColumns().resolve(ColumnResolutionContext(this, UnresolvedColumnsPolicy.Fail)).map { it.path }
+    selector.toColumns().resolve(this, UnresolvedColumnsPolicy.Fail).map { it.path }
 
 internal fun <T, C> DataFrame<T>.getGroupColumns(selector: ColumnsSelector<T, DataRow<C>>) =
     getColumnsWithPaths(selector).map { it.data.asGroup() }
@@ -152,7 +152,7 @@ interface DataFrame<out T> : DataFrameBase<T> {
     fun getColumnIndex(name: String): Int
     fun getColumnIndex(col: AnyCol) = getColumnIndex(col.name())
 
-    fun <R> tryGetColumn(column: ColumnReference<R>): DataColumn<R>? = column.resolveSingle(ColumnResolutionContext(this, UnresolvedColumnsPolicy.Skip))?.data
+    fun <R> tryGetColumn(column: ColumnReference<R>): DataColumn<R>? = column.resolveSingle(this, UnresolvedColumnsPolicy.Skip)?.data
 //        tryGetColumn(column.path()) as? DataColumn<R>
 
     override fun tryGetColumn(columnName: String): AnyCol? =

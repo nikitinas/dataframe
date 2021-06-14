@@ -41,7 +41,7 @@ fun <TD, T : DataFrame<TD>, C> Selector<T, Columns<C>>.toColumns(createReceiver:
     createColumnSet {
         val receiver = createReceiver(it)
         val columnSet = this(receiver, receiver)
-        columnSet.resolve(ColumnResolutionContext(receiver, it.unresolvedColumnsPolicy))
+        columnSet.resolve(receiver, it.unresolvedColumnsPolicy)
     }
 
 fun <C> createColumnSet(resolver: (ColumnResolutionContext) -> List<ColumnWithPath<C>>): Columns<C> =
@@ -109,7 +109,7 @@ fun <T, R> computeValues(df: DataFrame<T>, expression: AddExpression<T, R>): Pai
     return nullable to list
 }
 
-inline fun <T, reified R> DataFrameBase<T>.newColumn(name: String, noinline expression: AddExpression<T, R>): DataColumn<R> {
+inline fun <T, reified R> DataFrameBase<T>.newColumn(name: String = "", noinline expression: AddExpression<T, R>): DataColumn<R> {
     val (nullable, values) = computeValues(this as DataFrame<T>, expression)
     if (R::class == DataFrame::class) return DataColumn.frames(name, values as List<AnyFrame?>) as DataColumn<R>
     return column(name, values, nullable)

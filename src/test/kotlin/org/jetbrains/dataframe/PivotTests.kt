@@ -24,15 +24,15 @@ class PivotTests {
     @Test
     fun `pivot with rename`(){
 
-        val pivoted = df.pivot(b).withIndex(a).values { c and (c named "d") }
+        val pivoted = df.pivot(b).withIndex(a).values { c default '?' into "d" and (c into "e") }
         pivoted.columnNames() shouldBe listOf("a", "q", "w")
         pivoted.nrow shouldBe 2
         pivoted.print()
 
-        pivoted["q"]["c"].values() shouldBe listOf('x', 'y')
         pivoted["q"]["d"].values() shouldBe listOf('x', 'y')
-        pivoted["w"]["c"].values() shouldBe listOf(null, 'z')
-        pivoted["w"]["d"].values() shouldBe listOf(null, 'z')
+        pivoted["q"]["e"].values() shouldBe listOf('x', 'y')
+        pivoted["w"]["d"].values() shouldBe listOf('?', 'z')
+        pivoted["w"]["e"].values() shouldBe listOf(null, 'z')
     }
 
     @Test
@@ -42,8 +42,8 @@ class PivotTests {
             get(c).first() default '-' into "first"
             get(c).last() into "last" default '?'
         }
-        pivoted.ncol() shouldBe 3
-        pivoted.nrow() shouldBe 2
+        pivoted.ncol shouldBe 3
+        pivoted.nrow shouldBe 2
         val cols = pivoted.getColumns { except(a).dfs() }
         cols.size shouldBe 4
         cols.forEach {

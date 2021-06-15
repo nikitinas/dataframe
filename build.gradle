@@ -98,7 +98,7 @@ kotlinPublications {
 
     pom {
         use(ru.ileasile.kotlin.PomUtilKt) {
-            githubRepo("nikitinas", "dataframe")
+            githubRepo("JetBrains", "dataframe")
             inceptionYear.set("2021")
             licenses {
                 apache2()

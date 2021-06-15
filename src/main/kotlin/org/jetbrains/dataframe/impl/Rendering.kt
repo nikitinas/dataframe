@@ -3,6 +3,7 @@ package org.jetbrains.dataframe.impl
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.AnyFrame
 import org.jetbrains.dataframe.ColumnKind
+import org.jetbrains.dataframe.Many
 import org.jetbrains.dataframe.internal.schema.ColumnSchema
 import org.jetbrains.dataframe.internal.schema.DataFrameSchema
 import org.jetbrains.dataframe.impl.columns.asGroup
@@ -29,10 +30,7 @@ internal fun renderSchema(schema: DataFrameSchema): String =
 internal fun renderType(column: ColumnSchema) =
     when(column) {
         is ColumnSchema.Value -> {
-            val type = column.type
-            val result = type.toString()
-            if (result.startsWith("kotlin.")) result.substring(7)
-            else result
+            renderType(column.type)
         }
         is ColumnSchema.Frame -> {
             "[${renderSchema(column.schema)}]"
@@ -44,13 +42,21 @@ internal fun renderType(column: ColumnSchema) =
     }
 
 internal fun renderType(type: KType): String{
-    if(type.classifier == List::class) {
-        val argument = type.arguments[0].type?.let { renderType(it) } ?: "*"
-        return "List<${argument}>"
+    return when(type.classifier){
+        List::class -> {
+            val argument = type.arguments[0].type?.let { renderType(it) } ?: "*"
+            "List<${argument}>"
+        }
+        Many::class -> {
+            val argument = type.arguments[0].type?.let { renderType(it) } ?: "*"
+            "Many<${argument}>"
+        }
+        else -> {
+            val result = type.toString()
+            if (result.startsWith("kotlin.")) result.substring(7)
+            else result
+        }
     }
-    val result = type.toString()
-    return if (result.startsWith("kotlin.")) result.substring(7)
-    else result
 }
 
 internal fun renderType(column: AnyCol) =

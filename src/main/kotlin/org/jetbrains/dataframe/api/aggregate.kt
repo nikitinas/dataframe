@@ -1,17 +1,21 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.AnyCol
+import org.jetbrains.dataframe.columns.BaseColumn
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.Columns
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.SingleColumn
 import org.jetbrains.dataframe.columns.guessColumnType
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.shortPath
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.DataFrameReceiver
+import org.jetbrains.dataframe.impl.columns.addPath
 import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.createDataCollector
+import org.jetbrains.dataframe.impl.emptyPath
 import org.jetbrains.dataframe.impl.getListType
 import org.jetbrains.dataframe.impl.pathOf
 import kotlin.reflect.KProperty
@@ -21,11 +25,20 @@ internal class ValueWithDefault<T>(val value: T, val default: T)
 
 internal class AggregateColumnWithOptions<C> private constructor(val columns: Columns<C>, private val default: C? = null, private val newPath: ColumnPath? = null): Columns<C> {
 
+    private fun ColumnWithPath<C>.toDescriptor(keepName: Boolean) = when(val col = this){
+        is AggregateColumnDescriptor<C> -> {
+            val path = if(keepName) newPath?.plus(col.newPath ?: col.column.shortPath()) ?: col.newPath
+                       else newPath ?: col.newPath
+            AggregateColumnDescriptor(col.column, default ?: col.default, path)
+        }
+        else -> AggregateColumnDescriptor(col, default, if(keepName) newPath?.plus(col.name) else newPath)
+    }
+
     override fun resolve(context: ColumnResolutionContext): List<ColumnWithPath<C>> {
         val resolved = columns.resolve(context)
-        if(resolved.size == 1) return listOf(AggregateColumnDescriptor(resolved[0], default, newPath))
+        if(resolved.size == 1) return listOf(resolved[0].toDescriptor(false))
         else return resolved.map {
-            AggregateColumnDescriptor(it, default, newPath?.plus(it.name))
+            it.toDescriptor(true)
         }
     }
 
@@ -60,9 +73,9 @@ interface Aggregatable<out T> {
 
     fun <R> aggregateBase(body: BaseAggregator<T, R>): DataFrame<T>
 
-    fun <V> value(column: ColumnReference<V>) = withColumn { it[column] }
-    fun value(column: String) = withColumn<T, Any?> { it.getColumn(column) }
-    fun <V> value(column: ColumnSelector<T, V>) = withColumn { it[column] }
+    fun <V> value(column: ColumnReference<V>) = withColumn { getAggregateColumn { column } }
+    fun value(column: String) = withColumn { getAggregateColumn { it[column] } }
+    fun <V> value(column: AggregateColumnsSelector<T, V>) = withColumn { getAggregateColumn(column) }
 
     fun values(vararg columns: Column) = values { columns.toColumns() }
     fun values(vararg columns: String) = values { columns.toColumns() }
@@ -122,6 +135,7 @@ interface AggregatablePivot<T>: Aggregatable<T> {
     fun <R> aggregate(body: PivotAggregator<T, R>): DataFrame<T>
 
     fun groupByValue(flag: Boolean = true): AggregatablePivot<T>
+    fun withDefault(value: Any?): AggregatablePivot<T>
     fun withGrouping(groupPath: ColumnPath): AggregatablePivot<T>
 
     fun into(column: Column) = value(column)
@@ -164,7 +178,7 @@ internal fun <T, V> AggregateReceiver<T>.yieldOneOrMany(values: List<V>, type: K
 @PublishedApi
 internal fun <T, V> AggregateReceiver<T>.yieldOneOrMany(path: ColumnPath, values: List<V>, type: KType, default: V? = null) {
     if (values.size == 1) yield(path, values[0], type, default)
-    else yield(path, values.wrapValues(), getListType(type), default)
+    else yield(path, values.toMany(), getListType(type), default)
 }
 
 @PublishedApi
@@ -201,6 +215,8 @@ internal fun <T, C> AggregateColumnsSelector<T, C>.toColumns(): Columns<C> = toC
 
     AggregateSelectReceiverImpl(it.df.typed())
 }
+
+internal fun <T, C> DataFrame<T>.getAggregateColumn(selector: AggregateColumnsSelector<T, C>) = getAggregateColumns(selector).single()
 
 internal fun <T, C> DataFrame<T>.getAggregateColumns(selector: AggregateColumnsSelector<T, C>): List<AggregateColumnDescriptor<C>> {
     val columns = selector.toColumns().resolve(this, UnresolvedColumnsPolicy.Create)

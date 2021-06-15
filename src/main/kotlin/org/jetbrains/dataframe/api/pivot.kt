@@ -2,7 +2,6 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.guessColumnType
 import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.columns.toColumns
@@ -27,9 +26,10 @@ fun <T> GroupReceiver<T>.pivot(vararg columns: Column) = pivot { columns.toColum
 fun <T> GroupReceiver<T>.pivot(vararg columns: String) = pivot { columns.toColumns() }
 
 // TODO: add  overloads
-internal fun <T, V> Aggregatable<T>.withColumn(column: DataFrame<T>.(DataFrame<T>) -> DataColumn<V>) = aggregateBase {
-    val data = column(this)
-    yieldOneOrMany(data.toList(), data.type())
+inline internal fun <T, V> Aggregatable<T>.withColumn(crossinline getColumn: DataFrame<T>.(DataFrame<T>) -> AggregateColumnDescriptor<V>) = aggregateBase {
+    val column = getColumn(this)
+    val path = getPath(column, true)
+    yieldOneOrMany(path, column.data.toList(), column.type, column.default)
 }
 
 fun <T, P:AggregatablePivot<T>> P.withGrouping(group: MapColumnReference) = withGrouping(group.path()) as P
@@ -51,16 +51,20 @@ data class GroupedFramePivot<T>(
     internal val df: GroupedDataFrame<*, T>,
     internal val columns: ColumnsSelector<T, *>,
     internal val groupValues: Boolean = false,
+    internal val default: Any? = null,
     internal val groupPath: ColumnPath = emptyList()
 ) : AggregatablePivot<T> {
     override fun <R> aggregate(body: PivotAggregator<T, R>): DataFrame<T> {
         return df.aggregate {
-            aggregatePivot(this, columns, groupValues, groupPath, body)
+            aggregatePivot(this, columns, groupValues, groupPath, default, body)
         }.typed()
     }
 
     override fun groupByValue(flag: Boolean) = copy(groupValues = flag)
+
     override fun withGrouping(groupPath: ColumnPath) = copy(groupPath = groupPath)
+
+    override fun withDefault(value: Any?) = copy(default = value)
 
     override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all().except(columns.toColumns()) }
 }
@@ -70,16 +74,20 @@ data class DataFramePivot<T>(
     internal val columns: ColumnsSelector<T, *>,
     internal val index: ColumnsSelector<T, *>? = null,
     internal val groupValues: Boolean = false,
+    internal val default: Any? = null,
     internal val groupPath: ColumnPath = emptyList()
 ) : AggregatablePivot<T> {
 
     override fun groupByValue(flag: Boolean) = copy(groupValues = flag)
+
+    override fun withDefault(value: Any?) = copy(default = value)
+
     override fun withGrouping(groupPath: ColumnPath) = copy(groupPath = groupPath)
 
     override fun <R> aggregate(body: PivotAggregator<T, R>): DataFrame<T> {
         if (index != null) {
             val grouped = df.groupBy(index)
-            return GroupedFramePivot(grouped, columns, groupValues, groupPath).aggregate(body)
+            return GroupedFramePivot(grouped, columns, groupValues, default, groupPath).aggregate(body)
         } else {
 
             data class RowData(val name: String, val type: KType?, val defaultValue: Any?)
@@ -96,7 +104,7 @@ data class DataFramePivot<T>(
                 val result = body(builder, builder)
                 val hasResult = result != Unit
                 val values = if (builder.values.isEmpty())
-                    if (hasResult) listOf(NamedValue.create(emptyList(), result, null, null))
+                    if (hasResult) listOf(NamedValue.create(emptyPath(), result, null, default))
                     else emptyList()
                 else builder.values
                 val columnData = mutableListOf<Any?>()
@@ -153,10 +161,14 @@ data class GroupAggregatorPivot<T>(
     internal val aggregator: GroupReceiver<T>,
     internal val columns: ColumnsSelector<T, *>,
     internal val groupValues: Boolean = false,
+    internal val default: Any? = null,
     internal val groupPath: ColumnPath = emptyList()
 ) : AggregatablePivot<T> {
 
     override fun groupByValue(flag: Boolean) = copy(groupValues = flag)
+
+    override fun withDefault(value: Any?) = copy(default = value)
+
     override fun withGrouping(groupPath: ColumnPath) = copy(groupPath = groupPath)
 
     override fun <R> aggregate(body: PivotAggregator<T, R>): DataFrame<T> {
@@ -164,7 +176,7 @@ data class GroupAggregatorPivot<T>(
         require(aggregator is GroupReceiverImpl<T>)
 
         val childAggregator = aggregator.child()
-        aggregatePivot(childAggregator, columns, groupValues, groupPath, body)
+        aggregatePivot(childAggregator, columns, groupValues, groupPath, default, body)
         return AggregatedPivot(aggregator.df, childAggregator)
     }
 
@@ -176,6 +188,7 @@ internal fun <T, R> aggregatePivot(
     columns: ColumnsSelector<T, *>,
     groupValues: Boolean,
     groupPath: ColumnPath,
+    default: Any? = null,
     body: PivotAggregator<T, R>
 ) {
 
@@ -189,12 +202,12 @@ internal fun <T, R> aggregatePivot(
 
         val values = builder.values
         when {
-            values.size == 1 && values[0].path.isEmpty() -> aggregator.yield(values[0].copy(path = groupPath + path))
-            values.isEmpty() -> aggregator.yield(groupPath + path, if (hasResult) result else null, null, null, true)
+            values.size == 1 && values[0].path.isEmpty() -> aggregator.yield(values[0].copy(path = groupPath + path, default = values[0].default ?: default))
+            values.isEmpty() -> aggregator.yield(groupPath + path, if (hasResult) result else null, null, default, true)
             else -> {
                 values.forEach {
                     val targetPath = groupPath + if (groupValues) it.path + path else path + it.path
-                    aggregator.yield(targetPath, it.value, it.type, it.default, it.guessType)
+                    aggregator.yield(targetPath, it.value, it.type, it.default ?: default, it.guessType)
                 }
             }
         }

@@ -76,6 +76,7 @@ import org.jetbrains.dataframe.subcolumn
 import org.jetbrains.dataframe.sumBy
 import org.jetbrains.dataframe.toDefinition
 import org.jetbrains.dataframe.toGrouped
+import org.jetbrains.dataframe.toMany
 import org.jetbrains.dataframe.toTop
 import org.jetbrains.dataframe.typed
 import org.jetbrains.dataframe.under
@@ -85,7 +86,6 @@ import org.jetbrains.dataframe.with
 import org.jetbrains.dataframe.with2
 import org.jetbrains.dataframe.withIndex
 import org.jetbrains.dataframe.withNull
-import org.jetbrains.dataframe.wrapValues
 import org.junit.Test
 
 class DataFrameTreeTests : BaseTest() {
@@ -276,7 +276,7 @@ class DataFrameTreeTests : BaseTest() {
     @Test
     fun splitRows() {
         val selected = typed2.select { nameAndCity }
-        val nested = selected.mergeRows { nameAndCity.city }
+        val nested = selected.mergeRows(dropNulls = false) { nameAndCity.city }
         val mergedCity by columnList<String?>("city")
         val res = nested.split { nameAndCity[mergedCity] }.intoRows()
         val expected = selected.sortBy { nameAndCity.name }
@@ -292,7 +292,7 @@ class DataFrameTreeTests : BaseTest() {
         val typed2 = df2.typed<GroupedPerson>()
 
         val expected = modified.typed<Person>().groupBy { name and city }.map { key, group ->
-            val value = if(key.city == "Moscow") group.age.toList().wrapValues()
+            val value = if(key.city == "Moscow") group.age.toMany()
                         else group.age[0]
             (key.name to key.city.toString()) to value
         }.plus("Bob" to "Moscow" to emptyMany<Int>()).toMap()
@@ -504,14 +504,14 @@ class DataFrameTreeTests : BaseTest() {
     }
 
     @Test
-    fun splitFrameColumnsWithNullsIntoRows() {
+    fun explodeFrameColumnWithNulls() {
         val grouped = typed.groupBy { city }
         val groupCol = grouped.groups.toDefinition()
         val plain = grouped.plain()
             .update { groupCol }.at(1).withNull()
             .update { groupCol }.at(2).with { emptyDataFrame(0) }
             .update { groupCol }.at(3).with { it.filter { false } }
-        val res = plain.explode { groupCol }
+        val res = plain.explode(dropEmpty = false) { groupCol }
         val expected = plain[groupCol].sumBy { Math.max(it?.nrow() ?: 0, 1) }
         res.nrow() shouldBe expected
     }

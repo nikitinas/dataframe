@@ -35,7 +35,7 @@ fun <T, C> SplitClause<T, C>.by(
 }
 
 fun <T, C, K> SplitClause<T, C>.by(splitter: (C) -> List<K>) = SplitClause(df, columns, inward) {
-    splitter(it)
+    splitter(it).toMany()
 }
 
 fun <T, C> SplitClause<T, C>.inward() = SplitClause(df, columns, true, transform)
@@ -60,11 +60,11 @@ fun <T, C> SplitClause<T, C>.into(
     else names
 }
 
-internal fun valueToList(value: Any?): List<Any?> = when (value) {
+internal fun valueToList(value: Any?, splitStrings: Boolean = true): List<Any?> = when (value) {
     null -> emptyList()
-    is List<*> -> value
-    is DataFrame<*> -> value.rows().toList()
-    else -> value.toString().split(",").map { it.trim() }
+    is AnyMany -> value
+    is AnyFrame -> value.rows().toList()
+    else -> if(splitStrings) value.toString().split(",").map { it.trim() } else listOf(value)
 }
 
 fun <T, C> doSplitCols(
@@ -113,5 +113,5 @@ fun <T, C> doSplitCols(
     return removeResult.df.insert(toInsert)
 }
 
-fun <T, C> SplitClause<T, C>.intoRows() = df.explode(columns)
+fun <T, C> SplitClause<T, C>.intoRows(dropEmpty: Boolean = true) = df.explode(dropEmpty, columns)
 

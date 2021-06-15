@@ -1,10 +1,14 @@
 package org.jetbrains.dataframe.impl
 
-import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.columns.AnyCol
+import org.jetbrains.dataframe.AnyFrame
+import org.jetbrains.dataframe.AnyRow
+import org.jetbrains.dataframe.DataFrame
+import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.commonParent
-import java.lang.UnsupportedOperationException
+import org.jetbrains.dataframe.columns.guessColumnType
+import org.jetbrains.dataframe.createStarProjectedType
+import org.jetbrains.dataframe.toDataFrame
+import org.jetbrains.dataframe.union
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.isSubclassOf
@@ -47,44 +51,7 @@ internal abstract class DataCollectorBase<T>(initCapacity: Int): DataCollector<T
 
 internal open class ColumnDataCollector(initCapacity: Int = 0, val getType: (KClass<*>) -> KType): DataCollectorBase<Any?>(initCapacity) {
 
-    private val classes = mutableSetOf<KClass<*>>()
-
-    private var hasRows : Boolean = false
-    private var hasTables: Boolean = false
-
-    protected fun commonClass() = classes.commonParent()
-
-    override fun add(value: Any?) {
-        super.add(value)
-        if (value != null) {
-            if(!hasRows && value is AnyRow) hasRows = true
-            else if(!hasTables && value is AnyFrame) hasTables = true
-            else classes.add(value.javaClass.kotlin)
-        }
-    }
-
-    override fun toColumn(name: String): AnyCol {
-        if(classes.isEmpty()){
-            if(hasTables){
-                val groups = values.map {
-                    when(it){
-                        null -> emptyDataFrame(1)
-                        is AnyRow -> it.toDataFrame()
-                        is AnyFrame -> it
-                        else -> throw UnsupportedOperationException()
-                    }
-                }
-                return DataColumn.create(name, groups)
-            }else if(hasRows){
-                val frames = values.map {
-                    (it as AnyRow?)?.toDataFrame() ?: emptyDataFrame(1)
-                }
-                val merged = frames.union()
-                return DataColumn.create(name, merged) as AnyCol
-            }
-        }
-        return createColumn(name, getType(commonClass()).withNullability(hasNulls))
-    }
+    override fun toColumn(name: String) = guessColumnType(name, values)
 }
 
 internal class TypedColumnDataCollector<T>(initCapacity: Int = 0, val type: KType): DataCollectorBase<T?>(initCapacity) {

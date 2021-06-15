@@ -18,6 +18,7 @@ import org.jetbrains.dataframe.columns.guessColumnType
 import org.jetbrains.dataframe.columns.size
 import org.jetbrains.dataframe.columns.type
 import org.jetbrains.dataframe.columns.name
+import org.jetbrains.dataframe.columns.typeClass
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.columns.ConvertedColumnDef
@@ -241,11 +242,24 @@ fun <T> DataColumn<T>.lastOrNull() = if(size > 0) last() else null
 
 fun <C> DataColumn<C>.allNulls() = size == 0 || all { it == null }
 
+internal fun KType.isSubtypeWithNullabilityOf(type: KType) = this.isSubtypeOf(type) && (!this.isMarkedNullable || type.isMarkedNullable)
+
+fun AnyCol.hasElementsOfType(type: KType) = typeOfElement().isSubtypeWithNullabilityOf(type)
+
 fun AnyCol.isSubtypeOf(type: KType) = this.type.isSubtypeOf(type) && (!this.type.isMarkedNullable || type.isMarkedNullable)
+
+inline fun <reified T> AnyCol.hasElementsOfType() = hasElementsOfType(getType<T>())
 inline fun <reified T> AnyCol.isSubtypeOf() = isSubtypeOf(getType<T>())
 inline fun <reified T> AnyCol.isType() = type() == getType<T>()
 
-fun AnyCol.isNumber() = isSubtypeOf<Number?>()
+fun AnyCol.isNumber() = hasElementsOfType<Number?>()
+fun AnyCol.isMany() = typeClass == Many::class
+fun AnyCol.typeOfElement(): KType =
+    if(isMany()) type.arguments[0].type ?: getType<Any?>()
+    else type
+
+fun AnyCol.elementTypeIsNullable(): Boolean = typeOfElement().isMarkedNullable
+
 fun AnyCol.isComparable() = isSubtypeOf<Comparable<*>>()
 
 fun AnyCol.guessType() = DataColumn.create(name, toList())

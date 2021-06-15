@@ -3,22 +3,31 @@ package org.jetbrains.dataframe
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.columns.values
-import kotlin.reflect.KType
+import org.jetbrains.dataframe.impl.columns.toColumns
+import kotlin.reflect.KProperty
 
-inline fun <T, reified C> DataFrame<T>.mergeRows(noinline selector: ColumnsSelector<T, C>) = mergeRows(this, selector, getType<C>())
+fun <T> DataFrame<T>.mergeRows(vararg columns: String, dropNulls: Boolean = false) = mergeRows(dropNulls) { columns.toColumns() }
+fun <T> DataFrame<T>.mergeRows(vararg columns: Column, dropNulls: Boolean = false) = mergeRows(dropNulls) { columns.toColumns() }
+fun <T, C> DataFrame<T>.mergeRows(vararg columns: KProperty<C>, dropNulls: Boolean = false) = mergeRows(dropNulls) { columns.toColumns() }
 
-fun <T, C> mergeRows(df: DataFrame<T>, selector: ColumnsSelector<T, C>, type: KType): DataFrame<T> {
+fun <T, C> DataFrame<T>.mergeRows(dropNulls: Boolean = false, columns: ColumnsSelector<T, C>): DataFrame<T> {
+    return groupBy { except(columns) }.mapNotNullGroups {
 
-    val listType = List::class.createTypeWithArgument(type)
-    return df.groupBy { except(selector) }.mapNotNullGroups {
-        val updated = update(selector).suggestTypes(List::class to listType).with2 { row, column ->
-            if(row.index > 0) null
-            else when(column.kind()) {
-                ColumnKind.Value -> column.toList()
+        replace(columns).with {
+            val column = it
+            val filterNulls = dropNulls && column.hasNulls()
+            val value = when (column.kind()) {
+                ColumnKind.Value -> column.toList().let { if(filterNulls) (it as List<Any?>).filterNotNull() else it }.toMany()
                 ColumnKind.Group -> column.asGroup().df
                 ColumnKind.Frame -> column.asTable().values.union()
             }
-        }
-        updated[0..0]
+            var first = true
+            column.map {
+                if (first) {
+                    first = false
+                    value
+                } else null
+            }
+        }[0..0]
     }.ungroup()
 }

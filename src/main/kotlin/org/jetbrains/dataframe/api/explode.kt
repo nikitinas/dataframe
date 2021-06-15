@@ -12,9 +12,13 @@ import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.impl.columns.isTable
+import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.createDataCollector
 
-fun <T> DataFrame<T>.explode(selector: ColumnsSelector<T, *>): DataFrame<T> {
+fun <T> DataFrame<T>.explode(vararg columns: Column) = explode { columns.toColumns() }
+fun <T> DataFrame<T>.explode(vararg columns: String) = explode { columns.toColumns() }
+
+fun <T> DataFrame<T>.explode(dropEmpty: Boolean = true, selector: ColumnsSelector<T, *>): DataFrame<T> {
 
     val columns = getColumnsWithPaths(selector)
 
@@ -22,10 +26,11 @@ fun <T> DataFrame<T>.explode(selector: ColumnsSelector<T, *>): DataFrame<T> {
         columns.maxOf {
             val n = when (val value = it.data[row]) {
                 is AnyFrame -> value.nrow()
-                is List<*> -> value.size
+                is Many<*> -> value.size
                 else -> 1
             }
-            if(n == 0) 1 else n
+            if(!dropEmpty && n == 0) 1
+            else n
         }
     }
 
@@ -63,7 +68,7 @@ fun <T> DataFrame<T>.explode(selector: ColumnsSelector<T, *>): DataFrame<T> {
                     is ValueColumn<*> -> {
                         val collector = createDataCollector(outputRowsCount)
                         col.asSequence().forEachIndexed { rowIndex, value ->
-                            val list = valueToList(value)
+                            val list = valueToList(value, splitStrings = false)
                             val expectedSize = rowExpandSizes[rowIndex]
                             list.forEach { collector.add(it) }
                             repeat (expectedSize - list.size) {

@@ -63,9 +63,13 @@ class TypedColumnsFromDataRowBuilder<T>(val df: DataFrame<T>): DataFrameBase<T> 
 
     inline fun <reified R> add(`colum nReference`: ColumnReference<R>, noinline expression: RowSelector<T, R>) = add(df.newColumn(`colum nReference`.name(), expression))
 
-    inline operator fun <reified R> ColumnReference<R>.invoke(noinline expression: RowSelector<T, R>) = add(df.newColumn(name(), expression))
+    inline infix fun <reified R> ColumnReference<R>.by(noinline expression: RowSelector<T, R>) = add(df.newColumn(name(), expression))
 
-    inline operator fun <reified R> String.invoke(noinline expression: RowSelector<T, R>) = add(this, expression)
+    inline operator fun <reified R> ColumnReference<R>.invoke(noinline expression: RowSelector<T, R>) = by(expression)
+
+    inline infix fun <reified R> String.by(noinline expression: RowSelector<T, R>) = add(this, expression)
+
+    inline operator fun <reified R> String.invoke(noinline expression: RowSelector<T, R>) = by(expression)
 
     operator fun String.invoke(column: AnyCol) = add(column.rename(this))
 

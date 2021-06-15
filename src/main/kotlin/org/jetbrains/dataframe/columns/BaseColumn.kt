@@ -6,6 +6,7 @@ import org.jetbrains.dataframe.headPlusIterable
 import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.columns.DataColumnInternal
 import kotlin.reflect.KProperty
+import kotlin.reflect.KType
 
 /**
  * Column with type, name/path and values
@@ -29,6 +30,8 @@ interface BaseColumn<out T> : ColumnReference<T> {
     fun values(): Iterable<T>
 
     fun toList() = values().asList()
+
+    fun type(): KType
 
     fun defaultValue(): T?
 

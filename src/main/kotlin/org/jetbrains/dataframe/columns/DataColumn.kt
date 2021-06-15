@@ -59,8 +59,6 @@ interface DataColumn<out T> : BaseColumn<T> {
         fun empty() = create("", emptyList<Unit>(), getType<Unit>()) as AnyCol
     }
 
-    fun type(): KType
-
     fun hasNulls(): Boolean = type().isMarkedNullable
 
     override fun distinct(): DataColumn<T>

@@ -2,22 +2,20 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.impl.and
 import org.jetbrains.dataframe.impl.columns.isTable
 import kotlin.reflect.KType
 import kotlin.reflect.jvm.jvmErasure
 
 data class GatherClause<T, C, K, R>(val df: DataFrame<T>, val selector: ColumnsSelector<T, C>, val filter: ((C) -> Boolean)? = null,
-                               val nameTransform: ((String) -> K), val valueTransform: ((C) -> R))
+                                    val dropNulls: Boolean = true,
+                               val nameTransform: ((String) -> K), val valueTransform: ((C) -> R)? = null)
 
-fun <T, C> DataFrame<T>.gather(selector: ColumnsSelector<T, C>) = GatherClause(this, selector, null, { it }, { it })
-fun <T, C, K, R> GatherClause<T, C, K, R>.where(filter: Predicate<C>) = GatherClause(df, selector, this.filter?.let { it and filter }
-        ?: filter,
-        nameTransform, valueTransform)
+fun <T, C> DataFrame<T>.gather(dropNulls: Boolean = true, selector: ColumnsSelector<T, C?>) = GatherClause<T, C, String, C>(this, selector as ColumnsSelector<T, C>, null, dropNulls, { it }, null)
 
-fun <T, C, K, R> GatherClause<T, C, *, R>.mapNames(transform: (String) -> K) = GatherClause(df, selector, filter, transform, valueTransform)
-fun <T, C, K, R> GatherClause<T, C, K, *>.map(transform: (C) -> R) = GatherClause(df, selector, filter, nameTransform, transform)
-fun <T, C : Any, K, R> GatherClause<T, C?, K, *>.mapNotNull(transform: (C) -> R) = GatherClause(df, selector, filter, nameTransform, { if (it != null) transform(it) else null })
+fun <T, C, K, R> GatherClause<T, C, K, R>.where(filter: Predicate<C>) = copy(filter = filter)
+
+fun <T, C, K, R> GatherClause<T, C, *, R>.mapNames(transform: (String) -> K) = GatherClause(df, selector, filter, dropNulls, transform, valueTransform)
+fun <T, C, K, R> GatherClause<T, C, K, *>.map(transform: (C) -> R) = GatherClause(df, selector, filter, dropNulls, nameTransform, transform)
 
 inline fun <T, C, reified K, reified R> GatherClause<T, C, K, R>.into(keyColumn: ColumnReference<String>) = into(keyColumn.name())
 inline fun <T, C, reified K, reified R> GatherClause<T, C, K, R>.into(keyColumn: String) = doGather(this, keyColumn, null, getType<K>(), getType<R>())
@@ -33,41 +31,69 @@ fun <T, C, K, R> doGather(clause: GatherClause<T, C, K, R>, namesTo: String, val
     if (isGatherGroups && columnsToGather.any { !it.isGroup() })
         throw UnsupportedOperationException("Cannot mix ColumnGroups with other types of columns in 'gather' operation")
 
-    val gatheredColumnKeys = columnsToGather.map { clause.nameTransform(it.name()) }
+    val keys = columnsToGather.map { clause.nameTransform(it.name()) }
 
-    val namesColumn = column<List<K>>(namesTo)
-    val valuesColumn = column<List<*>>(valuesTo ?: "newValues")
+    val namesColumn = column<Many<K>>(namesTo)
+    val valuesColumn = column<AnyMany>(valuesTo ?: "newValues")
 
     var df = removed.df
 
-    val filter = clause.filter
+    var filter = clause.filter
+    if(clause.dropNulls && columnsToGather.any { it.hasNulls() }) {
+        if(filter == null) filter = { it != null }
+        else {
+            val oldFilter = filter
+            filter = { it != null && oldFilter(it)}
+        }
+    }
+
+    val valueTransform = clause.valueTransform
 
     if(filter == null) {
-        df = df.add(namesColumn) {
-            gatheredColumnKeys
-        }.add(valuesColumn) { row ->
-            columnsToGather.map { col ->
-                clause.valueTransform(col[row])
-            }
-        }
 
-        df = df.split { namesColumn and valuesColumn }.intoRows()
+        // optimization when no filter is applied
+        val wrappedKeys = keys.toMany()
+        df = df.add { // add columns for names and values
+            namesColumn by { wrappedKeys }
+            valuesColumn by { row ->
+                columnsToGather.map { col ->
+                    val value = col[row]
+                    if(valueTransform != null)
+                        when {
+                            value is Many<*> -> (value as Many<C>).map(valueTransform)
+                            else -> valueTransform(value)
+                        }
+                    else value
+                }.toMany()
+            }
+        }.explode(namesColumn, valuesColumn) // expand collected names and values
+         .explode(valuesColumn) // expand values in Many
+
     }else {
-        val nameAndValue = column<List<Pair<K, R>>>("nameAndValue")
+
+        val nameAndValue = column<Many<Pair<K, R>>>("nameAndValue")
         df = df.add(nameAndValue) { row ->
             columnsToGather.mapIndexedNotNull { colIndex, col ->
                 val value = col[row]
-                if(filter(value)) {
-                    gatheredColumnKeys[colIndex] to clause.valueTransform(value)
-                }else null
-            }
+                when {
+                    value is Many<*> -> {
+                        val filtered = (value as Many<C>).filter(filter).toMany()
+                        keys[colIndex] to (valueTransform?.let { filtered.map(it).toMany() } ?: filtered)
+                    }
+                    filter(value) -> keys[colIndex] to (valueTransform?.invoke(value) ?: value)
+                    else -> null
+                }
+            }.toMany()
         }
 
-        df = df.split { nameAndValue }.intoRows()
+        df = df.explode { nameAndValue }
 
-        val nameAndValuePairs = nameAndValue.changeType<Pair<K, C>?>()
+        val nameAndValuePairs = nameAndValue.changeType<Pair<K, C>>()
 
-        df = df.split { nameAndValuePairs }.by { it?.let { listOf(it.first, it.second)} ?: listOf(null, null) }.into(namesColumn, valuesColumn)
+        df = df.split { nameAndValuePairs }
+            .by { listOf(it.first, it.second) }
+            .into(namesColumn, valuesColumn)
+            .explode(valuesColumn)
     }
 
     df = df.convert(namesColumn.name()).to(keyColumnType)

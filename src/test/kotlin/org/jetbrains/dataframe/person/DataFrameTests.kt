@@ -6,6 +6,7 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.columns.size
 import org.jetbrains.dataframe.columns.toAccessor
 import org.jetbrains.dataframe.columns.typeClass
 import org.jetbrains.dataframe.impl.columns.asGroup
@@ -1000,11 +1001,11 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `pivot to matrix`() {
 
-        val others by column<List<String>>("other")
+        val others by column<Many<String>>("other")
         val other by column<String>()
         val sum by column<Int>()
 
-        val names = typed.name.distinct().toList()
+        val names = typed.name.distinct().toMany()
 
         val src = typed.select { name }
             .add(others) { names }
@@ -1024,19 +1025,42 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun mergeRows() {
-        val selected = typed.select { name and city }
-        val res = selected.mergeRows { city }
-        val cityList by column<List<String?>>().named("city")
-        val expected = selected.map { name to city }.groupBy({ it.first }) { it.second }.mapValues { it.value.toSet() }
-        val actual = res.map { name to it[cityList] }.toMap().mapValues { it.value.toSet() }
+    fun `merge rows keep nulls`() {
+
+        val merged = typed.select { name and city }.mergeRows(dropNulls = false) { city }
+
+        val cityList by column<Many<String?>>().named("city")
+        merged[cityList].sumBy { it.size } shouldBe typed.city.size
+        merged[cityList].type() shouldBe getType<Many<String?>>()
+
+        val expected = typed.groupBy { name }.aggregate { it.city.toSet() into "city" }
+        val actual = merged.update { cityList }.with { it.toSet() }
+
+        actual shouldBe expected
+
+        // check that default value for 'dropNulls' is false
+        typed.select { name and city }.mergeRows { city } shouldBe merged
+    }
+
+    @Test
+    fun `merge rows drop nulls`() {
+
+        val merged = typed.select { name and city }.mergeRows(dropNulls = true) { city }
+
+        val cityList by column<Many<String>>().named("city")
+        merged[cityList].sumBy { it.size } shouldBe typed.city.dropNulls().size
+        merged[cityList].type() shouldBe getType<Many<String>>()
+
+        val expected = typed.dropNulls {city}.groupBy { name }.aggregate { it.city.toSet() as Set<String> into "city" }
+        val actual = merged.update { cityList }.with { it.toSet() }
+
         actual shouldBe expected
     }
 
     @Test
     fun splitRows() {
         val selected = typed.select { name and city }
-        val nested = selected.mergeRows { city }
+        val nested = selected.mergeRows(dropNulls = false) { city }
         val mergedCity by columnList<String?>("city")
         val res = nested.split { mergedCity }.intoRows()
         res.sortBy { name } shouldBe selected.sortBy { name }
@@ -1449,8 +1473,8 @@ class DataFrameTests : BaseTest() {
     @Test
     fun splitUnequalLists() {
         val values by columnOf(1, 2, 3, 4)
-        val list1 by columnOf(listOf(1, 2, 3), listOf(), listOf(1, 2), null)
-        val list2 by columnOf(listOf(1, 2), listOf(1, 2), listOf(1, 2), listOf(1))
+        val list1 by columnOf(manyOf(1, 2, 3), manyOf(), manyOf(1, 2), null)
+        val list2 by columnOf(manyOf(1, 2), manyOf(1, 2), manyOf(1, 2), manyOf(1))
         val df = dataFrameOf(values, list1, list2)
         val res = df.explode { list1 and list2 }
         val expected = dataFrameOf(values.name(), list1.name(), list2.name())(
@@ -1469,8 +1493,8 @@ class DataFrameTests : BaseTest() {
     @Test
     fun splitUnequalListAndFrames() {
         val values by columnOf(1, 2, 3)
-        val list1 by columnOf(listOf(1, 2, 3), listOf(1), listOf(1, 2))
-        val frames by listOf(listOf(1, 2), listOf(1, 2), listOf(1, 2)).map {
+        val list1 by columnOf(manyOf(1, 2, 3), manyOf(1), manyOf(1, 2))
+        val frames by listOf(manyOf(1, 2), manyOf(1, 2), manyOf(1, 2)).map {
             val data = column("data", it)
             val dataStr = column("dataStr", it.map { it.toString() })
             dataFrameOf(data, dataStr)

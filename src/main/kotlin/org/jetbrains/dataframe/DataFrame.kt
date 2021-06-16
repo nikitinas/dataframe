@@ -1,5 +1,6 @@
 package org.jetbrains.dataframe
 
+import org.jetbrains.dataframe.aggregation.DataFrameAggregations
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.impl.DataFrameReceiver
@@ -18,10 +19,14 @@ import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.put
 import org.jetbrains.dataframe.impl.toIndices
-import kotlin.reflect.KProperty
 
 internal open class SelectReceiverImpl<T>(df: DataFrame<T>, allowMissingColumns: Boolean) :
-    DataFrameReceiver<T>(df, allowMissingColumns), SelectReceiver<T>
+    DataFrameReceiver<T>(df, allowMissingColumns), SelectReceiver<T> {
+
+    override fun <R> aggregateBase(body: AggregateBody<T, R>) = source.aggregateBase(body)
+
+    override fun remainingColumnsSelector() = source.remainingColumnsSelector()
+}
 
 data class DataFrameSize(val ncol: Int, val nrow: Int) {
     override fun toString() = "$nrow x $ncol"
@@ -100,19 +105,18 @@ internal fun <T, C> DataFrame<T>.getColumns(selector: ColumnsSelector<T, C>): Li
 
 internal fun <T> DataFrame<T>.new(columns: Iterable<AnyCol>) = dataFrameOf(columns).typed<T>()
 
-interface DataFrame<out T> : DataFrameBase<T> {
+interface DataFrame<out T> : DataFrameAggregations<T> {
 
     companion object {
         fun empty(nrow: Int = 0): AnyFrame = EmptyDataFrame<Any?>(nrow)
     }
 
-    fun nrow(): Int
-
     fun indices(): IntRange = 0 until nrow
 
     override fun ncol(): Int = columns().size
 
-    fun rows(): Iterable<DataRow<T>> = forwardIterable()
+    override fun rows(): Iterable<DataRow<T>> = forwardIterable()
+
     fun columnNames() = columns().map { it.name() }
 
     override fun columns(): List<AnyCol>
@@ -121,6 +125,7 @@ interface DataFrame<out T> : DataFrameBase<T> {
     operator fun set(columnName: String, value: AnyCol)
 
     override operator fun get(index: Int): DataRow<T> = DataRowImpl(index, this)
+
     override operator fun get(columnName: String) =
         tryGetColumn(columnName) ?: throw Exception("Column not found: '$columnName'")
 
@@ -133,8 +138,7 @@ interface DataFrame<out T> : DataFrameBase<T> {
     override operator fun <R> get(column: ColumnReference<DataFrame<R>>): FrameColumn<R> =
         get<DataFrame<R>>(column) as FrameColumn<R>
 
-    operator fun <C> get(selector: ColumnsSelector<T, C>): List<DataColumn<C>> = getColumns(false, selector)
-    operator fun <C> get(selector: ColumnSelector<T, C>): DataColumn<C> = getColumns(false, selector).single()
+    override operator fun <C> get(selector: ColumnsSelector<T, C>): List<DataColumn<C>> = getColumns(false, selector)
 
     operator fun get(indices: Iterable<Int>) = getRows(indices)
     operator fun get(mask: BooleanArray) = getRows(mask)
@@ -153,7 +157,6 @@ interface DataFrame<out T> : DataFrameBase<T> {
     fun getColumnIndex(col: AnyCol) = getColumnIndex(col.name())
 
     fun <R> tryGetColumn(column: ColumnReference<R>): DataColumn<R>? = column.resolveSingle(this, UnresolvedColumnsPolicy.Skip)?.data
-//        tryGetColumn(column.path()) as? DataColumn<R>
 
     override fun tryGetColumn(columnName: String): AnyCol? =
         getColumnIndex(columnName).let { if (it != -1) column(it) else null }

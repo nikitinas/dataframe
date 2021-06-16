@@ -1,5 +1,6 @@
 package org.jetbrains.dataframe.impl.columns.missing
 
+import org.jetbrains.dataframe.AggregateBody
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataRow
@@ -44,4 +45,8 @@ internal class MissingColumnGroup<T> : MissingDataColumn<DataRow<T>>(), DataColu
     override fun get(firstIndex: Int, vararg otherIndices: Int) = throw UnsupportedOperationException()
 
     override fun distinct() = throw UnsupportedOperationException()
+
+    override fun <R> aggregateBase(body: AggregateBody<T, R>) = throw UnsupportedOperationException()
+
+    override fun remainingColumnsSelector() = throw UnsupportedOperationException()
 }

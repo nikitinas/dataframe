@@ -14,7 +14,6 @@ import org.jetbrains.dataframe.images.Image
 import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
 import org.jetbrains.dataframe.into
 import org.jetbrains.dataframe.map
-import org.jetbrains.dataframe.minBy
 import org.jetbrains.dataframe.move
 import org.jetbrains.dataframe.remove
 import org.jetbrains.dataframe.select
@@ -306,13 +305,13 @@ class PlaylistJsonTest {
     fun `aggregate by column`(){
 
         val res = typed.aggregate { items }.with {
-            minBy { snippet.publishedAt }.snippet into "earliest"
+            minFor { snippet.publishedAt }.snippet into "earliest"
         }
 
         res.ncol() shouldBe typed.ncol() + 1
         res.getColumnIndex("earliest") shouldBe typed.getColumnIndex("items") + 1
 
-        val expected = typed.items.map { it.snippet.minBy { publishedAt } }.toList()
+        val expected = typed.items.map { it.snippet.minFor { publishedAt } }.toList()
         res["earliest"].toList() shouldBe expected
     }
 }

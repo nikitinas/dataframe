@@ -25,7 +25,6 @@ import org.jetbrains.dataframe.columnOf
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.toAccessor
-import org.jetbrains.dataframe.count
 import org.jetbrains.dataframe.dataFrameOf
 import org.jetbrains.dataframe.distinct
 import org.jetbrains.dataframe.dropNulls
@@ -73,7 +72,7 @@ import org.jetbrains.dataframe.select
 import org.jetbrains.dataframe.sortBy
 import org.jetbrains.dataframe.split
 import org.jetbrains.dataframe.subcolumn
-import org.jetbrains.dataframe.sumBy
+import org.jetbrains.dataframe.sumOf
 import org.jetbrains.dataframe.toDefinition
 import org.jetbrains.dataframe.toGrouped
 import org.jetbrains.dataframe.toMany
@@ -512,7 +511,7 @@ class DataFrameTreeTests : BaseTest() {
             .update { groupCol }.at(2).with { emptyDataFrame(0) }
             .update { groupCol }.at(3).with { it.filter { false } }
         val res = plain.explode(dropEmpty = false) { groupCol }
-        val expected = plain[groupCol].sumBy { Math.max(it?.nrow() ?: 0, 1) }
+        val expected = plain[groupCol].sumOf { Math.max(it?.nrow() ?: 0, 1) }
         res.nrow() shouldBe expected
     }
 

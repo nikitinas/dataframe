@@ -603,7 +603,7 @@ class DataFrameTests : BaseTest() {
             median { age } into "median age"
             min { age } into "min age"
             all { weight != null } into "all with weights"
-            maxBy { age }.city into "oldest origin"
+            maxFor { age }.city into "oldest origin"
             sortBy { age }.first().city into "youngest origin"
             pivot { city.map { "from $it"} }.count()
             age.toList() into "ages"
@@ -615,7 +615,7 @@ class DataFrameTests : BaseTest() {
             it.median { it.age } into "median age"
             it.min { it.age } into "min age"
             it.all { it.weight != null } into "all with weights"
-            it.maxBy { it.age }.city into "oldest origin"
+            it.maxFor { it.age }.city into "oldest origin"
             it.sortBy { it.age }.first().city into "youngest origin"
             it.pivot { it.city.map { "from $it" } }.count()
             it.age.toList() into "ages"
@@ -651,7 +651,7 @@ class DataFrameTests : BaseTest() {
             median { int("age") } into "median age"
             min { int("age") } into "min age"
             all { get("weight") != null } into "all with weights"
-            maxBy { int("age") }.get("city") into "oldest origin"
+            maxFor { int("age") }.get("city") into "oldest origin"
             sortBy("age").first()["city"] into "youngest origin"
             pivot { it["city"].map { "from $it" } }.count()
             it["age"].toList() into "ages"
@@ -674,20 +674,19 @@ class DataFrameTests : BaseTest() {
     fun `min`() {
         val expected = 15
 
-        fun Int?.check() = this shouldBe expected
+        fun Any?.check() = this shouldBe expected
 
-        typed.min { age }.check()
+        typed.minOf { age }.check()
         typed.min { it.age }.check()
         typed.age.min().check()
 
-        df.min { age(it) }.check()
+        df.min { age }.check()
         df.min(age).check()
         df[age].min().check()
 
         df.min { int("age") }.check()
-        df.min { "age"<Int>() }.check()
+        df.min("age").check()
         df["age"].typed<Int>().min().check()
-        (df.min("age") as Int?).check()
     }
 
     @Test
@@ -700,7 +699,7 @@ class DataFrameTests : BaseTest() {
         typed.max { it.weight }.check()
         typed.weight.max().check()
 
-        df.max { weight() }.check()
+        df.max { weight }.check()
         df.max(weight).check()
         df[weight].max().check()
 
@@ -715,12 +714,12 @@ class DataFrameTests : BaseTest() {
 
         fun AnyRow?.check() = this!![name] shouldBe expected
 
-        typed.dropNulls { weight }.minBy { weight!! }.check()
-        typed.dropNulls { it.weight }.minBy { it.weight!! }.check()
+        typed.dropNulls { weight }.minBy { weight }.check()
+        typed.dropNulls { it.weight }.minBy { it.weight }.check()
 
-        df.dropNulls(weight).minBy { weight()!! }.check()
+        df.dropNulls(weight).minBy { weight }.check()
 
-        df.dropNulls("weight").minBy { "weight"<Int>() }.check()
+        df.dropNulls("weight").minBy { int("weight") }.check()
         df.dropNulls("weight").minBy("weight").check()
     }
 
@@ -734,10 +733,10 @@ class DataFrameTests : BaseTest() {
         typed.maxBy { it.age }.check()
         typed.maxBy(typed.age).check()
 
-        df.maxBy { age() }.check()
+        df.maxBy { age }.check()
         df.maxBy(age).check()
 
-        df.maxBy { "age"<Int>() }.check()
+        df.maxBy { int("age") }.check()
         df.maxBy("age").check()
     }
 
@@ -1030,7 +1029,7 @@ class DataFrameTests : BaseTest() {
         val merged = typed.select { name and city }.mergeRows(dropNulls = false) { city }
 
         val cityList by column<Many<String?>>().named("city")
-        merged[cityList].sumBy { it.size } shouldBe typed.city.size
+        merged[cityList].sumOf { it.size } shouldBe typed.city.size
         merged[cityList].type() shouldBe getType<Many<String?>>()
 
         val expected = typed.groupBy { name }.aggregate { it.city.toSet() into "city" }
@@ -1048,7 +1047,7 @@ class DataFrameTests : BaseTest() {
         val merged = typed.select { name and city }.mergeRows(dropNulls = true) { city }
 
         val cityList by column<Many<String>>().named("city")
-        merged[cityList].sumBy { it.size } shouldBe typed.city.dropNulls().size
+        merged[cityList].sumOf { it.size } shouldBe typed.city.dropNulls().size
         merged[cityList].type() shouldBe getType<Many<String>>()
 
         val expected = typed.dropNulls {city}.groupBy { name }.aggregate { it.city.toSet() as Set<String> into "city" }
@@ -1240,7 +1239,7 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun `basic math`() {
+    fun `column stats`() {
         typed.age.mean() shouldBe typed.age.toList().mean()
         typed.age.min() shouldBe typed.age.toList().minOrNull()
         typed.age.max() shouldBe typed.age.toList().maxOrNull()

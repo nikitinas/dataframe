@@ -2,6 +2,7 @@ package org.jetbrains.dataframe.columns
 
 import org.jetbrains.dataframe.AnyFrame
 import org.jetbrains.dataframe.AnyRow
+import org.jetbrains.dataframe.aggregation.DataColumnAggregations
 import org.jetbrains.dataframe.ColumnResolutionContext
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataRow
@@ -33,7 +34,7 @@ import kotlin.reflect.full.withNullability
  * All column extension functions that clash with [DataFrame] API (such as filter, forEach, map etc.) are defined for this interface,
  * because [ColumnGroup] doesn't inherit from it
  */
-interface DataColumn<out T> : BaseColumn<T> {
+interface DataColumn<out T> : DataColumnAggregations<T> {
 
     companion object {
 

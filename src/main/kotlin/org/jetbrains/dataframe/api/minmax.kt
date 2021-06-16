@@ -15,7 +15,7 @@ fun <T> DataFrame<T>.max(col: String): Any? = get(col).maxUnsafe()
 
 fun <T, D : Comparable<D>> DataFrame<T>.min(col: KProperty<D?>): D? = get(col).min()
 fun <T, D : Comparable<D>> DataFrame<T>.min(col: ColumnReference<D?>): D? = get(col).min()
-fun <T, D : Comparable<D>> DataFrame<T>.min(selector: RowSelector<T, D?>): D? = rows().asSequence().map { selector(it, it) }.filterNotNull().minOrNull()
+//fun <T, D : Comparable<D>> DataFrame<T>.min(selector: RowSelector<T, D?>): D? = rows().asSequence().map { selector(it, it) }.filterNotNull().minOrNull()
 fun <T> DataFrame<T>.min(col: String): Any? = get(col).minUnsafe()
 
 internal fun <T> DataColumn<T?>.minUnsafe(): T? {

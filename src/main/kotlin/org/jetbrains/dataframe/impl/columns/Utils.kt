@@ -111,6 +111,9 @@ internal fun <A, B> Columns<A>.transform(transform: (List<ColumnWithPath<A>>) ->
 
 internal fun Array<out Columns<*>>.toColumns(): Columns<Any?> = ColumnsList(this.asList())
 internal fun Array<out String>.toColumns(): Columns<Any?> = map { it.toColumnDef() }.toColumnSet()
+internal fun <C> Array<out String>.toColumnsOf(): Columns<C> = toColumns() as Columns<C>
+internal fun Array<out String>.toComparableColumns() = toColumnsOf<Comparable<Any?>>()
+internal fun Array<out String>.toNumberColumns() = toColumnsOf<Number>()
 internal fun Array<out ColumnPath>.toColumns(): Columns<Any?> = map { it.toColumnDef() }.toColumnSet()
 internal fun <C> Iterable<Columns<C>>.toColumnSet(): Columns<C> = ColumnsList(asList())
 

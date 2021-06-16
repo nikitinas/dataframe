@@ -151,6 +151,12 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
     fun DataFrameBase<*>.bool(columnName: String) = getColumn<Boolean>(columnName)
     fun DataFrameBase<*>.double(columnName: String) = getColumn<Double>(columnName)
     fun DataFrameBase<*>.long(columnName: String) = getColumn<Long>(columnName)
+    fun DataFrameBase<*>.nint(columnName: String) = getColumn<Int?>(columnName)
+    fun DataFrameBase<*>.nstring(columnName: String) = getColumn<String?>(columnName)
+    fun DataFrameBase<*>.ndouble(columnName: String) = getColumn<Double?>(columnName)
+    fun DataFrameBase<*>.nbool(columnName: String) = getColumn<Boolean?>(columnName)
+    fun DataFrameBase<*>.nlong(columnName: String) = getColumn<Long?>(columnName)
+
 }
 
 internal fun <T,C> ColumnsSelector<T, C>.filter(predicate: (ColumnWithPath<C>) -> Boolean): ColumnsSelector<T, C> = { this@filter(it, it).filter(predicate) }

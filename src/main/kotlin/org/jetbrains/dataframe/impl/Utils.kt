@@ -3,6 +3,7 @@ package org.jetbrains.dataframe.impl
 import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.Predicate
 import java.math.BigDecimal
+import java.math.BigInteger
 import kotlin.reflect.KClass
 
 internal infix fun <T> (Predicate<T>).and(other: Predicate<T>): Predicate<T> = { this(it) && other(it) }
@@ -53,7 +54,6 @@ internal fun BooleanArray.toIndices(): List<Int> {
     return res
 }
 
-
 internal fun <T> Iterable<T>.equalsByElement(other: Iterable<T>): Boolean {
     val iterator1 = iterator()
     val iterator2 = other.iterator()
@@ -79,6 +79,22 @@ fun <T> Iterable<T>.asList() = when (this) {
 
 internal fun <T> Iterable<T>.anyNull() = any { it == null }
 
+@PublishedApi
 internal fun emptyPath(): ColumnPath = emptyList()
 
+@PublishedApi
 internal fun pathOf(name: String): ColumnPath = listOf(name)
+
+@PublishedApi
+internal fun <T:Number> KClass<T>.zero(): T = when(this){
+    Int::class -> 0 as T
+    Byte::class -> 0.toByte() as T
+    Short::class -> 0.toShort() as T
+    Long::class -> 0.toLong() as T
+    Double::class -> 0.toDouble() as T
+    Float::class -> 0.toFloat() as T
+    BigDecimal::class -> BigDecimal.ZERO as T
+    BigInteger::class -> BigInteger.ZERO as T
+    Number::class -> 0 as T
+    else -> TODO()
+}

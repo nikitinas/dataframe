@@ -1,16 +1,20 @@
 package org.jetbrains.dataframe.impl
 
 import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.aggregation.receivers.AggregateReceiver
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.name
+import org.jetbrains.dataframe.columns.shortPath
 import org.jetbrains.dataframe.columns.size
+import org.jetbrains.dataframe.impl.aggregation.toColumnWithPath
 import org.jetbrains.dataframe.impl.columns.addPath
 import org.jetbrains.dataframe.io.renderToString
 import java.lang.IllegalArgumentException
+import kotlin.reflect.KType
 
-internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T>, AggregatableDataFrame<T> {
+internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T> {
 
     private val nrow: Int = columns.firstOrNull()?.size ?: 0
 
@@ -63,10 +67,25 @@ internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T>, 
 
     override fun columns() = columns
 
-    override fun <R> aggregateBase(body: BaseAggregator<T, R>): DataFrame<T> {
+    override fun <R> aggregateBase(body: AggregateBody<T, R>): DataFrame<T> {
 
-        return this
+        class DataFrameAggregateReceiver: AggregateReceiver<T>, DataFrame<T> by this {
+
+            val values = mutableListOf<NamedValue>()
+
+            override fun yield(value: NamedValue) = value.also { values.add(it) }
+
+            override fun <R> yield(path: ColumnPath, value: R, type: KType?, default: R?) = yield(path, value, type, default, false)
+
+            override fun pathForSingleColumn(column: AnyCol) = column.shortPath()
+        }
+
+        val receiver = DataFrameAggregateReceiver()
+        val result = body(receiver, receiver)
+        val values = if(result != Unit && receiver.values.isEmpty()) listOf(NamedValue.create(pathOf("value"), result, null, null, true))
+            else receiver.values
+        return values.map { it.toColumnWithPath() }.toDataFrame<T>()
     }
 
-    override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { none() }
+    override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all() }
 }

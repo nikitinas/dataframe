@@ -343,8 +343,8 @@ class PivotTests {
     @Test
     fun `pivot matches yes no`() {
         val pivoted = typed.drop(1).pivot { key }.withIndex { name }.matches("yes", "no")
-        pivoted.sumBy { values.count { it == "yes" } } shouldBe typed.nrow() - 1
-        pivoted.sumBy { values.count { it == "no" } } shouldBe 1
+        pivoted.sumOf { values.count { it == "yes" } } shouldBe typed.nrow() - 1
+        pivoted.sumOf { values.count { it == "no" } } shouldBe 1
     }
 
     @Test

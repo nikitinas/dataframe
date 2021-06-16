@@ -29,6 +29,9 @@ interface DataFrameBase<out T>: SingleColumn<DataRow<T>> {
     operator fun <R> get(column: KProperty<DataRow<R>>) = get(column.name) as ColumnGroup<R>
     operator fun <R> get(column: KProperty<DataFrame<R>>) = get(column.name) as FrameColumn<R>
 
+    operator fun <C> get(columns: ColumnsSelector<T, C>): List<DataColumn<C>>
+    operator fun <C> get(columns: ColumnSelector<T, C>): DataColumn<C> = get(columns as ColumnsSelector<T, C>).single()
+
     fun <R> getColumn(name: String) = get(name) as DataColumn<R>
 
     fun hasColumn(columnName: String) = tryGetColumn(columnName) != null
@@ -48,6 +51,8 @@ interface DataFrameBase<out T>: SingleColumn<DataRow<T>> {
     fun column(columnIndex: Int): AnyCol
     fun columns(): List<AnyCol>
     fun ncol(): Int
+    fun nrow(): Int
+    fun rows(): Iterable<DataRow<T>>
 }
 
 operator fun <T, R> DataFrameBase<T>.get(column: KProperty<DataFrame<R>>) = get(column.toColumnDef())

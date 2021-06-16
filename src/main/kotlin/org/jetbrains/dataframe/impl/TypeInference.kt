@@ -96,3 +96,28 @@ internal fun resolve(actualType: KType, declaredType: KType): Map<KTypeParameter
     resolveRec(actualType, declaredType)
     return map
 }
+
+internal val numberTypeExtensions: Map<Pair<KClass<*>, KClass<*>>, KClass<*>> by lazy {
+    val map = mutableMapOf<Pair<KClass<*>, KClass<*>>, KClass<*>>()
+    fun add(from: KClass<*>, to: KClass<*>) {
+        map[from to to] = to
+        map[to to from] = to
+    }
+    val intTypes = listOf(Byte::class, Short::class, Int::class, Long::class)
+    for(i in intTypes.indices){
+        for(j in i+1 until intTypes.size)
+            add(intTypes[i], intTypes[j])
+        add(intTypes[i], Double::class)
+    }
+    add(Float::class, Double::class)
+    map
+}
+
+internal fun getCommonNumberType(first: KClass<*>?, second: KClass<*>): KClass<*> =
+    when{
+        first == null -> second
+        first == second -> first
+        else -> numberTypeExtensions[first to second] ?: error("Can not find common number type for $first and $second")
+    }
+
+internal fun Iterable<KClass<*>>.commonNumberClass(): KClass<*> = fold(null as KClass<*>?, ::getCommonNumberType) ?: Number::class

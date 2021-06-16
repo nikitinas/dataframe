@@ -99,7 +99,7 @@ internal fun AnyColumn.unbox(): AnyCol = when (this) {
 
 fun <T> Iterable<AnyColumn>.asDataFrame() = dataFrameOf(this).typed<T>()
 
-@JvmName("toDataFrameColumnPathAnyCol")
+@JvmName("toDataFramePairColumnPathAnyCol")
 fun <T> Iterable<Pair<ColumnPath, AnyColumn>>.toDataFrame(): DataFrame<T> {
 
     val nameGenerator = ColumnNameGenerator()

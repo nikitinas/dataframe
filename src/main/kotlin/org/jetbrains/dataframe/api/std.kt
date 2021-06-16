@@ -28,7 +28,7 @@ fun <T> DataFrame<T>.std(): DataRow<T> {
     }.asDataFrame<T>()[0]
 }
 
-fun <T : Number> Iterable<T>.std(clazz: KClass<T>) = when (clazz) {
+fun <T : Number> Iterable<T>.std(clazz: KClass<*>) = when (clazz) {
     Double::class -> (this as Iterable<Double>).std()
     Float::class -> (this as Iterable<Float>).std()
     Int::class, Short::class, Byte::class -> (this as Iterable<Int>).std()
@@ -56,7 +56,7 @@ fun Iterable<BigDecimal>.std() = stdMean().first
 
 @JvmName("doubleStdMean")
 fun Iterable<Double>.stdMean(): Pair<Double, Double> {
-    val m = mean()
+    val m = mean(false)
     return sqrt(fold(0.0) { acc, el ->
         val diff = el - m
         acc + diff * diff
@@ -65,7 +65,7 @@ fun Iterable<Double>.stdMean(): Pair<Double, Double> {
 
 @JvmName("floatStdMean")
 fun Iterable<Float>.stdMean(): Pair<Double, Double> {
-    val m = mean()
+    val m = mean(false)
     return sqrt(fold(0.0){ acc, el ->
         val diff = el - m
         acc + diff * diff

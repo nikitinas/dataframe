@@ -24,6 +24,8 @@ fun <T> manyOf(element: T): Many<T> = ManyImpl(listOf(element))
 
 fun <T> manyOf(vararg values: T): Many<T> = ManyImpl(listOf(*values))
 
+fun <T> Sequence<T>.toMany() = toList().toMany()
+
 fun <T> Iterable<T>.toMany(): Many<T> = when(this){
     is Many<T> -> this
     is List<T> -> ManyImpl(this)

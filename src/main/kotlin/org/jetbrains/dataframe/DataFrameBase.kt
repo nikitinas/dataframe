@@ -33,6 +33,7 @@ interface DataFrameBase<out T>: SingleColumn<DataRow<T>> {
     operator fun <C> get(columns: ColumnSelector<T, C>): DataColumn<C> = get(columns as ColumnsSelector<T, C>).single()
 
     fun <R> getColumn(name: String) = get(name) as DataColumn<R>
+    fun <R> getColumn(index: Int) = column(index) as DataColumn<R>
 
     fun hasColumn(columnName: String) = tryGetColumn(columnName) != null
 

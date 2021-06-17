@@ -31,14 +31,14 @@ class MoveTests {
     @Test
     fun `select all dfs`() {
 
-        val selected = grouped.getColumnsWithPaths { all().colsDfs() }.map { it.path.joinToString(".") }
-        selected shouldBe listOf("a.b", "a.c", "a.c.d", "b.c", "b.d", "e.f")
+        val selected = grouped.getColumnsWithPaths { all().dfs() }.map { it.path.joinToString(".") }
+        selected shouldBe listOf("a.b", "a.c.d", "b.c", "b.d", "e.f")
     }
 
     @Test
     fun batchUngrouping(){
 
-        val ungrouped = grouped.move { colsDfs { it.depth() > 0 && !it.isGroup() } }.into { path(it.path.joinToString(".")) }
+        val ungrouped = grouped.move { dfs { it.depth() > 0 && !it.isGroup() } }.into { path(it.path.joinToString(".")) }
         ungrouped.columnNames() shouldBe listOf("q", "a.b", "a.c.d", "b.c", "b.d", "w", "e.f", "r")
     }
 
@@ -74,7 +74,7 @@ class MoveTests {
     @Test
     fun `selectDfs`() {
 
-        val selected = grouped.select { it["a"].colsDfs { !it.isGroup() }}
+        val selected = grouped.select { it["a"].dfs { !it.isGroup() }}
         selected.columnNames() shouldBe listOf("b", "d")
     }
 
@@ -82,7 +82,7 @@ class MoveTests {
     fun `columnsWithPath in selector`() {
 
         val selected = grouped.getColumnsWithPaths { it["a"] }
-        val actual = grouped.getColumnsWithPaths { selected.map { it.colsDfs() }.toColumnSet() }
-        actual.map { it.path.joinToString(".") } shouldBe listOf("a.b", "a.c", "a.c.d")
+        val actual = grouped.getColumnsWithPaths { selected.map { it.dfs() }.toColumnSet() }
+        actual.map { it.path.joinToString(".") } shouldBe listOf("a.b", "a.c.d")
     }
 }

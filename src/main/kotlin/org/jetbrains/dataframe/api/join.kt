@@ -185,7 +185,7 @@ fun <A, B> DataFrame<A>.join(
     val rightJoinColumnPaths = allRightJoinColumns.map { it.path to it.data }.toMap()
 
     val newRightColumns =
-        if (addNewColumns) other.getColumnsWithPaths { colsDfs { !it.isGroup() && !rightJoinColumnPaths.contains(it.path) } } else emptyList()
+        if (addNewColumns) other.getColumnsWithPaths { dfs { !it.isGroup() && !rightJoinColumnPaths.contains(it.path) } } else emptyList()
 
     // for every column index from left data frame stores matching column from right data frame
     val leftToRightColumns = leftColumns.map { rightJoinColumnPaths[pathMapping[it.path()]] }

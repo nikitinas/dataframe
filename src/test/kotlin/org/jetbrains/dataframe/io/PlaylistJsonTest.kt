@@ -243,7 +243,7 @@ class PlaylistJsonTest {
     @Test
     fun `deep batch update all`() {
 
-        val updated = item.update { colsDfs { it.name == "url" } }.with { (it as? String)?.let{ Image(it) } }
+        val updated = item.update { dfs { it.name == "url" } }.with { (it as? String)?.let{ Image(it) } }
         updated.snippet.thumbnails.default.url.type() shouldBe getType<Image>()
         updated.snippet.thumbnails.maxres.url.type() shouldBe getType<Image?>()
         updated.snippet.thumbnails.standard.url.type() shouldBe getType<Image?>()

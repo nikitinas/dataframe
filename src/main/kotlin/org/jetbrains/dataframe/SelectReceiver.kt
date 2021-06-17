@@ -44,13 +44,13 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
     fun Columns<*>.cols(range: IntRange) = transform { it.flatMap { it.children().subList(range.start, range.endInclusive+1) } }
     fun Columns<*>.cols(predicate: (AnyCol) -> Boolean = {true}) = colsInternal(predicate)
 
-    fun <C> Columns<C>.colsDfs(predicate: (ColumnWithPath<*>) -> Boolean = {true}) = dfsInternal(predicate)
+    fun <C> Columns<C>.dfs(predicate: (ColumnWithPath<*>) -> Boolean) = dfsInternal(predicate)
 
     fun DataFrameBase<*>.all(): Columns<*> = ColumnsList(children())
 
     fun none(): Columns<*> = ColumnsList<Any?>(emptyList())
 
-    fun Columns<*>.dfs() = colsDfs { !it.isGroup() }
+    fun Columns<*>.dfs() = dfs { !it.isGroup() }
 
     // excluding current
     fun DataFrameBase<*>.allAfter(colPath: ColumnPath) = children().let { var take = false; it.filter { if(take) true else { take = colPath == it.path; false} } }
@@ -162,11 +162,11 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
 internal fun <T,C> ColumnsSelector<T, C>.filter(predicate: (ColumnWithPath<C>) -> Boolean): ColumnsSelector<T, C> = { this@filter(it, it).filter(predicate) }
 //internal fun Columns<*>.filter(predicate: (AnyCol) -> Boolean) = transform { it.filter { predicate(it.data) } }
 internal fun Columns<*>.colsInternal(predicate: (AnyCol) -> Boolean) = transform { it.flatMap { it.children().filter { predicate(it.data) } } }
-internal fun Columns<*>.dfsInternal(predicate: (ColumnWithPath<*>) -> Boolean) = transform { it.filter { it.isGroup() }.flatMap { it.children().colsDfs().filter(predicate) } }
+internal fun Columns<*>.dfsInternal(predicate: (ColumnWithPath<*>) -> Boolean) = transform { it.filter { it.isGroup() }.flatMap { it.children().dfs().filter(predicate) } }
 
-fun <C> Columns<*>.colsDfsOf(type: KType, predicate: (ColumnWithPath<C>) -> Boolean = { true }) = dfsInternal { it.data.hasElementsOfType(type) && predicate(it.typed()) }
-inline fun <reified C> Columns<*>.colsDfsOf(noinline filter: (ColumnWithPath<C>) -> Boolean = { true }) = colsDfsOf(
-    getType<C>(), filter)
+fun <C> Columns<*>.dfsOf(type: KType, predicate: (ColumnWithPath<C>) -> Boolean = { true }): Columns<*> = dfsInternal { it.data.hasElementsOfType(type) && predicate(it.typed()) }
+inline fun <reified C> Columns<*>.dfsOf(noinline filter: (ColumnWithPath<C>) -> Boolean = { true }): Columns<C> = dfsOf(
+    getType<C>(), filter) as Columns<C>
 
 fun  Columns<*>.colsOf(type: KType): Columns<Any?> = colsOf(type) { true }
 

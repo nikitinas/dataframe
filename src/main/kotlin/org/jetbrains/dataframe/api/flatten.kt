@@ -20,7 +20,7 @@ fun <T, C> DataFrame<T>.flatten(
     fun getRootPrefix(path: ColumnPath) =
         (1 until path.size).asSequence().map { path.subList(0, it) }.first { rootPrefixes.contains(it) }
 
-    val result = move { rootColumns.toColumnSet().colsDfs { !it.isGroup() } }
+    val result = move { rootColumns.toColumnSet().dfs { !it.isGroup() } }
         .into {
             val prefix = getRootPrefix(it.path).dropLast(1)
             val desiredName = it.path.drop(prefix.size).joinToString(separator)

@@ -32,6 +32,6 @@ internal fun DataColumn<String?>.tryParseAny(): DataColumn<*> {
     return DataColumn.create(name(), parsedValues, Parsers[parserId].type.withNullability(hasNulls))
 }
 
-fun <T> DataFrame<T>.parse() = parse { colsDfsOf() }
+fun <T> DataFrame<T>.parse() = parse { this@parse.dfsOf() }
 
 fun <T> DataFrame<T>.parse(columns: ColumnsSelector<T, String?>) = convert(columns).to { it.tryParseAny() }

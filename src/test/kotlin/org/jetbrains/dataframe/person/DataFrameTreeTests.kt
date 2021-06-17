@@ -19,7 +19,7 @@ import org.jetbrains.dataframe.sumOf
 import org.jetbrains.dataframe.append
 import org.jetbrains.dataframe.at
 import org.jetbrains.dataframe.by
-import org.jetbrains.dataframe.colsDfsOf
+import org.jetbrains.dataframe.dfsOf
 import org.jetbrains.dataframe.column
 import org.jetbrains.dataframe.columnGroup
 import org.jetbrains.dataframe.columnList
@@ -149,8 +149,8 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun `select dfs under group`() {
-        df2.select { nameAndCity.colsDfsOf<String>() } shouldBe typed2.select { nameAndCity.name }
-        df2.select { nameAndCity.colsDfsOf<String?>() } shouldBe typed2.select { nameAndCity.name and nameAndCity.city }
+        df2.select { nameAndCity.dfsOf<String>() } shouldBe typed2.select { nameAndCity.name }
+        df2.select { nameAndCity.dfsOf<String?>() } shouldBe typed2.select { nameAndCity.name and nameAndCity.city }
     }
 
     @Test
@@ -268,7 +268,7 @@ class DataFrameTreeTests : BaseTest() {
     @Test
     fun selectDfs() {
 
-        val cols = typed2.select { colsDfs { it.hasNulls } }
+        val cols = typed2.select { dfs { it.hasNulls } }
         cols shouldBe typed2.select { nameAndCity.city and weight }
     }
 
@@ -452,7 +452,7 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun parentColumnTest() {
-        val res = typed2.move { colsDfs { it.depth > 0 } }.toTop { it.parent!!.name + "-" + it.name }
+        val res = typed2.move { dfs { it.depth > 0 } }.toTop { it.parent!!.name + "-" + it.name }
         res.ncol() shouldBe 4
         res.columnNames() shouldBe listOf("nameAndCity-name", "nameAndCity-city", "age", "weight")
     }

@@ -136,7 +136,7 @@ internal fun TreeNode<ColumnPosition>.allRemovedColumns() = dfs { it.data.wasRem
 
 internal fun TreeNode<ColumnPosition>.allWithColumns() = dfs { it.data.column != null }
 
-internal fun Iterable<ColumnWithPath<*>>.colsDfs(): List<ColumnWithPath<*>> {
+internal fun Iterable<ColumnWithPath<*>>.dfs(): List<ColumnWithPath<*>> {
 
     val result = mutableListOf<ColumnWithPath<*>>()
     fun dfs(cols: Iterable<ColumnWithPath<*>>) {

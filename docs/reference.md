@@ -745,15 +745,15 @@ df.move { cols { it.name.startsWith("total") } }.into { path("total", it.name.su
 
 // some.path.data1 -> new.column.path.data1
 // another.path.data2 -> new.column.path.data2
-df.move { colsDfs { it.parent.name == "path" } }.under { new.column.path } // new.column.path should aready exists
+df.move { dfs { it.parent.name == "path" } }.under { new.column.path } // new.column.path should aready exists
 
 // info.default.data -> default
 // some.field.data -> field
-df.move { colsDfs { it.name == "data" } }.toTop { it.parent.name }
+df.move { dfs { it.name == "data" } }.toTop { it.parent.name }
 
 // a.b -> b.a
 // a.b.c -> a.b.c
-df.move { colsDfs { it.path.length == 2 } }.into { it.path.reverse() }
+df.move { dfs { it.path.length == 2 } }.into { it.path.reverse() }
 ```
 ### group
 Group columns into column groups. It is a special case of [move](#move) operation

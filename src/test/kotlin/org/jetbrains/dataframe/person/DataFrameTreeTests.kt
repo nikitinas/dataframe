@@ -14,8 +14,8 @@ import org.jetbrains.dataframe.Many
 import org.jetbrains.dataframe.add
 import org.jetbrains.dataframe.after
 import org.jetbrains.dataframe.annotations.DataSchema
-import org.jetbrains.dataframe.api.max
-import org.jetbrains.dataframe.api.sumOf
+import org.jetbrains.dataframe.max
+import org.jetbrains.dataframe.sumOf
 import org.jetbrains.dataframe.append
 import org.jetbrains.dataframe.at
 import org.jetbrains.dataframe.by
@@ -58,7 +58,6 @@ import org.jetbrains.dataframe.isGroup
 import org.jetbrains.dataframe.join
 import org.jetbrains.dataframe.map
 import org.jetbrains.dataframe.mapNotNullGroups
-import org.jetbrains.dataframe.max
 import org.jetbrains.dataframe.mergeRows
 import org.jetbrains.dataframe.minus
 import org.jetbrains.dataframe.move
@@ -74,7 +73,6 @@ import org.jetbrains.dataframe.select
 import org.jetbrains.dataframe.sortBy
 import org.jetbrains.dataframe.split
 import org.jetbrains.dataframe.subcolumn
-import org.jetbrains.dataframe.sumOf
 import org.jetbrains.dataframe.toDefinition
 import org.jetbrains.dataframe.toGrouped
 import org.jetbrains.dataframe.toMany

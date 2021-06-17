@@ -1,7 +1,7 @@
 package org.jetbrains.dataframe.impl.aggregation.modes
 
 import org.jetbrains.dataframe.aggregation.Aggregatable
-import org.jetbrains.dataframe.api.DataFrameAggregations
+import org.jetbrains.dataframe.DataFrameAggregations
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregator
 import org.jetbrains.dataframe.DataFrame

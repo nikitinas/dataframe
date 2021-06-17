@@ -1,15 +1,7 @@
-package org.jetbrains.dataframe.api
+package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.ColumnSelector
-import org.jetbrains.dataframe.ColumnsSelector
-import org.jetbrains.dataframe.DataFrame
-import org.jetbrains.dataframe.DataFrameBase
-import org.jetbrains.dataframe.DataRow
-import org.jetbrains.dataframe.RowFilter
-import org.jetbrains.dataframe.RowSelector
 import org.jetbrains.dataframe.aggregation.Aggregatable
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
-import org.jetbrains.dataframe.asSequence
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregators
 import org.jetbrains.dataframe.impl.aggregation.comparableColumns
@@ -25,11 +17,6 @@ import org.jetbrains.dataframe.impl.columns.toComparableColumns
 import org.jetbrains.dataframe.impl.columns.toNumberColumns
 import org.jetbrains.dataframe.impl.mapRows
 import org.jetbrains.dataframe.impl.zero
-import org.jetbrains.dataframe.indexOfMax
-import org.jetbrains.dataframe.indexOfMin
-import org.jetbrains.dataframe.isNumber
-import org.jetbrains.dataframe.sumOf
-import org.jetbrains.dataframe.toColumnDef
 import kotlin.reflect.KProperty
 
 interface DataFrameAggregations<out T> : Aggregatable<T>, DataFrameBase<T> {

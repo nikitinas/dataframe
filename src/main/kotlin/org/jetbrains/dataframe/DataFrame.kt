@@ -1,6 +1,5 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.api.DataFrameAggregations
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.impl.DataFrameReceiver

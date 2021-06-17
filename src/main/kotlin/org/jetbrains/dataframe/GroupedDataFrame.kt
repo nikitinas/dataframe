@@ -1,6 +1,5 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.api.GroupByAggregations
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.impl.GroupedDataFrameImpl
 import org.jetbrains.dataframe.impl.columns.asTable

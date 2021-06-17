@@ -1,7 +1,6 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.aggregation.Aggregatable
-import org.jetbrains.dataframe.api.PivotAggregations
 import org.jetbrains.dataframe.aggregation.AggregateReceiver
 import org.jetbrains.dataframe.aggregation.GroupByReceiver
 import org.jetbrains.dataframe.columns.AnyCol

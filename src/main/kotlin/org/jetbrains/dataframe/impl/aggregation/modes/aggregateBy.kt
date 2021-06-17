@@ -5,7 +5,7 @@ import org.jetbrains.dataframe.DataFrameSelector
 import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.GroupedDataFrame
 import org.jetbrains.dataframe.aggregateGroupBy
-import org.jetbrains.dataframe.api.GroupByAggregations
+import org.jetbrains.dataframe.GroupByAggregations
 import org.jetbrains.dataframe.namedValues
 import org.jetbrains.dataframe.typed
 

@@ -1,14 +1,11 @@
-package org.jetbrains.dataframe.api
+package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.Predicate
-import org.jetbrains.dataframe.asSequence
 import org.jetbrains.dataframe.columns.BaseColumn
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.typeClass
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregators
 import org.jetbrains.dataframe.impl.aggregation.modes.of
-import org.jetbrains.dataframe.sum
 
 interface DataColumnAggregations<out T>: BaseColumn<T> {
 

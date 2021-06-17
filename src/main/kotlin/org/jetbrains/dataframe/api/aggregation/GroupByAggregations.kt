@@ -1,13 +1,7 @@
-package org.jetbrains.dataframe.api
+package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.ColumnSelector
-import org.jetbrains.dataframe.ColumnsSelector
-import org.jetbrains.dataframe.DataFrame
-import org.jetbrains.dataframe.RowFilter
-import org.jetbrains.dataframe.RowSelector
 import org.jetbrains.dataframe.aggregation.Aggregatable
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
-import org.jetbrains.dataframe.getType
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregators
 import org.jetbrains.dataframe.impl.aggregation.comparableColumns
 import org.jetbrains.dataframe.impl.aggregation.modes.aggregateValue
@@ -18,7 +12,6 @@ import org.jetbrains.dataframe.impl.aggregation.modes.of
 import org.jetbrains.dataframe.impl.aggregation.numberColumns
 import org.jetbrains.dataframe.impl.aggregation.yieldOneOrMany
 import org.jetbrains.dataframe.impl.columns.toComparableColumns
-import org.jetbrains.dataframe.map
 
 interface GroupByAggregations<out T> : Aggregatable<T>, PivotOrGroupByAggregations<T> {
 

@@ -1,8 +1,5 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.api.max
-import org.jetbrains.dataframe.api.mean
-import org.jetbrains.dataframe.api.min
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.DataColumn

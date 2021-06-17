@@ -1,8 +1,5 @@
-package org.jetbrains.dataframe.api
+package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.Column
-import org.jetbrains.dataframe.ColumnsSelector
-import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.aggregation.Aggregatable
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
 import org.jetbrains.dataframe.columns.ColumnReference
@@ -12,7 +9,6 @@ import org.jetbrains.dataframe.impl.aggregation.modes.aggregateFor
 import org.jetbrains.dataframe.impl.aggregation.numberColumns
 import org.jetbrains.dataframe.impl.aggregation.yieldOneOrManyBy
 import org.jetbrains.dataframe.impl.columns.toColumns
-import org.jetbrains.dataframe.withColumn
 
 interface PivotOrGroupByAggregations<out T> : Aggregatable<T> {
 

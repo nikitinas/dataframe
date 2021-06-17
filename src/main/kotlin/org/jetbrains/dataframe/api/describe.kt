@@ -1,5 +1,8 @@
 package org.jetbrains.dataframe
 
+import org.jetbrains.dataframe.api.max
+import org.jetbrains.dataframe.api.mean
+import org.jetbrains.dataframe.api.min
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.DataColumn
@@ -50,8 +53,8 @@ internal fun describe(cols: List<AnyCol>): DataFrame<ColumnDescriptionSchema> {
         }
         if (hasNumeric) {
             NumberColumnDescriptionSchema::mean { if(it.isNumber()) (it as DataColumn<Number?>).mean() else null }
-            NumberColumnDescriptionSchema::min { if(it.isNumber()) (it as DataColumn<Number?>).minNumber() else null }
-            NumberColumnDescriptionSchema::max { if(it.isNumber()) (it as DataColumn<Number?>).maxNumber() else null }
+            NumberColumnDescriptionSchema::min { if(it.isComparable()) (it as DataColumn<Comparable<Any?>>).min() else null }
+            NumberColumnDescriptionSchema::max { if(it.isComparable()) (it as DataColumn<Comparable<Any?>>).max() else null }
         }
     }
     if (hasCategorical) df = df.add(ColumnDescriptionSchema::freq) {

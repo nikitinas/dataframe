@@ -1,6 +1,6 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.aggregation.DataFrameAggregations
+import org.jetbrains.dataframe.api.DataFrameAggregations
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.impl.DataFrameReceiver
@@ -151,7 +151,7 @@ interface DataFrame<out T> : DataFrameAggregations<T> {
 
     fun getRows(indices: Iterable<Int>) = columns().map { col -> col.slice(indices) }.asDataFrame<T>()
     fun getRows(mask: BooleanArray) = getRows(mask.toIndices())
-    fun getRows(range: IntRange) = columns().map { col -> col.slice(range) }.asDataFrame<T>()
+    fun getRows(range: IntRange) = if(range == indices()) this else columns().map { col -> col.slice(range) }.asDataFrame<T>()
 
     fun getColumnIndex(name: String): Int
     fun getColumnIndex(col: AnyCol) = getColumnIndex(col.name())

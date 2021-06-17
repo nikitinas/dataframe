@@ -1,9 +1,9 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.aggregation.Aggregatable
-import org.jetbrains.dataframe.aggregation.PivotAggregations
-import org.jetbrains.dataframe.aggregation.receivers.AggregateReceiver
-import org.jetbrains.dataframe.aggregation.receivers.GroupByReceiver
+import org.jetbrains.dataframe.api.PivotAggregations
+import org.jetbrains.dataframe.aggregation.AggregateReceiver
+import org.jetbrains.dataframe.aggregation.GroupByReceiver
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.guessColumnType
@@ -70,7 +70,7 @@ data class GroupedFramePivot<T>(
         }.typed()
     }
 
-    override fun groupByValue(flag: Boolean) = copy(groupValues = flag)
+    override fun groupByValue(flag: Boolean) = if(flag == groupValues) this else copy(groupValues = flag)
 
     override fun withGrouping(groupPath: ColumnPath) = copy(groupPath = groupPath)
 
@@ -88,7 +88,7 @@ data class DataFramePivot<T>(
     internal val groupPath: ColumnPath = emptyList()
 ) : PivotAggregations<T> {
 
-    override fun groupByValue(flag: Boolean) = copy(groupValues = flag)
+    override fun groupByValue(flag: Boolean) = if(flag == groupValues) this else copy(groupValues = flag)
 
     override fun withDefault(value: Any?) = copy(default = value)
 
@@ -175,7 +175,7 @@ data class GroupAggregatorPivot<T>(
     internal val groupPath: ColumnPath = emptyList()
 ) : PivotAggregations<T> {
 
-    override fun groupByValue(flag: Boolean) = copy(groupValues = flag)
+    override fun groupByValue(flag: Boolean) = if(flag == groupValues) this else copy(groupValues = flag)
 
     override fun withDefault(value: Any?) = copy(default = value)
 
@@ -242,6 +242,8 @@ data class NamedValue private constructor(val path: ColumnPath, val value: Any?,
         }
         fun aggregator(builder: GroupByReceiver<*>) = NamedValue(emptyPath(), builder, null, null, false)
     }
+
+    val name: String get() = path.last()
 }
 
 abstract class PivotReceiver<T>: AggregateReceiver<T> {

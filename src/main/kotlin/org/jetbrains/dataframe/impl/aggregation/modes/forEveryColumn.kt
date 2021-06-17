@@ -1,8 +1,8 @@
 package org.jetbrains.dataframe.impl.aggregation.modes
 
 import org.jetbrains.dataframe.aggregation.Aggregatable
-import org.jetbrains.dataframe.aggregation.DataFrameAggregations
-import org.jetbrains.dataframe.aggregation.receivers.AggregateColumnsSelector
+import org.jetbrains.dataframe.api.DataFrameAggregations
+import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregator
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataRow
@@ -22,7 +22,9 @@ internal fun <T, C, R> Aggregatable<T>.aggregateFor(
     val isSingle = cols.size == 1
     cols.forEach { col ->
         val path = getPath(col, isSingle)
-        yield(path, aggregator.aggregate(col.data), col.type, col.default)
+        val value = aggregator.aggregate(col.data)
+        val inferType = !aggregator.preservesType
+        yield(path, value, col.type, col.default, inferType)
     }
 }
 

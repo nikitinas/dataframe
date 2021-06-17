@@ -6,6 +6,12 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.api.max
+import org.jetbrains.dataframe.api.mean
+import org.jetbrains.dataframe.api.meanOf
+import org.jetbrains.dataframe.api.min
+import org.jetbrains.dataframe.api.sum
+import org.jetbrains.dataframe.api.sumOf
 import org.jetbrains.dataframe.columns.size
 import org.jetbrains.dataframe.columns.toAccessor
 import org.jetbrains.dataframe.columns.typeClass
@@ -94,9 +100,9 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `guess column type`() {
         val col by columnOf("Alice", 1, 3.5)
-        col.type() shouldBe getType<Any>()
+        col.type() shouldBe getType<Comparable<*>>()
         val filtered = col.filter { it is String }
-        filtered.type() shouldBe getType<Any>()
+        filtered.type() shouldBe getType<Comparable<*>>()
         filtered.guessType().type() shouldBe getType<String>()
     }
 
@@ -603,7 +609,7 @@ class DataFrameTests : BaseTest() {
             median { age } into "median age"
             min { age } into "min age"
             all { weight != null } into "all with weights"
-            maxFor { age }.city into "oldest origin"
+            maxBy { age }.city into "oldest origin"
             sortBy { age }.first().city into "youngest origin"
             pivot { city.map { "from $it"} }.count()
             age.toList() into "ages"
@@ -615,7 +621,7 @@ class DataFrameTests : BaseTest() {
             it.median { it.age } into "median age"
             it.min { it.age } into "min age"
             it.all { it.weight != null } into "all with weights"
-            it.maxFor { it.age }.city into "oldest origin"
+            it.maxBy { it.age }.city into "oldest origin"
             it.sortBy { it.age }.first().city into "youngest origin"
             it.pivot { it.city.map { "from $it" } }.count()
             it.age.toList() into "ages"
@@ -651,7 +657,7 @@ class DataFrameTests : BaseTest() {
             median { int("age") } into "median age"
             min { int("age") } into "min age"
             all { get("weight") != null } into "all with weights"
-            maxFor { int("age") }.get("city") into "oldest origin"
+            maxBy { int("age") }.get("city") into "oldest origin"
             sortBy("age").first()["city"] into "youngest origin"
             pivot { it["city"].map { "from $it" } }.count()
             it["age"].toList() into "ages"
@@ -1329,7 +1335,7 @@ class DataFrameTests : BaseTest() {
     fun `aggregate into grouped column`() {
 
         val d = typed.groupBy { name }.aggregate {
-            val row = select { age and weight }.mean()
+            val row = meanFor { age and weight }
             row into "mean"
         }
         d.ncol() shouldBe 2
@@ -1340,6 +1346,16 @@ class DataFrameTests : BaseTest() {
         mean.columns().forEach {
             it.type() shouldBe getType<Double>()
         }
+    }
+
+    @Test
+    fun `mean for all columns`() {
+
+        val d = typed.groupBy { name }.mean()
+        d.columnNames() shouldBe listOf("name", "age", "weight")
+        d.nrow() shouldBe typed.name.ndistinct()
+        d["age"].type() shouldBe getType<Double>()
+        d["weight"].type() shouldBe getType<Double>()
     }
 
     @Test

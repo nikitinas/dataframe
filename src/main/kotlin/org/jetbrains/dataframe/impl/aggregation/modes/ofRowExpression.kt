@@ -1,13 +1,13 @@
 package org.jetbrains.dataframe.impl.aggregation.modes
 
-import org.jetbrains.dataframe.aggregation.DataFrameAggregations
-import org.jetbrains.dataframe.aggregation.GroupByAggregations
-import org.jetbrains.dataframe.aggregation.PivotAggregations
+import org.jetbrains.dataframe.api.DataFrameAggregations
+import org.jetbrains.dataframe.api.GroupByAggregations
+import org.jetbrains.dataframe.api.PivotAggregations
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregator
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.RowSelector
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.createStarProjectedType
+import org.jetbrains.dataframe.getType
 import org.jetbrains.dataframe.impl.emptyPath
 import org.jetbrains.dataframe.impl.pathOf
 
@@ -55,7 +55,7 @@ internal inline fun <T, reified C, reified R> GroupByAggregations<T>.aggregateOf
     aggregator: Aggregator<C, R>
 ): DataFrame<T> {
     val path = pathOf(resultName ?: "value")
-    val type = R::class.createStarProjectedType(true) // TODO: check nullability
+    val type = getType<R>()
     return aggregateBase {
         yield(path, aggregator.aggregateOf(this, selector), type, null, false)
     }

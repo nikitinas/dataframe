@@ -1,12 +1,12 @@
-package org.jetbrains.dataframe.aggregation
+package org.jetbrains.dataframe.api
 
 import org.jetbrains.dataframe.Column
 import org.jetbrains.dataframe.ColumnsSelector
 import org.jetbrains.dataframe.DataFrame
-import org.jetbrains.dataframe.aggregation.receivers.AggregateColumnsSelector
+import org.jetbrains.dataframe.aggregation.Aggregatable
+import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregators
-import org.jetbrains.dataframe.impl.aggregation.comparableColumns
 import org.jetbrains.dataframe.impl.aggregation.getAggregateColumn
 import org.jetbrains.dataframe.impl.aggregation.modes.aggregateFor
 import org.jetbrains.dataframe.impl.aggregation.numberColumns
@@ -31,8 +31,4 @@ interface PivotOrGroupByAggregations<out T> : Aggregatable<T> {
 
     fun <R : Number> stdBy(columns: AggregateColumnsSelector<T, R>): DataFrame<T> = Aggregators.std.aggregateFor(this, columns)
     fun std(): DataFrame<T> = stdBy(numberColumns())
-
-    fun <R : Number> mean(skipNa: Boolean = true, columns: ColumnsSelector<T, R?>): DataFrame<T> = Aggregators.mean(skipNa).aggregateFor(this, columns)
-
-    fun mean(skipNa: Boolean = true): DataFrame<T> = mean(skipNa, numberColumns())
 }

@@ -2,6 +2,7 @@ package org.jetbrains.dataframe.impl
 
 import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.Predicate
+import org.jetbrains.dataframe.Selector
 import java.math.BigDecimal
 import java.math.BigInteger
 import kotlin.reflect.KClass

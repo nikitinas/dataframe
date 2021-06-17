@@ -38,6 +38,7 @@ internal class Integration : JupyterIntegration(){
         import("org.jetbrains.dataframe.*")
         import("org.jetbrains.dataframe.annotations.*")
         import("org.jetbrains.dataframe.io.*")
+        import("org.jetbrains.dataframe.aggregation.*")
 
         updateVariable<AnyFrame> { df, property ->
             codeGen.process(df, property).let {

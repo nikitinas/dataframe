@@ -1,7 +1,7 @@
 package org.jetbrains.dataframe.impl
 
 import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.aggregation.receivers.AggregateReceiver
+import org.jetbrains.dataframe.aggregation.AggregateReceiver
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnWithPath
@@ -89,3 +89,6 @@ internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T> {
 
     override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all() }
 }
+
+@PublishedApi
+internal fun <T, R> DataFrameBase<T>.mapRows(selector: RowSelector<T, R>):Sequence<R> = rows().asSequence().map { selector(it,it) }

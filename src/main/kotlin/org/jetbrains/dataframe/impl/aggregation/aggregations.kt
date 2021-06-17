@@ -1,9 +1,9 @@
 package org.jetbrains.dataframe.impl.aggregation
 
 import org.jetbrains.dataframe.aggregation.Aggregatable
-import org.jetbrains.dataframe.aggregation.receivers.AggregateColumnsSelector
-import org.jetbrains.dataframe.aggregation.receivers.AggregateReceiver
-import org.jetbrains.dataframe.aggregation.receivers.AggregateSelectReceiver
+import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
+import org.jetbrains.dataframe.aggregation.AggregateReceiver
+import org.jetbrains.dataframe.aggregation.AggregateSelectReceiver
 import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.SelectReceiverImpl

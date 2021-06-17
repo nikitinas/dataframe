@@ -305,13 +305,13 @@ class PlaylistJsonTest {
     fun `aggregate by column`(){
 
         val res = typed.aggregate { items }.with {
-            minFor { snippet.publishedAt }.snippet into "earliest"
+            minBy { snippet.publishedAt }.snippet into "earliest"
         }
 
         res.ncol() shouldBe typed.ncol() + 1
         res.getColumnIndex("earliest") shouldBe typed.getColumnIndex("items") + 1
 
-        val expected = typed.items.map { it.snippet.minFor { publishedAt } }.toList()
+        val expected = typed.items.map { it.snippet.minBy { publishedAt } }.toList()
         res["earliest"].toList() shouldBe expected
     }
 }

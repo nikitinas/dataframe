@@ -22,6 +22,7 @@ import org.jetbrains.dataframe.columns.typeClass
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.columns.ConvertedColumnDef
+import org.jetbrains.dataframe.impl.columns.typed
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -159,7 +160,7 @@ fun <T> column(parent: MapColumnReference): ColumnDelegate<T> = ColumnDelegate(p
 fun <T> column(parent: MapColumnReference, name: String): ColumnAccessor<T> =
     ColumnAccessorImpl(parent.path() + name)
 
-inline fun <reified T> columnOf(vararg values: T): DataColumn<T> = column(values.asIterable())
+inline fun <reified T> columnOf(vararg values: T): DataColumn<T> = createColumn(values.asIterable(), getType<T>(), true)
 
 fun columnOf(vararg values: AnyColumn): DataColumn<AnyRow> = columnOf(values.asIterable())
 
@@ -169,11 +170,16 @@ fun columnOf(columns: Iterable<AnyColumn>): DataColumn<AnyRow> = DataColumn.crea
 
 fun <T> columnOf(frames: Iterable<DataFrame<T>?>): FrameColumn<T> = DataColumn.create("", frames.toList())
 
-inline fun <reified T> column(values: Iterable<T>): DataColumn<T> = when {
+inline fun <reified T> column(values: Iterable<T>): DataColumn<T> = createColumn(values, getType<T>(), false)
+
+@PublishedApi
+internal fun <T> createColumn(values: Iterable<T>, suggestedType: KType, guessType: Boolean = false): DataColumn<T> = when {
     values.all { it is AnyCol } -> DataColumn.create("", (values as Iterable<AnyCol>).toDataFrame()) as DataColumn<T>
     values.all { it == null || it is AnyFrame} -> DataColumn.frames("", values.map { it as? AnyFrame }) as DataColumn<T>
-    else -> DataColumn.create("", values.toList(), getType<T>())
+    guessType -> guessColumnType("", values.asList(), suggestedType, suggestedTypeIsUpperBound = true).typed<T>()
+    else -> DataColumn.create("", values.toList(), suggestedType)
 }
+
 
 fun <T> Iterable<DataFrame<T>?>.toFrameColumn(name: String): FrameColumn<T> =
     DataColumn.create(name, asList())
@@ -262,4 +268,5 @@ fun AnyCol.elementTypeIsNullable(): Boolean = typeOfElement().isMarkedNullable
 
 fun AnyCol.isComparable() = isSubtypeOf<Comparable<*>>()
 
+// TODO: remove by checking that type of column is always inferred
 fun AnyCol.guessType() = DataColumn.create(name, toList())

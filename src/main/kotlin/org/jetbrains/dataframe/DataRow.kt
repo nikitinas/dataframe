@@ -2,6 +2,7 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.shortPath
 import org.jetbrains.dataframe.impl.toIterable
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
@@ -99,5 +100,8 @@ typealias RowCellSelector<T, C, R> = DataRow<T>.(C) -> R
 typealias RowCellFilter<T, C> = RowCellSelector<T, C, Boolean>
 typealias RowColumnSelector<T, C, R> = (DataRow<T>, DataColumn<C>) -> R
 
-
 typealias AnyRow = DataRow<*>
+
+internal fun AnyRow.namedValues(): Sequence<NamedValue> = owner.columns().asSequence().map {
+    NamedValue.create(it.shortPath(), it[index], it.type(), it.defaultValue(), guessType = false)
+}

@@ -14,6 +14,8 @@ import org.jetbrains.dataframe.Many
 import org.jetbrains.dataframe.add
 import org.jetbrains.dataframe.after
 import org.jetbrains.dataframe.annotations.DataSchema
+import org.jetbrains.dataframe.api.max
+import org.jetbrains.dataframe.api.sumOf
 import org.jetbrains.dataframe.append
 import org.jetbrains.dataframe.at
 import org.jetbrains.dataframe.by

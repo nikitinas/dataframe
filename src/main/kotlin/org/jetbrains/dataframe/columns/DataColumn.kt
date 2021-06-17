@@ -2,7 +2,7 @@ package org.jetbrains.dataframe.columns
 
 import org.jetbrains.dataframe.AnyFrame
 import org.jetbrains.dataframe.AnyRow
-import org.jetbrains.dataframe.aggregation.DataColumnAggregations
+import org.jetbrains.dataframe.api.DataColumnAggregations
 import org.jetbrains.dataframe.ColumnResolutionContext
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataRow

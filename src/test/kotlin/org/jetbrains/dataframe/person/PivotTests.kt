@@ -2,7 +2,9 @@ package org.jetbrains.dataframe.person
 
 import io.kotest.matchers.shouldBe
 import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.api.valueOf
 import org.jetbrains.dataframe.annotations.DataSchema
+import org.jetbrains.dataframe.api.sumOf
 import org.jetbrains.dataframe.columns.typeClass
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.typed
@@ -311,7 +313,7 @@ class PivotTests {
         val name by columnOf("set", "list", "set", "list")
         val data by columnOf(setOf(1), listOf(1), setOf(2), listOf(2))
         val df = dataFrameOf(id, name, data)
-        df[data].type() shouldBe getType<Collection<Int>>()
+        df[data].type() shouldBe getType<java.util.AbstractCollection<Int>>()
         val pivoted = df.pivot { name }.withIndex { id }.value { data }
         pivoted.nrow() shouldBe 2
         pivoted.ncol() shouldBe 3
@@ -325,7 +327,7 @@ class PivotTests {
         val name by columnOf("set", "list")
         val data by columnOf(setOf(1), listOf(1))
         val df = dataFrameOf(name, data)
-        df[data].type() shouldBe getType<Collection<Int>>()
+        df[data].type() shouldBe getType<java.util.AbstractCollection<Int>>()
         val pivoted = df.pivot { name }.value { data }
         pivoted.nrow() shouldBe 1
         pivoted.ncol() shouldBe 2

@@ -9,6 +9,9 @@ import org.jetbrains.dataframe.columns.values
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
 
+@JvmName("unionRows")
+fun <T> Iterable<DataRow<T>?>.union(): DataFrame<T> = merge(map { it?.toDataFrame() ?: emptyDataFrame(1) }).typed<T>()
+
 fun <T> Iterable<DataFrame<T>?>.union() = merge(filterNotNull()).typed<T>()
 
 fun <T> DataColumn<DataFrame<T>>.union() = values.union().typed<T>()

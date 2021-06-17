@@ -1,11 +1,10 @@
 package org.jetbrains.dataframe.impl.aggregation
 
 import org.jetbrains.dataframe.AggregatedPivot
-import org.jetbrains.dataframe.AnyFrame
+import org.jetbrains.dataframe.AnyRow
 import org.jetbrains.dataframe.DataFrame
-import org.jetbrains.dataframe.aggregation.receivers.GroupByReceiver
+import org.jetbrains.dataframe.aggregation.GroupByReceiver
 import org.jetbrains.dataframe.NamedValue
-import org.jetbrains.dataframe.emptyDataFrame
 import org.jetbrains.dataframe.toDataFrame
 
 internal class GroupByReceiverImpl<T>(internal val df: DataFrame<T>) : GroupByReceiver<T>(), DataFrame<T> by df {
@@ -18,7 +17,7 @@ internal class GroupByReceiverImpl<T>(internal val df: DataFrame<T>) : GroupByRe
         return child
     }
 
-    internal fun compute(): AnyFrame {
+    internal fun compute(): AnyRow? {
 
         val allValues = mutableListOf<NamedValue>()
         values.forEach {
@@ -30,8 +29,8 @@ internal class GroupByReceiverImpl<T>(internal val df: DataFrame<T>) : GroupByRe
                 allValues.add(it)
         }
         val columns = allValues.map { it.toColumnWithPath() }
-        return if (columns.isEmpty()) emptyDataFrame(1)
-        else columns.toDataFrame<T>()
+        return if (columns.isEmpty()) null
+        else columns.toDataFrame<T>()[0]
     }
 
     override fun yield(value: NamedValue): NamedValue {

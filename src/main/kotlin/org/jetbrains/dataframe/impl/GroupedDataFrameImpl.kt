@@ -1,7 +1,7 @@
 package org.jetbrains.dataframe.impl
 
 import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.aggregation.receivers.GroupAggregator
+import org.jetbrains.dataframe.aggregation.GroupAggregator
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.impl.columns.toColumns

@@ -11,9 +11,9 @@ internal abstract class AggregatorBase<C, R>(
     protected val aggregator: (Iterable<C>, KClass<*>) -> R?
 ) : Aggregator<C, R> {
 
-    override fun aggregate(column: DataColumn<C>): R? = if (column.hasNulls()) {
+    override fun aggregate(column: DataColumn<C?>): R? = if (column.hasNulls()) {
         aggregate(column.asSequence().filterNotNull().asIterable(), column.typeClass)
-    } else aggregate(column.asIterable(), column.typeClass)
+    } else aggregate(column.asIterable() as Iterable<C>, column.typeClass)
 
     override fun aggregate(values: Iterable<C>, clazz: KClass<*>): R? = aggregator(values, clazz)
 }

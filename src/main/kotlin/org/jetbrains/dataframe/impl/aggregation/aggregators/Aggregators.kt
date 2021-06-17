@@ -8,28 +8,23 @@ import kotlin.reflect.KClass
 @PublishedApi
 internal object Aggregators {
 
-    private fun <C> aggregator(aggregate: Iterable<C>.() -> C?) =
-        TwoStepAggregator.Factory<C, C>({ values, _ -> aggregate(values) }, aggregate)
+    private fun <C> preservesType(aggregate: Iterable<C>.() -> C?) =
+        TwoStepAggregator.Factory<C, C>({ values, _ -> aggregate(values) }, aggregate, true)
 
-    private fun <C, R> fixedTypeAggregator(aggregate1: Iterable<C>.(KClass<*>) -> R, aggregate2: Iterable<R>.() -> R) =
-        TwoStepAggregator.Factory(aggregate1, aggregate2)
+    private fun <C, R> changesType(aggregate1: Iterable<C>.(KClass<*>) -> R, aggregate2: Iterable<R>.() -> R) =
+        TwoStepAggregator.Factory(aggregate1, aggregate2, false)
 
-    private fun numbersAggregator(aggregate: Iterable<Number>.(KClass<*>) -> Number?) =
+    private fun extendsNumbers(aggregate: Iterable<Number>.(KClass<*>) -> Number?) =
         NumbersAggregator.Factory(aggregate)
 
-    private fun <P> optioned(getAggregator: (P) -> AggregatorProvider<*, *>) =
+    private fun <P, C, R> withOption(getAggregator: (P) -> AggregatorProvider<C, R>) =
         AggregatorOptionSwitch.Factory(getAggregator)
 
-    val min by aggregator<Comparable<Any?>> { minOrNull() }
-    val max by aggregator<Comparable<Any?>> { maxOrNull() }
-    val std by fixedTypeAggregator<Number, Double>({ std(it) }) { std() }
-    val mean by optioned<Boolean> { skipNaN ->
-        fixedTypeAggregator<Number, Double>({
-            mean(
-                it,
-                skipNaN
-            )
-        }) { mean(skipNaN) }
+    val min by preservesType<Comparable<Any?>> { minOrNull() }
+    val max by preservesType<Comparable<Any?>> { maxOrNull() }
+    val std by changesType<Number, Double>({ std(it) }) { std() }
+    val mean by withOption<Boolean, Number, Double> { skipNa ->
+        changesType({ mean(it, skipNa) }) { mean(skipNa) }
     }
-    val sum by numbersAggregator { sum(it) }
+    val sum by extendsNumbers { sum(it) }
 }

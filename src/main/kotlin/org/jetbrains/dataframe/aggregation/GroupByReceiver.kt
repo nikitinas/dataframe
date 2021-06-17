@@ -1,4 +1,4 @@
-package org.jetbrains.dataframe.aggregation.receivers
+package org.jetbrains.dataframe.aggregation
 
 import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.columns.AnyCol

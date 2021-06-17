@@ -31,6 +31,7 @@ import org.jetbrains.dataframe.impl.rollingHash
 import org.jetbrains.dataframe.isGroup
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.toColumnDef
+import org.jetbrains.dataframe.toColumnOf
 import org.jetbrains.dataframe.toColumns
 import org.jetbrains.dataframe.typed
 import kotlin.reflect.KProperty
@@ -113,6 +114,7 @@ internal fun Array<out Columns<*>>.toColumns(): Columns<Any?> = ColumnsList(this
 internal fun Array<out String>.toColumns(): Columns<Any?> = map { it.toColumnDef() }.toColumnSet()
 internal fun <C> Array<out String>.toColumnsOf(): Columns<C> = toColumns() as Columns<C>
 internal fun Array<out String>.toComparableColumns() = toColumnsOf<Comparable<Any?>>()
+internal fun String.toComparableColumn() = toColumnOf<Comparable<Any?>>()
 internal fun Array<out String>.toNumberColumns() = toColumnsOf<Number>()
 internal fun Array<out ColumnPath>.toColumns(): Columns<Any?> = map { it.toColumnDef() }.toColumnSet()
 internal fun <C> Iterable<Columns<C>>.toColumnSet(): Columns<C> = ColumnsList(asList())

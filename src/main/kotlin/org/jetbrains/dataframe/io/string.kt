@@ -12,7 +12,7 @@ internal fun AnyFrame.renderToString(limit: Int = 20, truncate: Int = 40): Strin
     sb.appendLine()
 
     val outputRows = limit.coerceAtMost(nrow())
-    val output = columns().map { it.values.take(limit).map { renderValue(it).truncate(truncate) } }
+    val output = columns().map { it.values.take(limit).map { renderValueForStdout(it, truncate) } }
     val header = columns().map { "${it.name()}:${renderType(it)}"}
     val columnLengths = output.mapIndexed { col, values -> (values + header[col]).map { it.length }.maxOrNull()!! + 1 }
 
@@ -40,15 +40,23 @@ internal fun AnyFrame.renderToString(limit: Int = 20, truncate: Int = 40): Strin
     return sb.toString()
 }
 
+internal val valueToStringLimitDefault = 1000
+internal val valueToStringLimitForRowAsTable = 50
+
 internal fun AnyRow.renderToString(): String{
     if(isEmpty()) return ""
     return owner.columns().map {it.name() to it[index]}.filter{it.second != null}
-        .map { "${it.first}:${renderValue(it.second)}" }.joinToString(prefix = "{ ", postfix = " }")
+        .map { "${it.first}:${renderValueForStdout(it.second)}" }.joinToString(prefix = "{ ", postfix = " }")
 }
 
-internal fun AnyRow.renderToStringTable(): String{
+/*
+fun AnyRow.renderToStringTableHtml() = renderToStringTable(true).replace("\n","<br>").replace(" ", "&nbsp;")
+    .let {  """<p style="font-family: Courier New">$it</p>""" }
+*/
+
+fun AnyRow.renderToStringTable(forHtml: Boolean = false): String{
     if(size() == 0) return ""
-    val pairs =  owner.columns().map {it.name() to renderValueForRowTable(it[index])}
+    val pairs =  owner.columns().map {it.name() to renderValueForRowTable(it[index], forHtml)}
     val width = pairs.map { it.first.length + it.second.second}.maxOrNull()!! + 4
     return pairs.joinToString("\n") {
         it.first + " ".repeat(width - it.first.length - it.second.second) + it.second.first
@@ -62,20 +70,25 @@ internal fun renderCollectionName(value: Collection<*>) = when(value) {
     else -> value.javaClass.simpleName
 }
 
-internal fun renderValueForRowTable(value: Any?): Pair<String, Int> = when(value) {
+fun renderValueForRowTable(value: Any?, forHtml: Boolean): Pair<String, Int> = when(value) {
     is AnyFrame -> "DataFrame [${value.nrow()} x ${value.ncol()}]".let {
-        if(value.nrow() == 1) it + " " + value[0].toString() else it
+        if (value.nrow() == 1) it + " " + value[0].toString() else it
     } to "DataFrame".length
     is AnyRow -> "DataRow $value" to "DataRow".length
     is Collection<*> -> renderCollectionName(value).let { it + " " + value.toString() to it.length }
-    else -> renderValue(value).let { it to it.length }
+    else -> if (forHtml) renderValueForHtml(value, valueToStringLimitForRowAsTable).let { it to it.length }
+    else renderValueForStdout(value, valueToStringLimitForRowAsTable).let { it to it.length }
 }
+
+internal fun renderValueForHtml(value: Any?, truncate: Int) = renderValue(value).truncate(truncate).escapeHTML()
+
+internal fun renderValueForStdout(value: Any?, truncate: Int = valueToStringLimitDefault) = renderValue(value).truncate(truncate).escapeNewLines()
 
 internal fun renderValue(value: Any?) =
     when(value) {
         is AnyFrame -> "[${value.nrow()} x ${value.ncol()}]".let { if(value.nrow() == 1) it + " " + value[0].toString() else it}
         is Double -> value.format(6)
-        else -> escapeHTML(value.toString())
+        else -> value.toString()
     }
 
 fun Double.format(digits: Int) = "%.${digits}f".format(this)

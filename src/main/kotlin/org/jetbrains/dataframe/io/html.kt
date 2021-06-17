@@ -5,6 +5,8 @@ import org.jetbrains.dataframe.RowColFormatter
 import org.jetbrains.dataframe.images.Image
 import org.jetbrains.dataframe.impl.truncate
 
+internal val tooltipLimit = 1000
+
 fun <T> DataFrame<T>.toHTML(configuration: DisplayConfiguration = DisplayConfiguration.DEFAULT) = buildString {
     append("<html><body>")
     append("<table><tr>")
@@ -25,8 +27,8 @@ fun <T> DataFrame<T>.toHTML(configuration: DisplayConfiguration = DisplayConfigu
                     content = "<img src=\"${cellVal.url}\"/>"
                 }
                 else -> {
-                    tooltip = renderValue(cellVal)
-                    content = tooltip.truncate(configuration.cellContentLimit)
+                    tooltip = renderValueForHtml(cellVal, tooltipLimit)
+                    content = renderValueForHtml(cellVal, configuration.cellContentLimit)
                 }
             }
             val attributes = configuration.cellFormatter?.invoke(row, col)?.attributes()?.joinToString(";") { "${it.first}:${it.second}" }.orEmpty()
@@ -50,12 +52,15 @@ data class DisplayConfiguration(
     }
 }
 
-fun escapeHTML(s: String): String {
+internal fun String.escapeNewLines() = replace("\n", "\\n")
+
+internal fun String.escapeHTML(): String {
+    val str = this
     return buildString {
-        for (c in s) {
-            if (c.toInt() > 127 || c == '"' || c == '\'' || c == '<' || c == '>' || c == '&') {
+        for (c in str) {
+            if (c.code > 127 || c == '"' || c == '\'' || c == '<' || c == '>' || c == '&') {
                 append("&#")
-                append(c.toInt())
+                append(c.code)
                 append(';')
             } else {
                 append(c)

@@ -19,7 +19,7 @@ import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.typed
 import org.jetbrains.dataframe.impl.trackColumnAccess
-import org.jetbrains.dataframe.io.renderValue
+import org.jetbrains.dataframe.io.renderValueForStdout
 import org.junit.Test
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -1729,7 +1729,7 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `render nested data frames to string`() {
-        val rendered = typed.drop(1).groupBy { name }.groups.asIterable().joinToString("\n") { renderValue(it) }
+        val rendered = typed.drop(1).groupBy { name }.groups.asIterable().joinToString("\n") { renderValueForStdout(it) }
         rendered shouldBe """
             [2 x 4]
             [3 x 4]

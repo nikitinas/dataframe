@@ -5,9 +5,6 @@ import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.internal.schema.ColumnSchema
 import org.junit.Test
-import java.net.HttpURLConnection
-import java.net.URL
-import java.net.URLConnection
 
 class ReadTests {
 
@@ -80,5 +77,17 @@ class ReadTests {
         val df = dataFrame(url)
         df.nrow() shouldBe 1
         df.columnNames() shouldBe listOf("code", "msg")
+    }
+
+    @Test
+    fun `array of arrays`() {
+        val data = """
+            {
+                "values": [[1,2,3],[4,5,6],[7,8,9]]
+            }
+        """.trimIndent()
+        val df = DataFrame.readJsonStr(data)
+        val values by column<Many<Many<Int>>>()
+        df[values][0][1][1] shouldBe 5
     }
 }

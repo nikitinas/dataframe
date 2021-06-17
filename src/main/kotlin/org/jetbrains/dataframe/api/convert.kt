@@ -12,6 +12,7 @@ import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.columns.DataColumnInternal
 import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.columns.typed
+import org.jetbrains.dataframe.io.toDataFrame
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -147,6 +148,8 @@ fun <T> ConvertClause<T, *>.toDate(zone: ZoneId = defaultTimeZone) = to { it.toL
 fun <T> ConvertClause<T, *>.toTime(zone: ZoneId = defaultTimeZone) = to { it.toLocalTime(zone) }
 fun <T> ConvertClause<T, *>.toDateTime(zone: ZoneId = defaultTimeZone) = to { it.toLocalDateTime(zone) }
 
+fun <T, C> ConvertClause<T,Many<Many<C>>>.toDataFrames(containsColumns: Boolean = false) = to { it.toDataFrames(containsColumns) }
+
 internal class StringParser<T : Any>(val type: KType, val parse: (String) -> T?) {
     fun toConverter(): TypeConverter = { parse(it as String) }
 }
@@ -168,6 +171,8 @@ fun AnyCol.toLocalTime(zone: ZoneId = defaultTimeZone): DataColumn<LocalTime> = 
     Int::class -> typed<Int>().map { it.toLong().toLocalDateTime(zone).toLocalTime() }
     else -> convertTo(getType<LocalTime>()).typed()
 }
+
+fun <T> DataColumn<Many<Many<T>>>.toDataFrames(containsColumns: Boolean = false) = map { it.toDataFrame(containsColumns) }
 
 internal object Parsers {
 

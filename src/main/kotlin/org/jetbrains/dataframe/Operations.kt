@@ -239,10 +239,9 @@ internal fun <T> DataFrame<T>.splitByIndices(
     }
 }
 
-internal fun <T> List<T>.splitByIndices(startIndices: Sequence<Int>, emptyToNull: Boolean): Sequence<List<T>?> {
+internal fun <T> List<T>.splitByIndices(startIndices: Sequence<Int>): Sequence<Many<T>> {
     return (startIndices + size).zipWithNext { start, endExclusive ->
-        if (emptyToNull && start == endExclusive) null
-        else subList(start, endExclusive)
+        subList(start, endExclusive).toMany()
     }
 }
 

@@ -55,10 +55,3 @@ interface DataFrameBase<out T>: SingleColumn<DataRow<T>> {
     fun nrow(): Int
     fun rows(): Iterable<DataRow<T>>
 }
-
-operator fun <T, R> DataFrameBase<T>.get(column: KProperty<DataFrame<R>>) = get(column.toColumnDef())
-
-@JvmName("getT")
-operator fun <T, R> DataFrameBase<T>.get(column: KProperty<DataRow<R>>) = get(column.toColumnDef())
-
-operator fun <T, R> DataFrameBase<T>.get(column: KProperty<R>) = get(column.toColumnDef())

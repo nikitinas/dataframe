@@ -1,6 +1,7 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
+import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregators
 import org.jetbrains.dataframe.impl.aggregation.comparableColumns
 import org.jetbrains.dataframe.impl.aggregation.modes.aggregateAll
@@ -76,10 +77,15 @@ inline fun <T, reified R : Number> PivotAggregations<T>.meanOf(
     crossinline expression: RowSelector<T, R>
 ): DataFrame<T> = Aggregators.mean(skipNa).cast<Double>().of(this, expression)
 
-inline fun <T, reified C> PivotAggregations<T>.valueOf(crossinline expression: RowSelector<T, C>): DataFrame<T> {
-    val type = getType<C>()
+inline fun <T, reified V> PivotAggregations<T>.with(noinline selector: RowSelector<T, V>): DataFrame<T> {
+    val type = getType<V>()
     return aggregate {
-        yieldOneOrMany(map(expression), type)
+        val values = map {
+            val value = selector(it, it)
+            if (value is ColumnReference<*>) it[value]
+            else value
+        }
+        yieldOneOrMany(values, type)
     }
 }
 

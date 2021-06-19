@@ -41,18 +41,6 @@ inline internal fun <T, V> Aggregatable<T>.withColumn(crossinline getColumn: Dat
 fun <T, P: PivotAggregations<T>> P.withGrouping(group: MapColumnReference) = withGrouping(group.path()) as P
 fun <T, P: PivotAggregations<T>> P.withGrouping(groupName: String) = withGrouping(listOf(groupName)) as P
 
-inline fun <T, reified V> PivotAggregations<T>.into(noinline selector: RowSelector<T, V>): DataFrame<T> {
-    val type = getType<V>()
-    return aggregate {
-        val values = map {
-            val value = selector(it, it)
-            if (value is ColumnReference<*>) it[value]
-            else value
-        }
-        yieldOneOrMany(values, type)
-    }
-}
-
 data class GroupedFramePivot<T>(
     internal val df: GroupedDataFrame<*, T>,
     internal val columns: ColumnsSelector<T, *>,

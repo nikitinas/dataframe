@@ -1,5 +1,6 @@
 package org.jetbrains.dataframe.withRealData
 
+import io.kotest.matchers.shouldBe
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.into
 import org.jetbrains.dataframe.io.read

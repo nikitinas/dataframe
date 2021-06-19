@@ -100,12 +100,12 @@ class PivotTests {
 
         res shouldBe defaultExpected
 
-        typed.pivot { key }.groupBy { name }.withDefault("-").values { value } shouldBe res
-        typed.pivot { key }.groupBy { name }.withDefault("-").into { value } shouldBe res
-        df.pivot { key }.groupBy { name }.withDefault("-").values { value } shouldBe res
-        df.pivot(key).groupBy(name).withDefault("-").values(value) shouldBe res
-        df.pivot(key).groupBy(name).withDefault("-").into { value } shouldBe res
-        typed.pivot { key }.groupBy { name }.withDefault("-").valueOf { value.toString() }
+        typed.pivot { key }.groupBy { name }.default("-").values { value } shouldBe res
+        typed.pivot { key }.groupBy { name }.default("-").into { value } shouldBe res
+        df.pivot { key }.groupBy { name }.default("-").values { value } shouldBe res
+        df.pivot(key).groupBy(name).default("-").values(value) shouldBe res
+        df.pivot(key).groupBy(name).default("-").into { value } shouldBe res
+        typed.pivot { key }.groupBy { name }.default("-").valueOf { value.toString() }
     }
 
     @Test

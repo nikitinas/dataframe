@@ -31,7 +31,7 @@ interface PivotAggregations<T> : PivotOrGroupByAggregations<T> {
     fun <R> aggregate(body: PivotAggregateBody<T, R>): DataFrame<T>
 
     fun groupByValue(flag: Boolean = true): PivotAggregations<T>
-    fun withDefault(value: Any?): PivotAggregations<T>
+    fun default(value: Any?): PivotAggregations<T>
     fun withGrouping(groupPath: ColumnPath): PivotAggregations<T>
 
     // region min

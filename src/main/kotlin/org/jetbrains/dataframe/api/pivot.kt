@@ -70,7 +70,7 @@ data class GroupedFramePivot<T>(
 
     override fun withGrouping(groupPath: ColumnPath) = copy(groupPath = groupPath)
 
-    override fun withDefault(value: Any?) = copy(default = value)
+    override fun default(value: Any?) = copy(default = value)
 
     override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all().except(columns.toColumns() and df.keys.columnNames().toColumns()) }
 }
@@ -85,7 +85,7 @@ data class DataFramePivot<T>(
 
     override fun groupByValue(flag: Boolean) = if(flag == groupValues) this else copy(groupValues = flag)
 
-    override fun withDefault(value: Any?) = copy(default = value)
+    override fun default(value: Any?) = copy(default = value)
 
     override fun withGrouping(groupPath: ColumnPath) = copy(groupPath = groupPath)
 
@@ -107,7 +107,7 @@ data class GroupAggregatorPivot<T>(
 
     override fun groupByValue(flag: Boolean) = if(flag == groupValues) this else copy(groupValues = flag)
 
-    override fun withDefault(value: Any?) = copy(default = value)
+    override fun default(value: Any?) = copy(default = value)
 
     override fun withGrouping(groupPath: ColumnPath) = copy(groupPath = groupPath)
 

@@ -15,7 +15,7 @@ import org.jetbrains.dataframe.impl.aggregation.yieldOneOrManyBy
 import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.columns.toComparableColumns
 
-interface GroupByAggregations<out T> : Aggregatable<T>, PivotOrGroupByAggregations<T> {
+interface GroupByAggregations<out T> : Aggregatable<T> {
 
     fun count(resultName: String = "count", predicate: RowFilter<T>? = null) =
         aggregateValue(resultName) { count(predicate) default 0 }
@@ -25,7 +25,6 @@ interface GroupByAggregations<out T> : Aggregatable<T>, PivotOrGroupByAggregatio
     fun values(columns: AggregateColumnsSelector<T, *>): DataFrame<T> = yieldOneOrManyBy(columns) { it.toList() }
 
     fun values(): DataFrame<T> = values(remainingColumnsSelector())
-
 
     // region min
 
@@ -71,6 +70,10 @@ interface GroupByAggregations<out T> : Aggregatable<T>, PivotOrGroupByAggregatio
 
     // region sum
 
+    fun sum(): DataFrame<T> = sumFor(numberColumns())
+
+    fun <R : Number> sumFor(columns: ColumnsSelector<T, R>): DataFrame<T> = Aggregators.sum.aggregateFor(this, columns)
+
     fun <R : Number> sum(resultName: String, columns: ColumnsSelector<T, R?>) =
         Aggregators.sum.aggregateAll(resultName, this, columns)
 
@@ -88,6 +91,9 @@ interface GroupByAggregations<out T> : Aggregatable<T>, PivotOrGroupByAggregatio
     // endregion
 
     // region std
+
+    fun <R : Number> stdFor(columns: AggregateColumnsSelector<T, R>): DataFrame<T> = Aggregators.std.aggregateFor(this, columns)
+    fun std(): DataFrame<T> = stdFor(numberColumns())
 
     fun <R : Number> std(resultName: String, columns: ColumnsSelector<T, R?>) =
         Aggregators.std.aggregateAll(resultName, this, columns)

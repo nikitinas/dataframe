@@ -1,5 +1,6 @@
 package org.jetbrains.dataframe
 
+import org.jetbrains.dataframe.aggregation.Aggregatable
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregators
@@ -13,7 +14,7 @@ import org.jetbrains.dataframe.impl.aggregation.yieldOneOrManyBy
 import org.jetbrains.dataframe.impl.columns.toColumns
 import kotlin.reflect.KProperty
 
-interface PivotAggregations<T> : PivotOrGroupByAggregations<T> {
+interface PivotAggregations<T> : Aggregatable<T> {
 
     fun count(predicate: RowFilter<T>? = null) = aggregateBase { count(predicate) default 0 }
 
@@ -59,6 +60,14 @@ interface PivotAggregations<T> : PivotOrGroupByAggregations<T> {
 
     // endregion
 
+    // region sum
+
+    fun sum(separate: Boolean = false): DataFrame<T> = sumFor(separate, numberColumns())
+
+    fun <R : Number> sumFor(separate: Boolean = false, columns: ColumnsSelector<T, R>): DataFrame<T> = Aggregators.sum.aggregateFor(groupByValue(separate), columns)
+
+    // endregion
+
     // region mean
 
     fun <R : Number> mean(skipNa: Boolean = true, columns: ColumnsSelector<T, R?>): DataFrame<T> = Aggregators.mean(skipNa).aggregateFor(this, columns)
@@ -66,6 +75,10 @@ interface PivotAggregations<T> : PivotOrGroupByAggregations<T> {
     fun mean(skipNa: Boolean = true): DataFrame<T> = mean(skipNa, numberColumns())
 
     // endregion
+
+    fun std(separate: Boolean = false): DataFrame<T> = stdFor(separate, numberColumns())
+
+    fun <R : Number> stdFor(separate: Boolean = false, columns: AggregateColumnsSelector<T, R>): DataFrame<T> = Aggregators.std.aggregateFor(groupByValue(separate), columns)
 
     fun <R : Number> std(columns: ColumnsSelector<T, R?>) = Aggregators.std.aggregateAll(this, columns)
 }

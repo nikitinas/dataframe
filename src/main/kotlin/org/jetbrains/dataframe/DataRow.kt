@@ -1,5 +1,6 @@
 package org.jetbrains.dataframe
 
+import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.shortPath
@@ -27,7 +28,7 @@ interface DataRow<out T>: DataRowBase<T> {
     operator fun <R> get(columns: List<ColumnReference<R>>): List<R> = columns.map { get(it) }
     operator fun <R> get(property: KProperty<R>) = get(property.name) as R
     operator fun <R> ColumnReference<R>.invoke() = get(this)
-    operator fun <R> String.invoke() = get(this) as R
+    operator fun <R> String.invoke() = this@DataRow[this] as R
 
     operator fun get(first: Column, vararg other: Column) = owner.select(listOf(first) + other)[index]
     operator fun get(first: String, vararg other: String) = owner.select(listOf(first) + other)[index]
@@ -104,4 +105,11 @@ typealias AnyRow = DataRow<*>
 
 internal fun AnyRow.namedValues(): Sequence<NamedValue> = owner.columns().asSequence().map {
     NamedValue.create(it.shortPath(), it[index], it.type(), it.defaultValue(), guessType = false)
+}
+
+operator fun Any?.get(column: String) = when(this){
+    is AnyRow -> get(column)
+    is AnyCol -> get(column)
+    is AnyFrame -> get(column)
+    else -> error("Unable to get value by string index from type ${this?.javaClass}")
 }

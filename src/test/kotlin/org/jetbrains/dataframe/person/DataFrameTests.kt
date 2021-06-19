@@ -1805,6 +1805,20 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
+    fun `groupBy none`() {
+        val grouped = typed.groupBy { none() }
+        grouped.keys.ncol shouldBe 0
+        grouped.groups.size shouldBe 1
+        val values = grouped.values()
+        values.nrow shouldBe 1
+        values.columns().forEach {
+            it.typeClass shouldBe Many::class
+            (it[0] as Many<*>).size shouldBe typed.nrow()
+        }
+        values.explode() shouldBe typed
+    }
+
+    @Test
     fun `pivot max`() {
         val pivoted = typed.pivot { city }.withIndex { name }.max { age }
         pivoted.single { name == "Mark" }["Moscow"] shouldBe 30

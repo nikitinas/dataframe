@@ -1,5 +1,6 @@
 package org.jetbrains.dataframe
 
+import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregators
 import org.jetbrains.dataframe.impl.aggregation.comparableColumns
 import org.jetbrains.dataframe.impl.aggregation.modes.aggregateAll
@@ -7,11 +8,19 @@ import org.jetbrains.dataframe.impl.aggregation.modes.aggregateFor
 import org.jetbrains.dataframe.impl.aggregation.modes.of
 import org.jetbrains.dataframe.impl.aggregation.numberColumns
 import org.jetbrains.dataframe.impl.aggregation.yieldOneOrMany
+import org.jetbrains.dataframe.impl.aggregation.yieldOneOrManyBy
+import org.jetbrains.dataframe.impl.columns.toColumns
 import kotlin.reflect.KProperty
 
 interface PivotAggregations<T> : PivotOrGroupByAggregations<T> {
 
     fun count(predicate: RowFilter<T>? = null) = aggregateBase { count(predicate) default 0 }
+
+    fun values(vararg columns: Column, separate: Boolean = false): DataFrame<T> = values(separate) { columns.toColumns() }
+    fun values(vararg columns: String, separate: Boolean = false): DataFrame<T> = values(separate) { columns.toColumns() }
+    fun values(separate: Boolean = false, columns: AggregateColumnsSelector<T, *>): DataFrame<T> = groupByValue(separate).yieldOneOrManyBy(columns) { it.toList() }
+
+    fun values(separate: Boolean = false): DataFrame<T> = values(separate, remainingColumnsSelector())
 
     fun <R> matches(yes: R, no: R) = aggregate { yes default no }
     fun matches() = matches(true, false)

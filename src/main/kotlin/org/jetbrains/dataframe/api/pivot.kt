@@ -22,7 +22,7 @@ fun <T> DataFrame<T>.pivot(columns: ColumnsSelector<T, *>) = DataFramePivot(this
 fun <T> DataFrame<T>.pivot(vararg columns: String) = pivot { columns.toColumns() }
 fun <T> DataFrame<T>.pivot(vararg columns: Column) = pivot { columns.toColumns() }
 
-fun <T> DataFramePivot<T>.withIndex(columns: ColumnsSelector<T, *>) = GroupedFramePivot(df.groupBy(columns), this.columns, groupValues, default, groupPath)
+fun <T> DataFramePivot<T>.withIndex(columns: ColumnsSelector<T, *>): GroupedFramePivot<T> = GroupedFramePivot(df.groupBy(columns), this.columns, groupValues, default, groupPath)
 fun <T> DataFramePivot<T>.withIndex(vararg columns: String) = withIndex { columns.toColumns() }
 fun <T> DataFramePivot<T>.withIndex(vararg columns: Column) = withIndex { columns.toColumns() }
 
@@ -92,67 +92,7 @@ data class DataFramePivot<T>(
 
     override fun withGrouping(groupPath: ColumnPath) = copy(groupPath = groupPath)
 
-    override fun <R> aggregate(body: PivotAggregateBody<T, R>): DataFrame<T> {
-
-        data class RowData(val name: String, val type: KType?, val defaultValue: Any?)
-
-        val rows = mutableListOf<RowData>()
-
-        val valueNameIndex = mutableMapOf<String, Int>()
-
-        // compute values for every column
-        val data = df.groupBy(columns).map { key, group ->
-            val keyValue = key.values()
-            val path = keyValue.map { it.toString() }
-            val builder = PivotReceiverImpl(group)
-            val result = body(builder, builder)
-            val hasResult = result != Unit
-            val values = if (builder.values.isEmpty())
-                if (hasResult) listOf(NamedValue.create(emptyPath(), result, null, default))
-                else emptyList()
-            else builder.values
-            val columnData = mutableListOf<Any?>()
-            // TODO: support column paths
-            var dataSize = 0
-            values.forEach {
-                val name = if (it.path.isEmpty()) "" else it.path.last()
-                val index = valueNameIndex[name] ?: run {
-                    val newIndex = rows.size
-                    rows.add(RowData(name, it.type, it.default))
-                    valueNameIndex[name] = newIndex
-                    newIndex
-                }
-                while (dataSize < index) {
-                    columnData.add(rows[dataSize++].defaultValue)
-                }
-                if (dataSize == index) {
-                    columnData.add(it.value)
-                    dataSize++
-                } else columnData[index] = it.value
-            }
-            path to columnData
-        }
-
-        val nrow = rows.size
-
-        // use original value type if it is common for all values
-        val commonType = rows.mapNotNull { it.type }.singleOrNull()
-
-        // Align column sizes and create dataframe
-        var result = data.map { (path, values) ->
-            while (values.size < nrow)
-                values.add(rows[values.size].defaultValue)
-            path to guessColumnType(path.last(), values.asList(), commonType, true)
-        }.toDataFrame<Any>()
-
-        if (nrow > 1) {
-            val nameGenerator = result.nameGenerator()
-            val indexName = nameGenerator.addUnique(defaultPivotIndexName)
-            val col = rows.map { it.name }.toColumn(indexName)
-            result = result.insert(col).at(0)
-        }
-        return result.typed()
-    }
+    override fun <R> aggregate(body: PivotAggregateBody<T, R>) = withIndex { none() }.aggregate(body)
 
     override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all().except(columns.toColumns()) }
 }
@@ -216,8 +156,6 @@ internal fun <T, R> aggregatePivot(
         }
     }
 }
-
-internal val defaultPivotIndexName = "index"
 
 typealias AggregateBody<T, R> = AggregateReceiver<T>.(AggregateReceiver<T>) -> R
 

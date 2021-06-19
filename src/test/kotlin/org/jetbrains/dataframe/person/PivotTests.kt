@@ -1,5 +1,6 @@
 package org.jetbrains.dataframe.person
 
+import io.kotest.assertions.fail
 import io.kotest.matchers.shouldBe
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.valueOf
@@ -108,13 +109,13 @@ class PivotTests {
     }
 
     @Test
-    fun `pivot with key map`() {
+    fun `pivot with transform`() {
         val pivoted = typed.pivot { key.map { "_$it" } }.withIndex { name }.into { value }
         pivoted.columnNames().drop(1).toSet() shouldBe typed.key.distinct().map { "_$it" }.toSet()
     }
 
     @Test
-    fun `pivot with index map`() {
+    fun `pivot with index transform`() {
         val pivoted = typed.pivot { key }.withIndex { name.map { "_$it" } }.into { value }
         pivoted.name shouldBe typed.name.distinct().map { "_$it" }
     }
@@ -150,7 +151,7 @@ class PivotTests {
     fun `pivot two values group by value`(){
         val type by column<KClass<*>>()
         val pivoted = typed.add(type){ value?.javaClass?.kotlin }
-            .pivot { key }.withIndex { name }.groupByValue().values { value and type }
+            .pivot { key }.withIndex { name }.values(separate = true) { value and type }
         pivoted.print()
         pivoted.ncol() shouldBe 3
     }
@@ -197,29 +198,35 @@ class PivotTests {
     @Test
     fun `pivot two values without index`(){
         val pivoted = typed.pivot { name and key }.values { value and (value.map { it?.javaClass?.kotlin } named "type") }
-        pivoted.ncol() shouldBe typed.name.ndistinct() + 1
-        pivoted.nrow() shouldBe 2
 
-        pivoted[defaultPivotIndexName].values() shouldBe listOf("value", "type")
-        val cols = pivoted.getColumns { all().drop(1).dfs() }
-        cols.size shouldBe typed.name.ndistinct() * typed.key.ndistinct() - 1
+        pivoted.ncol() shouldBe typed.name.ndistinct()
+        pivoted.nrow() shouldBe 1
+
+        val cols = pivoted.getColumns { all().dfs() }
+        cols.size shouldBe 2 * typed.name.ndistinct() * typed.key.ndistinct() - 2
         cols.forEach {
-            if(it.isMany()) it.name() shouldBe "age"
-            else {
-                it.typeClass shouldBe Any::class
-                it[1]?.javaClass?.kotlin?.isSubclassOf(KClass::class)?.let { it shouldBe true }
+            when {
+                it.isMany() -> it.path().dropLast(1) shouldBe listOf("Alice", "age")
+                it.hasNulls() -> {
+                    it.path().dropLast(1) shouldBe listOf("Mark", "weight")
+                    it.typeClass shouldBe Any::class
+                }
+                it.name() == "type" -> it.typeClass shouldBe KClass::class
+                else -> it.name() shouldBe  "value"
             }
-            it.hasNulls() shouldBe it.values().any { it == null }
         }
+        pivoted[0]["Bob"]["weight"]["value"] shouldBe 87
     }
 
     @Test
-    fun `resolve column name conflicts`() {
-        val replaced = typed.replaceAll("city" to defaultPivotIndexName)
-        val pivoted = replaced.pivot { key and name }.values { value and (value named "other") }
-        pivoted.ncol() shouldBe 1 + typed.key.ndistinct()
-        pivoted.nrow() shouldBe 2
-        pivoted.columnNames().filter { it.startsWith(defaultPivotIndexName)}.size shouldBe 2
+    fun `pivot two values without index group by value`() {
+        val pivoted = typed.pivot { name }.values(separate = true) { key and value }
+        pivoted.print()
+
+        pivoted.columnNames() shouldBe listOf("key", "value")
+        pivoted.nrow() shouldBe 1
+        (pivoted["key"]["Alice"][0] as Many<String>).size shouldBe 4
+        pivoted["value"]["Bob"].type() shouldBe getType<Many<Int>>()
     }
 
     @Test
@@ -385,5 +392,17 @@ class PivotTests {
             group["data"]["type"].hasNulls() shouldBe false
         }
         pivoted.print()
+    }
+
+    @Test
+    fun `pivot one value without index`() {
+        val pivoted = typed.pivot { name and key }.into { value }
+        pivoted.nrow() shouldBe 1
+        pivoted.columnNames() shouldBe typed.name.distinct().values()
+        pivoted["Alice"].asGroup().columnNames() shouldBe typed.key.distinct().values()
+        pivoted["Bob"].asGroup().columnNames() shouldBe listOf("age", "weight")
+        pivoted["Mark"].asGroup().columnNames() shouldBe typed.key.distinct().values()
+        pivoted["Alice"]["age"].type() shouldBe getType<Many<Int>>()
+        pivoted["Mark"]["weight"].type() shouldBe getType<Any?>()
     }
 }

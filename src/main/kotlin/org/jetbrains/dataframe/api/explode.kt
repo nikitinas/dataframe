@@ -15,6 +15,8 @@ import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.createDataCollector
 
+fun <T> DataFrame<T>.explode() = explode { all() }
+
 fun <T> DataFrame<T>.explode(vararg columns: Column) = explode { columns.toColumns() }
 fun <T> DataFrame<T>.explode(vararg columns: String) = explode { columns.toColumns() }
 

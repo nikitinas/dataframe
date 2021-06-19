@@ -11,12 +11,21 @@ import org.jetbrains.dataframe.impl.aggregation.modes.aggregateFor
 import org.jetbrains.dataframe.impl.aggregation.modes.of
 import org.jetbrains.dataframe.impl.aggregation.numberColumns
 import org.jetbrains.dataframe.impl.aggregation.yieldOneOrMany
+import org.jetbrains.dataframe.impl.aggregation.yieldOneOrManyBy
+import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.columns.toComparableColumns
 
 interface GroupByAggregations<out T> : Aggregatable<T>, PivotOrGroupByAggregations<T> {
 
     fun count(resultName: String = "count", predicate: RowFilter<T>? = null) =
         aggregateValue(resultName) { count(predicate) default 0 }
+
+    fun values(vararg columns: Column): DataFrame<T> = values { columns.toColumns() }
+    fun values(vararg columns: String): DataFrame<T> = values { columns.toColumns() }
+    fun values(columns: AggregateColumnsSelector<T, *>): DataFrame<T> = yieldOneOrManyBy(columns) { it.toList() }
+
+    fun values(): DataFrame<T> = values(remainingColumnsSelector())
+
 
     // region min
 

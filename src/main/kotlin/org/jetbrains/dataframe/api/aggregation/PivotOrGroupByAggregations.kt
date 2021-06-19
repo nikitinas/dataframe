@@ -16,12 +16,6 @@ interface PivotOrGroupByAggregations<out T> : Aggregatable<T> {
     fun value(column: String): DataFrame<T> = withColumn { getAggregateColumn { it[column] } }
     fun <V> value(column: AggregateColumnsSelector<T, V>): DataFrame<T> = withColumn { getAggregateColumn(column) }
 
-    fun values(vararg columns: Column): DataFrame<T> = values { columns.toColumns() }
-    fun values(vararg columns: String): DataFrame<T> = values { columns.toColumns() }
-    fun values(columns: AggregateColumnsSelector<T, *>): DataFrame<T> = yieldOneOrManyBy(columns) { it.toList() }
-
-    fun values(): DataFrame<T> = values(remainingColumnsSelector())
-
     fun <R : Number> sumBy(columns: ColumnsSelector<T, R>): DataFrame<T> = Aggregators.sum.aggregateFor(this, columns)
     fun sum(): DataFrame<T> = sumBy(numberColumns())
 

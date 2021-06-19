@@ -22,7 +22,7 @@ fun <T> DataFrame<T>.pivot(columns: ColumnsSelector<T, *>) = DataFramePivot(this
 fun <T> DataFrame<T>.pivot(vararg columns: String) = pivot { columns.toColumns() }
 fun <T> DataFrame<T>.pivot(vararg columns: Column) = pivot { columns.toColumns() }
 
-fun <T> DataFramePivot<T>.withIndex(columns: ColumnsSelector<T, *>) = copy(index = columns)
+fun <T> DataFramePivot<T>.withIndex(columns: ColumnsSelector<T, *>) = GroupedFramePivot(df.groupBy(columns), this.columns, groupValues, default, groupPath)
 fun <T> DataFramePivot<T>.withIndex(vararg columns: String) = withIndex { columns.toColumns() }
 fun <T> DataFramePivot<T>.withIndex(vararg columns: Column) = withIndex { columns.toColumns() }
 
@@ -75,13 +75,12 @@ data class GroupedFramePivot<T>(
 
     override fun withDefault(value: Any?) = copy(default = value)
 
-    override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all().except(columns.toColumns()) }
+    override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all().except(columns.toColumns() and df.keys.columnNames().toColumns()) }
 }
 
 data class DataFramePivot<T>(
     internal val df: DataFrame<T>,
     internal val columns: ColumnsSelector<T, *>,
-    internal val index: ColumnsSelector<T, *>? = null,
     internal val groupValues: Boolean = false,
     internal val default: Any? = null,
     internal val groupPath: ColumnPath = emptyList()
@@ -94,73 +93,68 @@ data class DataFramePivot<T>(
     override fun withGrouping(groupPath: ColumnPath) = copy(groupPath = groupPath)
 
     override fun <R> aggregate(body: PivotAggregateBody<T, R>): DataFrame<T> {
-        if (index != null) {
-            val grouped = df.groupBy(index)
-            return GroupedFramePivot(grouped, columns, groupValues, default, groupPath).aggregate(body)
-        } else {
 
-            data class RowData(val name: String, val type: KType?, val defaultValue: Any?)
+        data class RowData(val name: String, val type: KType?, val defaultValue: Any?)
 
-            val rows = mutableListOf<RowData>()
+        val rows = mutableListOf<RowData>()
 
-            val valueNameIndex = mutableMapOf<String, Int>()
+        val valueNameIndex = mutableMapOf<String, Int>()
 
-            // compute values for every column
-            val data = df.groupBy(columns).map { key, group ->
-                val keyValue = key.values()
-                val path = keyValue.map { it.toString() }
-                val builder = PivotReceiverImpl(group)
-                val result = body(builder, builder)
-                val hasResult = result != Unit
-                val values = if (builder.values.isEmpty())
-                    if (hasResult) listOf(NamedValue.create(emptyPath(), result, null, default))
-                    else emptyList()
-                else builder.values
-                val columnData = mutableListOf<Any?>()
-                // TODO: support column paths
-                var dataSize = 0
-                values.forEach {
-                    val name = if (it.path.isEmpty()) "" else it.path.last()
-                    val index = valueNameIndex[name] ?: run {
-                        val newIndex = rows.size
-                        rows.add(RowData(name, it.type, it.default))
-                        valueNameIndex[name] = newIndex
-                        newIndex
-                    }
-                    while (dataSize < index) {
-                        columnData.add(rows[dataSize++].defaultValue)
-                    }
-                    if (dataSize == index) {
-                        columnData.add(it.value)
-                        dataSize++
-                    } else columnData[index] = it.value
+        // compute values for every column
+        val data = df.groupBy(columns).map { key, group ->
+            val keyValue = key.values()
+            val path = keyValue.map { it.toString() }
+            val builder = PivotReceiverImpl(group)
+            val result = body(builder, builder)
+            val hasResult = result != Unit
+            val values = if (builder.values.isEmpty())
+                if (hasResult) listOf(NamedValue.create(emptyPath(), result, null, default))
+                else emptyList()
+            else builder.values
+            val columnData = mutableListOf<Any?>()
+            // TODO: support column paths
+            var dataSize = 0
+            values.forEach {
+                val name = if (it.path.isEmpty()) "" else it.path.last()
+                val index = valueNameIndex[name] ?: run {
+                    val newIndex = rows.size
+                    rows.add(RowData(name, it.type, it.default))
+                    valueNameIndex[name] = newIndex
+                    newIndex
                 }
-                path to columnData
+                while (dataSize < index) {
+                    columnData.add(rows[dataSize++].defaultValue)
+                }
+                if (dataSize == index) {
+                    columnData.add(it.value)
+                    dataSize++
+                } else columnData[index] = it.value
             }
-
-            val nrow = rows.size
-
-            // use original value type if it is common for all values
-            val commonType = rows.mapNotNull { it.type }.singleOrNull()
-
-            // Align column sizes and create dataframe
-            var result = data.map { (path, values) ->
-                while (values.size < nrow)
-                    values.add(rows[values.size].defaultValue)
-                path to guessColumnType(path.last(), values.asList(), commonType, true)
-            }.toDataFrame<Any>()
-
-            if (nrow > 1) {
-                val nameGenerator = result.nameGenerator()
-                val indexName = nameGenerator.addUnique(defaultPivotIndexName)
-                val col = rows.map { it.name }.toColumn(indexName)
-                result = result.insert(col).at(0)
-            }
-            return result.typed()
+            path to columnData
         }
+
+        val nrow = rows.size
+
+        // use original value type if it is common for all values
+        val commonType = rows.mapNotNull { it.type }.singleOrNull()
+
+        // Align column sizes and create dataframe
+        var result = data.map { (path, values) ->
+            while (values.size < nrow)
+                values.add(rows[values.size].defaultValue)
+            path to guessColumnType(path.last(), values.asList(), commonType, true)
+        }.toDataFrame<Any>()
+
+        if (nrow > 1) {
+            val nameGenerator = result.nameGenerator()
+            val indexName = nameGenerator.addUnique(defaultPivotIndexName)
+            val col = rows.map { it.name }.toColumn(indexName)
+            result = result.insert(col).at(0)
+        }
+        return result.typed()
     }
 
-    override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all().except(index?.toColumns()?.and(columns.toColumns()) ?: columns.toColumns()) }
+    override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all().except(columns.toColumns()) }
 }
 
 internal class AggregatedPivot<T>(private val df: DataFrame<T>, internal var aggregator: GroupByReceiverImpl<T>) :

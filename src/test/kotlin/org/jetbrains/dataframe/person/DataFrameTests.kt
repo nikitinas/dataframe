@@ -1813,6 +1813,7 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `pivot all values`() {
         val pivoted = typed.pivot { city }.withIndex { name }.values()
+        pivoted.ncol shouldBe 1 + typed.city.ndistinct()
         pivoted.columns().drop(1).forEach {
             it.kind() shouldBe ColumnKind.Group
             it.asGroup().columnNames() shouldBe listOf("age", "weight")

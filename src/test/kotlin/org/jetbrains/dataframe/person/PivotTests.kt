@@ -1,6 +1,5 @@
 package org.jetbrains.dataframe.person
 
-import io.kotest.assertions.fail
 import io.kotest.matchers.shouldBe
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.valueOf
@@ -12,7 +11,6 @@ import org.jetbrains.dataframe.impl.columns.typed
 import org.junit.Test
 import java.io.Serializable
 import kotlin.reflect.KClass
-import kotlin.reflect.full.isSubclassOf
 
 class PivotTests {
 
@@ -67,7 +65,7 @@ class PivotTests {
     fun `pivot matches`() {
 
         val filtered = typed.drop(1)
-        val res = filtered.pivot { key }.withIndex { name }.matches()
+        val res = filtered.pivot { key }.groupBy { name }.matches()
         res.ncol() shouldBe 1 + filtered.key.ndistinct()
         res.nrow() shouldBe filtered.name.ndistinct()
 
@@ -91,7 +89,7 @@ class PivotTests {
     @Test
     fun `simple pivot`() {
 
-        val res = typed.pivot { key }.withIndex { name }.values { value default "-" }
+        val res = typed.pivot { key }.groupBy { name }.values { value default "-" }
 
         res.ncol() shouldBe 1 + typed.key.ndistinct()
         res.nrow() shouldBe typed.name.ndistinct()
@@ -102,29 +100,29 @@ class PivotTests {
 
         res shouldBe defaultExpected
 
-        typed.pivot { key }.withIndex { name }.withDefault("-").values { value } shouldBe res
-        typed.pivot { key }.withIndex { name }.withDefault("-").into { value } shouldBe res
-        df.pivot { key }.withIndex { name }.withDefault("-").values { value } shouldBe res
-        df.pivot(key).withIndex(name).withDefault("-").values(value) shouldBe res
-        df.pivot(key).withIndex(name).withDefault("-").into { value } shouldBe res
-        typed.pivot { key }.withIndex { name }.withDefault("-").valueOf { value.toString() }
+        typed.pivot { key }.groupBy { name }.withDefault("-").values { value } shouldBe res
+        typed.pivot { key }.groupBy { name }.withDefault("-").into { value } shouldBe res
+        df.pivot { key }.groupBy { name }.withDefault("-").values { value } shouldBe res
+        df.pivot(key).groupBy(name).withDefault("-").values(value) shouldBe res
+        df.pivot(key).groupBy(name).withDefault("-").into { value } shouldBe res
+        typed.pivot { key }.groupBy { name }.withDefault("-").valueOf { value.toString() }
     }
 
     @Test
     fun `pivot with transform`() {
-        val pivoted = typed.pivot { key.map { "_$it" } }.withIndex { name }.into { value }
+        val pivoted = typed.pivot { key.map { "_$it" } }.groupBy { name }.into { value }
         pivoted.columnNames().drop(1).toSet() shouldBe typed.key.distinct().map { "_$it" }.toSet()
     }
 
     @Test
     fun `pivot with index transform`() {
-        val pivoted = typed.pivot { key }.withIndex { name.map { "_$it" } }.into { value }
+        val pivoted = typed.pivot { key }.groupBy { name.map { "_$it" } }.into { value }
         pivoted.name shouldBe typed.name.distinct().map { "_$it" }
     }
 
     @Test
     fun `pivot with value map`() {
-        val pivoted = typed.pivot { key }.withIndex { name }.values { value.map { "_$it" } }
+        val pivoted = typed.pivot { key }.groupBy { name }.values { value.map { "_$it" } }
 
         pivoted shouldBe dataFrameOf("name", "age", "city", "weight")(
             "Alice", manyOf("_15", "_55"), "_London", "_54",
@@ -135,7 +133,7 @@ class PivotTests {
 
     @Test
     fun `pivot two values`() {
-        val pivoted = typed.pivot { key }.withIndex { name }.values { value and "str" { value?.toString() } default "-" }
+        val pivoted = typed.pivot { key }.groupBy { name }.values { value and "str" { value?.toString() } default "-" }
         pivoted.print()
 
         val expected = defaultExpected.replace("age", "city", "weight").with {
@@ -153,14 +151,14 @@ class PivotTests {
     fun `pivot two values group by value`(){
         val type by column<KClass<*>>()
         val pivoted = typed.add(type){ value?.javaClass?.kotlin }
-            .pivot { key }.withIndex { name }.values(separate = true) { value and type }
+            .pivot { key }.groupBy { name }.values(separate = true) { value and type }
         pivoted.print()
         pivoted.ncol() shouldBe 3
     }
 
     @Test
     fun `pivot two columns`() {
-        val pivoted = typed.add("index") { 1 }.pivot { name and key }.withIndex("index").into { value }
+        val pivoted = typed.add("index") { 1 }.pivot { name and key }.groupBy("index").into { value }
 
         pivoted.columnNames() shouldBe listOf("index") + typed.name.distinct().values()
         pivoted.nrow() shouldBe 1
@@ -187,7 +185,7 @@ class PivotTests {
     @Test
     fun `pivot with two index columns`() {
         val pivoted = typed.dropNulls { value }.pivot { value.map { it!!.javaClass.kotlin.simpleName } }
-            .withIndex { name and key }.into { value }
+            .groupBy { name and key }.into { value }
 
         val expected = typed.dropNulls { value }.add {
             "Int" { value as? Int }
@@ -236,12 +234,12 @@ class PivotTests {
         }
         pivoted.ncol() shouldBe 2
         pivoted.print()
-        pivoted.ungroup("key") shouldBe typed.pivot { key }.withIndex { name }.into { value }
+        pivoted.ungroup("key") shouldBe typed.pivot { key }.groupBy { name }.into { value }
     }
 
     @Test
     fun `equal pivots`() {
-        val expected = typed.pivot { key }.withIndex { name }.into { value }
+        val expected = typed.pivot { key }.groupBy { name }.into { value }
         typed.groupBy { name }.pivot { key }.values { value } shouldBe expected
         val pivoted = typed.groupBy { name }.aggregate {
             pivot { key }.into { value }
@@ -253,7 +251,7 @@ class PivotTests {
     @Test
     fun gather() {
 
-        val res = typed.pivot { key }.withIndex { name }.into { value }
+        val res = typed.pivot { key }.groupBy { name }.into { value }
         val gathered = res.gather { cols().drop(1) }.into("key", "value")
         gathered shouldBe typed.dropNulls { value }.sortBy { name and "key" }
     }
@@ -261,7 +259,7 @@ class PivotTests {
     @Test
     fun `gather with filter`() {
 
-        val pivoted = typed.pivot { key }.withIndex { name }.into { value }
+        val pivoted = typed.pivot { key }.groupBy { name }.into { value }
         val gathered = pivoted.gather { cols().drop(1) }.where { it is Int }.into("key", "value")
         gathered shouldBe typed.filter { value is Int }.sortBy("name", "key").convert("value").toInt() // TODO: replace convert with cast
     }
@@ -276,7 +274,7 @@ class PivotTests {
             pivot { key.map(keyConverter) }.valueOf { valueConverter(value) }
         }
 
-        val pivoted3 = typed.pivot { key.map(keyConverter) }.withIndex { name }.values { value.map(valueConverter) }
+        val pivoted3 = typed.pivot { key.map(keyConverter) }.groupBy { name }.values { value.map(valueConverter) }
 
         pivoted2 shouldBe pivoted
         pivoted3 shouldBe pivoted
@@ -291,7 +289,7 @@ class PivotTests {
     @Test
     fun `gather with value conversion`() {
 
-        val pivoted = typed.pivot { key }.withIndex { name }.into { valueConverter(value) }
+        val pivoted = typed.pivot { key }.groupBy { name }.into { valueConverter(value) }
         val gathered = pivoted.gather { cols().drop(1) }.map { (it as? Double)?.toInt() ?: it }.into("key", "value")
         gathered shouldBe expectedFiltered
     }
@@ -299,7 +297,7 @@ class PivotTests {
     @Test
     fun `gather doubles with value conversion`() {
 
-        val pivoted = typed.pivot { key }.withIndex{ name }.into { valueConverter(value) }
+        val pivoted = typed.pivot { key }.groupBy{ name }.into { valueConverter(value) }
         val gathered = pivoted.remove("city").gather { doubleCols() }.map { it.toInt() }.into("key", "value")
         val expected = typed.filter { key != "city" && value != null }.convert { value }.to<Int>().sortBy { name and key }
         gathered shouldBe expected
@@ -308,7 +306,7 @@ class PivotTests {
     @Test
     fun `gather with name conversion`() {
 
-        val pivoted = typed.pivot { key.map(keyConverter) }.withIndex { name }.into { value }
+        val pivoted = typed.pivot { key.map(keyConverter) }.groupBy { name }.into { value }
         val gathered = pivoted.gather { cols().drop(1) }.mapNames { it.substring(2) }.into("key", "value")
         gathered shouldBe expectedFiltered
     }
@@ -321,7 +319,7 @@ class PivotTests {
         val data by columnOf(setOf(1), listOf(1), setOf(2), listOf(2))
         val df = dataFrameOf(id, name, data)
         df[data].type() shouldBe getType<java.util.AbstractCollection<Int>>()
-        val pivoted = df.pivot { name }.withIndex { id }.values { data }
+        val pivoted = df.pivot { name }.groupBy { id }.values { data }
         pivoted.nrow() shouldBe 2
         pivoted.ncol() shouldBe 3
         pivoted["set"].type() shouldBe getType<java.util.AbstractSet<Int>>()
@@ -344,21 +342,21 @@ class PivotTests {
 
     @Test
     fun `pivot with grouping`() {
-        val pivoted = typed.pivot { key }.withIndex { name }.withGrouping("keys").into {value}
+        val pivoted = typed.pivot { key }.groupBy { name }.withGrouping("keys").into {value}
         pivoted.columnNames() shouldBe listOf("name", "keys")
         pivoted["keys"].asGroup().columnNames() shouldBe typed.key.distinct().values()
     }
 
     @Test
     fun `pivot matches yes no`() {
-        val pivoted = typed.drop(1).pivot { key }.withIndex { name }.matches("yes", "no")
+        val pivoted = typed.drop(1).pivot { key }.groupBy { name }.matches("yes", "no")
         pivoted.sumOf { values.count { it == "yes" } } shouldBe typed.nrow() - 1
         pivoted.sumOf { values.count { it == "no" } } shouldBe 1
     }
 
     @Test
     fun `pivot aggregate into`() {
-        val pivoted = typed.pivot { key }.withIndex { name }.aggregate {
+        val pivoted = typed.pivot { key }.groupBy { name }.aggregate {
             value.first() into "value"
         }
         pivoted.columns().drop(1).forEach {
@@ -369,7 +367,7 @@ class PivotTests {
 
     @Test
     fun `pivot aggregate several into`() {
-        val pivoted = typed.pivot { key }.withIndex { name }.aggregate {
+        val pivoted = typed.pivot { key }.groupBy { name }.aggregate {
             value.first() into "first value"
             value.last() into "last value"
             "unused"
@@ -383,7 +381,7 @@ class PivotTests {
     @Test
     fun `pivot two value columns into one name`(){
         val type by typed.newColumn { value?.javaClass?.kotlin ?: Unit::class }
-        val pivoted = (typed + type).pivot { key }.withIndex { name }.values { value and (type default Any::class) into "data"}
+        val pivoted = (typed + type).pivot { key }.groupBy { name }.values { value and (type default Any::class) into "data"}
         pivoted.print()
         pivoted.columns().drop(1).forEach {
             val group = it.asGroup()

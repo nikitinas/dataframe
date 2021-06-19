@@ -83,7 +83,6 @@ import org.jetbrains.dataframe.ungroup
 import org.jetbrains.dataframe.update
 import org.jetbrains.dataframe.with
 import org.jetbrains.dataframe.with2
-import org.jetbrains.dataframe.withIndex
 import org.jetbrains.dataframe.withNull
 import org.junit.Test
 
@@ -313,16 +312,16 @@ class DataFrameTreeTests : BaseTest() {
             actual shouldBe expected
         }
 
-        typed2.pivot { nameAndCity.city }.withIndex { nameAndCity.name }.values { age }.check()
-        df2.pivot(nameAndCity[city]).withIndex { nameAndCity[name] }.values(age).check()
-        df2.pivot { it[GroupedPerson::nameAndCity][NameAndCity::city] }.withIndex { it[GroupedPerson::nameAndCity][NameAndCity::name] }.values(GroupedPerson::age).check()
-        df2.pivot { it["nameAndCity"]["city"] }.withIndex { it["nameAndCity"]["name"] }.values("age").check()
+        typed2.pivot { nameAndCity.city }.groupBy { nameAndCity.name }.values { age }.check()
+        df2.pivot(nameAndCity[city]).groupBy { nameAndCity[name] }.values(age).check()
+        df2.pivot { it[GroupedPerson::nameAndCity][NameAndCity::city] }.groupBy { it[GroupedPerson::nameAndCity][NameAndCity::name] }.values(GroupedPerson::age).check()
+        df2.pivot { it["nameAndCity"]["city"] }.groupBy { it["nameAndCity"]["name"] }.values("age").check()
     }
 
     @Test
     fun `pivot grouped column`() {
         val grouped = typed.group { age and weight }.into("info")
-        val pivoted = grouped.pivot { city }.withIndex { name }.values("info")
+        val pivoted = grouped.pivot { city }.groupBy { name }.values("info")
         pivoted.ncol() shouldBe typed.city.ndistinct() + 1
 
         val expected =

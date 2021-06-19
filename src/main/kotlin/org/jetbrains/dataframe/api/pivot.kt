@@ -5,26 +5,23 @@ import org.jetbrains.dataframe.aggregation.AggregateReceiver
 import org.jetbrains.dataframe.aggregation.GroupByReceiver
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.guessColumnType
 import org.jetbrains.dataframe.impl.aggregation.AggregateColumnDescriptor
 import org.jetbrains.dataframe.impl.aggregation.GroupByReceiverImpl
 import org.jetbrains.dataframe.impl.aggregation.ValueWithDefault
 import org.jetbrains.dataframe.impl.aggregation.getPath
 import org.jetbrains.dataframe.impl.aggregation.receivers.PivotReceiverImpl
 import org.jetbrains.dataframe.impl.aggregation.yieldOneOrMany
-import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.emptyPath
-import org.jetbrains.dataframe.impl.nameGenerator
 import kotlin.reflect.KType
 
 fun <T> DataFrame<T>.pivot(columns: ColumnsSelector<T, *>) = DataFramePivot(this, columns)
 fun <T> DataFrame<T>.pivot(vararg columns: String) = pivot { columns.toColumns() }
 fun <T> DataFrame<T>.pivot(vararg columns: Column) = pivot { columns.toColumns() }
 
-fun <T> DataFramePivot<T>.withIndex(columns: ColumnsSelector<T, *>): GroupedFramePivot<T> = GroupedFramePivot(df.groupBy(columns), this.columns, groupValues, default, groupPath)
-fun <T> DataFramePivot<T>.withIndex(vararg columns: String) = withIndex { columns.toColumns() }
-fun <T> DataFramePivot<T>.withIndex(vararg columns: Column) = withIndex { columns.toColumns() }
+fun <T> DataFramePivot<T>.groupBy(columns: ColumnsSelector<T, *>): GroupedFramePivot<T> = GroupedFramePivot(df.groupBy(columns), this.columns, groupValues, default, groupPath)
+fun <T> DataFramePivot<T>.groupBy(vararg columns: String) = groupBy { columns.toColumns() }
+fun <T> DataFramePivot<T>.groupBy(vararg columns: Column) = groupBy { columns.toColumns() }
 
 fun <T> GroupedDataFrame<*, T>.pivot(columns: ColumnsSelector<T, *>) = GroupedFramePivot(this, columns)
 fun <T> GroupedDataFrame<*, T>.pivot(vararg columns: Column) = pivot { columns.toColumns() }
@@ -92,7 +89,7 @@ data class DataFramePivot<T>(
 
     override fun withGrouping(groupPath: ColumnPath) = copy(groupPath = groupPath)
 
-    override fun <R> aggregate(body: PivotAggregateBody<T, R>) = withIndex { none() }.aggregate(body)
+    override fun <R> aggregate(body: PivotAggregateBody<T, R>) = groupBy { none() }.aggregate(body)
 
     override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all().except(columns.toColumns()) }
 }

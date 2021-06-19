@@ -936,7 +936,7 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `pivot matches`() {
-        val pivoted = typed.pivot { city }.withIndex { name and age and weight }.matches()
+        val pivoted = typed.pivot { city }.groupBy { name and age and weight }.matches()
         pivoted.ncol() shouldBe typed.ncol() + typed.city.ndistinct() - 1
 
         for (row in 0 until typed.nrow()) {
@@ -953,7 +953,7 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `pivot matches equality`() {
-        val res1 = typed.pivot { city }.withIndex {name}.matches()
+        val res1 = typed.pivot { city }.groupBy {name}.matches()
         val res2 = typed.groupBy { name }.pivot { city }.matches()
         val res3 = typed.groupBy { name }.aggregate {
             pivot { city }.matches()
@@ -965,7 +965,7 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `pivot to bool with conversion`() {
         val filtered = typed.dropNulls { city }
-        val res = filtered.pivot { city.lowercase() }.withIndex { name and age }.matches()
+        val res = filtered.pivot { city.lowercase() }.groupBy { name and age }.matches()
         val cities = filtered.city.toList().map {it!!.lowercase()}
         val gathered =
             res.gather { colsOf<Boolean> { cities.contains(it.name()) } }.where { it }.into("city")
@@ -975,7 +975,7 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `pivot to bool distinct rows`() {
-        val res = typed.pivot { city }.withIndex { name and age }.matches()
+        val res = typed.pivot { city }.groupBy { name and age }.matches()
         res.ncol() shouldBe 2 + typed.city.ndistinct()
         for (i in 0 until typed.nrow()) {
             val city = typed[i][city]
@@ -988,7 +988,7 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `pivot to bool merged rows`() {
         val selected = typed.select { name and city }
-        val res = typed.pivot { city }.withIndex { name }.matches()
+        val res = typed.pivot { city }.groupBy { name }.matches()
 
         res.ncol() shouldBe selected.city.ndistinct() + 1
         res.nrow() shouldBe selected.name.ndistinct()
@@ -1017,13 +1017,13 @@ class DataFrameTests : BaseTest() {
             .split { others }.intoRows()
             .add(sum) { name.length + other().length }
 
-        val matrix = src.pivot { other }.withIndex {name }.into { sum }
+        val matrix = src.pivot { other }.groupBy {name }.into { sum }
         matrix.ncol() shouldBe 1 + names.size
     }
 
     @Test
     fun `gather bool`() {
-        val pivoted = typed.pivot { city }.withIndex {name}.matches()
+        val pivoted = typed.pivot { city }.groupBy {name}.matches()
         val res = pivoted.gather { colsOf<Boolean>() }.where { it }.into("city")
         val sorted = res.sortBy { name and city }
         sorted shouldBe typed.select { name and city.map {it.toString()} }.distinct().sortBy { name and city }
@@ -1280,7 +1280,7 @@ class DataFrameTests : BaseTest() {
     fun `forEachIn`() {
 
         val cities by columnGroup()
-        val pivoted = typed.pivot { city }.withGrouping(cities).withIndex { name and weight }.into { age }
+        val pivoted = typed.pivot { city }.withGrouping(cities).groupBy { name and weight }.into { age }
         pivoted.print()
         var sum = 0
         pivoted.forEachIn({ cities.children() }) { row, column -> column[row]?.let { sum += it as Int } }
@@ -1820,13 +1820,13 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `pivot max`() {
-        val pivoted = typed.pivot { city }.withIndex { name }.max { age }
+        val pivoted = typed.pivot { city }.groupBy { name }.max { age }
         pivoted.single { name == "Mark" }["Moscow"] shouldBe 30
     }
 
     @Test
     fun `pivot all values`() {
-        val pivoted = typed.pivot { city }.withIndex { name }.values()
+        val pivoted = typed.pivot { city }.groupBy { name }.values()
         pivoted.ncol shouldBe 1 + typed.city.ndistinct()
         pivoted.columns().drop(1).forEach {
             it.kind() shouldBe ColumnKind.Group
@@ -1836,7 +1836,7 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `pivot mean values`() {
-        val pivoted = typed.pivot { city }.withIndex { name }.mean()
+        val pivoted = typed.pivot { city }.groupBy { name }.mean()
         pivoted.columns().drop(1).forEach {
             it.kind() shouldBe ColumnKind.Group
             val group = it.asGroup()

@@ -99,3 +99,5 @@ internal fun <T:Number> KClass<T>.zero(): T = when(this){
     Number::class -> 0 as T
     else -> TODO()
 }
+
+internal fun <T> catchSilent(body: ()->T): T? = try { body() } catch (_:Throwable){ null }

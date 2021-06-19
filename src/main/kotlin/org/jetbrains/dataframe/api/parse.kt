@@ -3,10 +3,19 @@ package org.jetbrains.dataframe
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.hasNulls
 import org.jetbrains.dataframe.columns.size
+import org.jetbrains.dataframe.columns.typeClass
 import org.jetbrains.dataframe.columns.values
 import kotlin.reflect.full.withNullability
 
-internal fun DataColumn<String?>.tryParseAny(): DataColumn<*> {
+val DataFrame.Companion.parser: DataFrameParserOptions get() = Parsers
+
+interface DataFrameParserOptions {
+
+    fun addDateTimeFormat(format: String)
+
+}
+
+fun DataColumn<String?>.tryParse(): DataColumn<*> {
 
     if(allNulls()) return this
 
@@ -34,4 +43,6 @@ internal fun DataColumn<String?>.tryParseAny(): DataColumn<*> {
 
 fun <T> DataFrame<T>.parse() = parse { this@parse.dfsOf() }
 
-fun <T> DataFrame<T>.parse(columns: ColumnsSelector<T, String?>) = convert(columns).to { it.tryParseAny() }
+fun <T> DataFrame<T>.parse(columns: ColumnsSelector<T, String?>) = convert(columns).to { it.tryParse() }
+
+fun DataColumn<String?>.parse() = tryParse().also { if(it.typeClass == String::class) error("Can't guess column type")}

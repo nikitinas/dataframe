@@ -261,7 +261,7 @@ fun DataFrame.Companion.readDelim(
             val values = records.map { it[colIndex]?.emptyAsNull(nullStrings).also { if (it == null) hasNulls = true } }
             val column = column(colName, values, hasNulls)
             when (colType) {
-                null -> column.tryParseAny()
+                null -> column.tryParse()
                 ColType.String -> column
                 else -> {
                     val parser = Parsers[colType.toType()]!!

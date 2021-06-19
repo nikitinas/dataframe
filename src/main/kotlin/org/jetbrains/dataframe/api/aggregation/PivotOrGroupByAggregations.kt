@@ -12,10 +12,6 @@ import org.jetbrains.dataframe.impl.columns.toColumns
 
 interface PivotOrGroupByAggregations<out T> : Aggregatable<T> {
 
-    fun <V> value(column: ColumnReference<V>): DataFrame<T> = withColumn { getAggregateColumn { column } }
-    fun value(column: String): DataFrame<T> = withColumn { getAggregateColumn { it[column] } }
-    fun <V> value(column: AggregateColumnsSelector<T, V>): DataFrame<T> = withColumn { getAggregateColumn(column) }
-
     fun <R : Number> sumBy(columns: ColumnsSelector<T, R>): DataFrame<T> = Aggregators.sum.aggregateFor(this, columns)
     fun sum(): DataFrame<T> = sumBy(numberColumns())
 

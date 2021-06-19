@@ -16,7 +16,7 @@ class Securities {
 
     @Test
     fun pivot(){
-        val res = df.rename("id").into("rowId").pivot("columns").withIndex("rowId").into("data")
+        val res = df.rename("id").into("rowId").pivot("columns").withIndex("rowId").values("data")
         res.nrow() shouldBe 100
         res.ncol() shouldBe 17
     }

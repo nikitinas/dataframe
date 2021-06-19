@@ -91,7 +91,7 @@ class PivotTests {
     @Test
     fun `simple pivot`() {
 
-        val res = typed.pivot { key }.withIndex { name }.value { value default "-" }
+        val res = typed.pivot { key }.withIndex { name }.values { value default "-" }
 
         res.ncol() shouldBe 1 + typed.key.ndistinct()
         res.nrow() shouldBe typed.name.ndistinct()
@@ -102,9 +102,11 @@ class PivotTests {
 
         res shouldBe defaultExpected
 
+        typed.pivot { key }.withIndex { name }.withDefault("-").values { value } shouldBe res
         typed.pivot { key }.withIndex { name }.withDefault("-").into { value } shouldBe res
-        df.pivot { key }.withIndex { name }.withDefault("-").into { value } shouldBe res
-        df.pivot(key).withIndex(name).withDefault("-").into(value) shouldBe res
+        df.pivot { key }.withIndex { name }.withDefault("-").values { value } shouldBe res
+        df.pivot(key).withIndex(name).withDefault("-").values(value) shouldBe res
+        df.pivot(key).withIndex(name).withDefault("-").into { value } shouldBe res
         typed.pivot { key }.withIndex { name }.withDefault("-").valueOf { value.toString() }
     }
 
@@ -122,7 +124,7 @@ class PivotTests {
 
     @Test
     fun `pivot with value map`() {
-        val pivoted = typed.pivot { key }.withIndex { name }.value { value.map { "_$it" } }
+        val pivoted = typed.pivot { key }.withIndex { name }.values { value.map { "_$it" } }
 
         pivoted shouldBe dataFrameOf("name", "age", "city", "weight")(
             "Alice", manyOf("_15", "_55"), "_London", "_54",
@@ -221,8 +223,6 @@ class PivotTests {
     @Test
     fun `pivot two values without index group by value`() {
         val pivoted = typed.pivot { name }.values(separate = true) { key and value }
-        pivoted.print()
-
         pivoted.columnNames() shouldBe listOf("key", "value")
         pivoted.nrow() shouldBe 1
         (pivoted["key"]["Alice"][0] as Many<String>).size shouldBe 4
@@ -242,7 +242,7 @@ class PivotTests {
     @Test
     fun `equal pivots`() {
         val expected = typed.pivot { key }.withIndex { name }.into { value }
-        typed.groupBy { name }.pivot { key }.value { value } shouldBe expected
+        typed.groupBy { name }.pivot { key }.values { value } shouldBe expected
         val pivoted = typed.groupBy { name }.aggregate {
             pivot { key }.into { value }
         }
@@ -276,7 +276,7 @@ class PivotTests {
             pivot { key.map(keyConverter) }.valueOf { valueConverter(value) }
         }
 
-        val pivoted3 = typed.pivot { key.map(keyConverter) }.withIndex { name }.value { value.map(valueConverter) }
+        val pivoted3 = typed.pivot { key.map(keyConverter) }.withIndex { name }.values { value.map(valueConverter) }
 
         pivoted2 shouldBe pivoted
         pivoted3 shouldBe pivoted
@@ -321,7 +321,7 @@ class PivotTests {
         val data by columnOf(setOf(1), listOf(1), setOf(2), listOf(2))
         val df = dataFrameOf(id, name, data)
         df[data].type() shouldBe getType<java.util.AbstractCollection<Int>>()
-        val pivoted = df.pivot { name }.withIndex { id }.value { data }
+        val pivoted = df.pivot { name }.withIndex { id }.values { data }
         pivoted.nrow() shouldBe 2
         pivoted.ncol() shouldBe 3
         pivoted["set"].type() shouldBe getType<java.util.AbstractSet<Int>>()
@@ -335,7 +335,7 @@ class PivotTests {
         val data by columnOf(setOf(1), listOf(1))
         val df = dataFrameOf(name, data)
         df[data].type() shouldBe getType<java.util.AbstractCollection<Int>>()
-        val pivoted = df.pivot { name }.value { data }
+        val pivoted = df.pivot { name }.values { data }
         pivoted.nrow() shouldBe 1
         pivoted.ncol() shouldBe 2
         pivoted["set"].type() shouldBe getType<java.util.AbstractSet<Int>>()

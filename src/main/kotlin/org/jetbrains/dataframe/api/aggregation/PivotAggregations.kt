@@ -18,6 +18,7 @@ interface PivotAggregations<T> : PivotOrGroupByAggregations<T> {
 
     fun values(vararg columns: Column, separate: Boolean = false): DataFrame<T> = values(separate) { columns.toColumns() }
     fun values(vararg columns: String, separate: Boolean = false): DataFrame<T> = values(separate) { columns.toColumns() }
+    fun values(vararg columns: KProperty<*>, separate: Boolean = false): DataFrame<T> = values(separate) { columns.toColumns() }
     fun values(separate: Boolean = false, columns: AggregateColumnsSelector<T, *>): DataFrame<T> = groupByValue(separate).yieldOneOrManyBy(columns) { it.toList() }
 
     fun values(separate: Boolean = false): DataFrame<T> = values(separate, remainingColumnsSelector())
@@ -32,10 +33,6 @@ interface PivotAggregations<T> : PivotOrGroupByAggregations<T> {
     fun groupByValue(flag: Boolean = true): PivotAggregations<T>
     fun withDefault(value: Any?): PivotAggregations<T>
     fun withGrouping(groupPath: ColumnPath): PivotAggregations<T>
-
-    fun into(column: Column) = value(column)
-    fun into(column: String) = value(column)
-    fun into(column: KProperty<*>) = value(column.name)
 
     // region min
 

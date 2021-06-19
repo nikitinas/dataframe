@@ -313,16 +313,16 @@ class DataFrameTreeTests : BaseTest() {
             actual shouldBe expected
         }
 
-        typed2.pivot { nameAndCity.city }.withIndex { nameAndCity.name }.into { age }.check()
-        df2.pivot(nameAndCity[city]).withIndex { nameAndCity[name] }.into(age).check()
-        df2.pivot { it[GroupedPerson::nameAndCity][NameAndCity::city] }.withIndex { it[GroupedPerson::nameAndCity][NameAndCity::name] }.into(GroupedPerson::age).check()
-        df2.pivot { it["nameAndCity"]["city"] }.withIndex { it["nameAndCity"]["name"] }.into("age").check()
+        typed2.pivot { nameAndCity.city }.withIndex { nameAndCity.name }.values { age }.check()
+        df2.pivot(nameAndCity[city]).withIndex { nameAndCity[name] }.values(age).check()
+        df2.pivot { it[GroupedPerson::nameAndCity][NameAndCity::city] }.withIndex { it[GroupedPerson::nameAndCity][NameAndCity::name] }.values(GroupedPerson::age).check()
+        df2.pivot { it["nameAndCity"]["city"] }.withIndex { it["nameAndCity"]["name"] }.values("age").check()
     }
 
     @Test
     fun `pivot grouped column`() {
         val grouped = typed.group { age and weight }.into("info")
-        val pivoted = grouped.pivot { city }.withIndex { name }.into("info")
+        val pivoted = grouped.pivot { city }.withIndex { name }.values("info")
         pivoted.ncol() shouldBe typed.city.ndistinct() + 1
 
         val expected =

@@ -1,109 +1,68 @@
-package org.jetbrains.dataframe
+package org.jetbrains.dataframe.api.aggregation
 
+import org.jetbrains.dataframe.Column
+import org.jetbrains.dataframe.ColumnSelector
+import org.jetbrains.dataframe.ColumnsSelector
+import org.jetbrains.dataframe.DataFramePivot
+import org.jetbrains.dataframe.DataRow
+import org.jetbrains.dataframe.RowFilter
+import org.jetbrains.dataframe.RowSelector
 import org.jetbrains.dataframe.aggregation.Aggregatable
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
-import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregators
-import org.jetbrains.dataframe.impl.aggregation.comparableColumns
-import org.jetbrains.dataframe.impl.aggregation.modes.aggregateAll
-import org.jetbrains.dataframe.impl.aggregation.modes.aggregateFor
-import org.jetbrains.dataframe.impl.aggregation.modes.of
-import org.jetbrains.dataframe.impl.aggregation.numberColumns
-import org.jetbrains.dataframe.impl.aggregation.yieldOneOrMany
-import org.jetbrains.dataframe.impl.aggregation.yieldOneOrManyBy
+import org.jetbrains.dataframe.groupBy
 import org.jetbrains.dataframe.impl.columns.toColumns
+import org.jetbrains.dataframe.with
 import kotlin.reflect.KProperty
 
 interface PivotAggregations<T> : Aggregatable<T> {
 
-    fun count(predicate: RowFilter<T>? = null) = aggregateBase { count(predicate) default 0 }
+    fun count(predicate: RowFilter<T>? = null): DataRow<T> = asGrouped().count(predicate)[0]
 
-    fun values(vararg columns: Column, separate: Boolean = false): DataFrame<T> = values(separate) { columns.toColumns() }
-    fun values(vararg columns: String, separate: Boolean = false): DataFrame<T> = values(separate) { columns.toColumns() }
-    fun values(vararg columns: KProperty<*>, separate: Boolean = false): DataFrame<T> = values(separate) { columns.toColumns() }
-    fun values(separate: Boolean = false, columns: AggregateColumnsSelector<T, *>): DataFrame<T> = groupByValue(separate).yieldOneOrManyBy(columns) { it.toList() }
+    fun values(vararg columns: Column, separate: Boolean = false) = values(separate) { columns.toColumns() }
+    fun values(vararg columns: String, separate: Boolean = false) = values(separate) { columns.toColumns() }
+    fun values(vararg columns: KProperty<*>, separate: Boolean = false) = values(separate) { columns.toColumns() }
+    fun values(separate: Boolean = false, columns: AggregateColumnsSelector<T, *>): DataRow<T> = asGrouped().values(separate, columns)[0]
 
-    fun values(separate: Boolean = false): DataFrame<T> = values(separate, remainingColumnsSelector())
-
-    fun <R> matches(yes: R, no: R) = aggregate { yes default no }
-    fun matches() = matches(true, false)
-
-    override fun <R> aggregateBase(body: AggregateBody<T, R>) = aggregate(body as PivotAggregateBody<T, R>)
-
-    fun <R> aggregate(body: PivotAggregateBody<T, R>): DataFrame<T>
-
-    fun groupByValue(flag: Boolean = true): PivotAggregations<T>
-    fun default(value: Any?): PivotAggregations<T>
-    fun withGrouping(groupPath: ColumnPath): PivotAggregations<T>
+    fun values(separate: Boolean = false): DataRow<T> = asGrouped().values(separate)[0]
 
     // region min
 
-    fun <R : Comparable<R>> min(separate: Boolean = false): DataFrame<T> = minFor(separate, comparableColumns())
+    fun min(separate: Boolean = false): DataRow<T> = asGrouped().min(separate)[0]
 
-    fun <R : Comparable<R>> minFor(separate: Boolean = false, columns: ColumnsSelector<T, R?>): DataFrame<T> = Aggregators.min.aggregateFor(groupByValue(separate), columns)
+    fun <R : Comparable<R>> minFor(separate: Boolean = false, columns: ColumnsSelector<T, R?>): DataRow<T> = asGrouped().minFor(separate, columns)[0]
 
-    fun <R : Comparable<R>> min(columns: ColumnsSelector<T, R?>): DataFrame<T> = Aggregators.min.aggregateAll(this, columns)
+    fun <R : Comparable<R>> min(columns: ColumnsSelector<T, R?>): DataRow<T> = asGrouped().min(columns)[0]
 
-    fun <R : Comparable<R>> minOf(selector: RowSelector<T, R>): DataFrame<T> = aggregate { minOf(selector) }
+    fun <R : Comparable<R>> minOf(rowExpression: RowSelector<T, R>): DataRow<T> = asGrouped().minOf(rowExpression)[0]
 
-    fun <R : Comparable<R>> minBy(column: ColumnSelector<T, R>): DataFrame<T> = aggregate { minBy(column) }
+    fun <R : Comparable<R>> minBy(column: ColumnSelector<T, R>): DataRow<T> = asGrouped().minBy(column)[0]
 
-    fun <R : Comparable<R>> minByExpr(rowExpression: RowSelector<T, R>): DataFrame<T> = aggregate { minByExpr(rowExpression) }
+    fun <R : Comparable<R>> minByExpr(rowExpression: RowSelector<T, R>): DataRow<T> = asGrouped().minByExpr(rowExpression)[0]
 
     // endregion
 
     // region max
 
-    fun <R : Comparable<R>> max(columns: ColumnsSelector<T, R?>): DataFrame<T> = Aggregators.max.aggregateAll(this, columns)
+    fun max(separate: Boolean = false): DataRow<T> = asGrouped().max(separate)[0]
 
-    fun <R : Comparable<R>> maxOf(selector: RowSelector<T, R>) = aggregate { maxOf(selector) }
+    fun <R : Comparable<R>> maxFor(separate: Boolean = false, columns: ColumnsSelector<T, R?>): DataRow<T> = asGrouped().maxFor(separate, columns)[0]
 
-    // endregion
+    fun <R : Comparable<R>> max(columns: ColumnsSelector<T, R?>): DataRow<T> = asGrouped().max(columns)[0]
 
-    // region sum
+    fun <R : Comparable<R>> maxOf(rowExpression: RowSelector<T, R>): DataRow<T> = asGrouped().maxOf(rowExpression)[0]
 
-    fun sum(separate: Boolean = false): DataFrame<T> = sumFor(separate, numberColumns())
+    fun <R : Comparable<R>> maxBy(column: ColumnSelector<T, R>): DataRow<T> = asGrouped().maxBy(column)[0]
 
-    fun <R : Number> sumFor(separate: Boolean = false, columns: ColumnsSelector<T, R>): DataFrame<T> = Aggregators.sum.aggregateFor(groupByValue(separate), columns)
-
-    // endregion
-
-    // region mean
-
-    fun <R : Number> mean(skipNa: Boolean = true, columns: ColumnsSelector<T, R?>): DataFrame<T> = Aggregators.mean(skipNa).aggregateFor(this, columns)
-
-    fun mean(skipNa: Boolean = true): DataFrame<T> = mean(skipNa, numberColumns())
+    fun <R : Comparable<R>> maxByExpr(rowExpression: RowSelector<T, R>): DataRow<T> = asGrouped().maxByExpr(rowExpression)[0]
 
     // endregion
-
-    fun std(separate: Boolean = false): DataFrame<T> = stdFor(separate, numberColumns())
-
-    fun <R : Number> stdFor(separate: Boolean = false, columns: AggregateColumnsSelector<T, R>): DataFrame<T> = Aggregators.std.aggregateFor(groupByValue(separate), columns)
-
-    fun <R : Number> std(columns: ColumnsSelector<T, R?>) = Aggregators.std.aggregateAll(this, columns)
 }
+
+@PublishedApi
+internal fun <T> PivotAggregations<T>.asGrouped() = (this as DataFramePivot<T>).groupBy { none() }
 
 // region inlines
 
-inline fun <T, reified R : Number> PivotAggregations<T>.meanOf(
-    skipNa: Boolean = true,
-    crossinline expression: RowSelector<T, R>
-): DataFrame<T> = Aggregators.mean(skipNa).cast<Double>().of(this, expression)
-
-inline fun <T, reified V> PivotAggregations<T>.with(noinline selector: RowSelector<T, V>): DataFrame<T> {
-    val type = getType<V>()
-    return aggregate {
-        val values = map {
-            val value = selector(it, it)
-            if (value is ColumnReference<*>) it[value]
-            else value
-        }
-        yieldOneOrMany(values, type)
-    }
-}
-
-inline fun <T, reified R : Number> PivotAggregations<T>.sumOf(crossinline selector: RowSelector<T, R>) =
-    Aggregators.sum.of(this, selector)
-
+inline fun <T, reified V> PivotAggregations<T>.with(noinline selector: RowSelector<T, V>): DataRow<T> = asGrouped().with(selector)[0]
 
 // endregion

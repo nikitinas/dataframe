@@ -2,7 +2,7 @@ package org.jetbrains.dataframe.impl.aggregation.modes
 
 import org.jetbrains.dataframe.DataFrameAggregations
 import org.jetbrains.dataframe.GroupByAggregations
-import org.jetbrains.dataframe.PivotAggregations
+import org.jetbrains.dataframe.GroupedPivotAggregations
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregator
 import org.jetbrains.dataframe.ColumnsSelector
 import org.jetbrains.dataframe.DataFrame
@@ -22,7 +22,7 @@ internal fun <T, R, C> Aggregator<*, R>.aggregateAll(
 ): DataFrame<T> = data.aggregateAll(cast(), columns, name)
 
 internal fun <T, R, C> Aggregator<*, R>.aggregateAll(
-    data: PivotAggregations<T>,
+    data: GroupedPivotAggregations<T>,
     columns: ColumnsSelector<T, C>
 ): DataFrame<T> = data.aggregateAll(cast(), columns)
 
@@ -43,7 +43,7 @@ internal fun <T, C, R> GroupByAggregations<T>.aggregateAll(
         yield(pathOf(name ?: aggregator.name), aggregator.aggregate(cols))
 }
 
-internal fun <T, C, R> PivotAggregations<T>.aggregateAll(
+internal fun <T, C, R> GroupedPivotAggregations<T>.aggregateAll(
     aggregator: Aggregator<C, R>,
     columns: ColumnsSelector<T, C>
 ): DataFrame<T> = aggregateBase {

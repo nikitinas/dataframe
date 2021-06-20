@@ -2,7 +2,7 @@ package org.jetbrains.dataframe.impl.aggregation.modes
 
 import org.jetbrains.dataframe.DataFrameAggregations
 import org.jetbrains.dataframe.GroupByAggregations
-import org.jetbrains.dataframe.PivotAggregations
+import org.jetbrains.dataframe.GroupedPivotAggregations
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregator
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.RowSelector
@@ -44,7 +44,7 @@ internal inline fun <T, reified C, reified R> Aggregator<*, R>.of(
 
 @PublishedApi
 internal inline fun <T, reified C, reified R> Aggregator<*, R>.of(
-    data: PivotAggregations<T>,
+    data: GroupedPivotAggregations<T>,
     crossinline expression: RowSelector<T, C>
 ): DataFrame<T> = data.aggregateOf(expression, this as Aggregator<C, R>)
 
@@ -62,7 +62,7 @@ internal inline fun <T, reified C, reified R> GroupByAggregations<T>.aggregateOf
 }
 
 @PublishedApi
-internal inline fun <T, reified C, R> PivotAggregations<T>.aggregateOf(
+internal inline fun <T, reified C, R> GroupedPivotAggregations<T>.aggregateOf(
     crossinline selector: RowSelector<T, C>,
     aggregator: Aggregator<C, R>
 ): DataFrame<T> = aggregateBase {

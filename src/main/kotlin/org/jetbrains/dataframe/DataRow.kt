@@ -21,6 +21,10 @@ interface DataRow<out T>: DataRowBase<T> {
 
     fun getRow(index: Int): DataRow<T>?
     override operator fun get(name: String): Any?
+
+    fun ncol() = df().ncol()
+    fun columnNames() = df().columnNames()
+
     override fun tryGet(name: String): Any?
     operator fun get(columnIndex: Int): Any?
     operator fun <R> get(selector: RowSelector<T, R>) = selector(this, this)

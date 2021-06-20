@@ -3,8 +3,9 @@ package org.jetbrains.dataframe
 import org.jetbrains.dataframe.aggregation.Aggregatable
 import org.jetbrains.dataframe.aggregation.AggregateReceiver
 import org.jetbrains.dataframe.aggregation.GroupByReceiver
+import org.jetbrains.dataframe.api.aggregation.PivotAggregations
+import org.jetbrains.dataframe.api.aggregation.asGrouped
 import org.jetbrains.dataframe.columns.AnyCol
-import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.impl.aggregation.AggregateColumnDescriptor
 import org.jetbrains.dataframe.impl.aggregation.GroupByReceiverImpl
 import org.jetbrains.dataframe.impl.aggregation.ValueWithDefault
@@ -19,11 +20,11 @@ fun <T> DataFrame<T>.pivot(columns: ColumnsSelector<T, *>) = DataFramePivot(this
 fun <T> DataFrame<T>.pivot(vararg columns: String) = pivot { columns.toColumns() }
 fun <T> DataFrame<T>.pivot(vararg columns: Column) = pivot { columns.toColumns() }
 
-fun <T> DataFramePivot<T>.groupBy(columns: ColumnsSelector<T, *>): GroupedFramePivot<T> = GroupedFramePivot(df.groupBy(columns), this.columns, groupValues, default, groupPath)
+fun <T> DataFramePivot<T>.groupBy(columns: ColumnsSelector<T, *>): GroupedPivot<T> = GroupedPivot(df.groupBy(columns), this.columns, groupValues, default, groupPath)
 fun <T> DataFramePivot<T>.groupBy(vararg columns: String) = groupBy { columns.toColumns() }
 fun <T> DataFramePivot<T>.groupBy(vararg columns: Column) = groupBy { columns.toColumns() }
 
-fun <T> GroupedDataFrame<*, T>.pivot(columns: ColumnsSelector<T, *>) = GroupedFramePivot(this, columns)
+fun <T> GroupedDataFrame<*, T>.pivot(columns: ColumnsSelector<T, *>) = GroupedPivot(this, columns)
 fun <T> GroupedDataFrame<*, T>.pivot(vararg columns: Column) = pivot { columns.toColumns() }
 fun <T> GroupedDataFrame<*, T>.pivot(vararg columns: String) = pivot { columns.toColumns() }
 
@@ -31,23 +32,16 @@ fun <T> GroupByReceiver<T>.pivot(columns: ColumnsSelector<T, *>) = GroupAggregat
 fun <T> GroupByReceiver<T>.pivot(vararg columns: Column) = pivot { columns.toColumns() }
 fun <T> GroupByReceiver<T>.pivot(vararg columns: String) = pivot { columns.toColumns() }
 
-// TODO: add  overloads
-inline internal fun <T, V> Aggregatable<T>.withColumn(crossinline getColumn: DataFrame<T>.(DataFrame<T>) -> AggregateColumnDescriptor<V>) = aggregateBase {
-    val column = getColumn(this)
-    val path = getPath(column, true)
-    yieldOneOrMany(path, column.data.toList(), column.type, column.default)
-}
+fun <T, P: GroupedPivotAggregations<T>> P.withGrouping(group: MapColumnReference) = withGrouping(group.path()) as P
+fun <T, P: GroupedPivotAggregations<T>> P.withGrouping(groupName: String) = withGrouping(listOf(groupName)) as P
 
-fun <T, P: PivotAggregations<T>> P.withGrouping(group: MapColumnReference) = withGrouping(group.path()) as P
-fun <T, P: PivotAggregations<T>> P.withGrouping(groupName: String) = withGrouping(listOf(groupName)) as P
-
-data class GroupedFramePivot<T>(
+data class GroupedPivot<T>(
     internal val df: GroupedDataFrame<*, T>,
     internal val columns: ColumnsSelector<T, *>,
     internal val groupValues: Boolean = false,
     internal val default: Any? = null,
     internal val groupPath: ColumnPath = emptyList()
-) : PivotAggregations<T> {
+) : GroupedPivotAggregations<T> {
     override fun <R> aggregate(body: PivotAggregateBody<T, R>): DataFrame<T> {
         return df.aggregate {
             aggregatePivot(this, columns, groupValues, groupPath, default, body)
@@ -71,15 +65,11 @@ data class DataFramePivot<T>(
     internal val groupPath: ColumnPath = emptyList()
 ) : PivotAggregations<T> {
 
-    override fun groupByValue(flag: Boolean) = if(flag == groupValues) this else copy(groupValues = flag)
-
-    override fun default(value: Any?) = copy(default = value)
-
-    override fun withGrouping(groupPath: ColumnPath) = copy(groupPath = groupPath)
-
-    override fun <R> aggregate(body: PivotAggregateBody<T, R>) = groupBy { none() }.aggregate(body)
+    fun <R> aggregate(body: PivotAggregateBody<T, R>): DataRow<T> = asGrouped().aggregate(body)[0]
 
     override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all().except(columns.toColumns()) }
+
+    override fun <R> aggregateBase(body: AggregateBody<T, R>) = asGrouped().aggregateBase(body)
 }
 
 internal class AggregatedPivot<T>(private val df: DataFrame<T>, internal var aggregator: GroupByReceiverImpl<T>) :
@@ -91,7 +81,7 @@ data class GroupAggregatorPivot<T>(
     internal val groupValues: Boolean = false,
     internal val default: Any? = null,
     internal val groupPath: ColumnPath = emptyList()
-) : PivotAggregations<T> {
+) : GroupedPivotAggregations<T> {
 
     override fun groupByValue(flag: Boolean) = if(flag == groupValues) this else copy(groupValues = flag)
 

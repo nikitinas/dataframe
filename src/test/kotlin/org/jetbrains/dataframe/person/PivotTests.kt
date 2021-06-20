@@ -3,6 +3,7 @@ package org.jetbrains.dataframe.person
 import io.kotest.matchers.shouldBe
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.annotations.DataSchema
+import org.jetbrains.dataframe.api.aggregation.with
 import org.jetbrains.dataframe.sumOf
 import org.jetbrains.dataframe.columns.typeClass
 import org.jetbrains.dataframe.impl.columns.asGroup
@@ -180,7 +181,7 @@ class PivotTests {
         data shouldBe expected
 
         val pivotedNoIndex = typed.pivot { name and key }.with { value }
-        pivotedNoIndex shouldBe pivoted.remove("index")
+        pivotedNoIndex shouldBe pivoted.remove("index")[0]
     }
 
     @Test
@@ -201,9 +202,8 @@ class PivotTests {
         val pivoted = typed.pivot { name and key }.values { value and (value.map { it?.javaClass?.kotlin } named "type") }
 
         pivoted.ncol() shouldBe typed.name.ndistinct()
-        pivoted.nrow() shouldBe 1
 
-        val cols = pivoted.getColumns { all().dfs() }
+        val cols = pivoted.df().getColumns { all().dfs() }
         cols.size shouldBe 2 * typed.name.ndistinct() * typed.key.ndistinct() - 2
         cols.forEach {
             when {
@@ -216,16 +216,16 @@ class PivotTests {
                 else -> it.name() shouldBe  "value"
             }
         }
-        pivoted[0]["Bob"]["weight"]["value"] shouldBe 87
+        pivoted["Bob"]["weight"]["value"] shouldBe 87
     }
 
     @Test
     fun `pivot two values without index group by value`() {
         val pivoted = typed.pivot { name }.values(separate = true) { key and value }
-        pivoted.columnNames() shouldBe listOf("key", "value")
-        pivoted.nrow() shouldBe 1
-        (pivoted["key"]["Alice"][0] as Many<String>).size shouldBe 4
-        pivoted["value"]["Bob"].type() shouldBe getType<Many<Int>>()
+        pivoted.df().columnNames() shouldBe listOf("key", "value")
+        (pivoted["key"]["Alice"] as Many<String>).size shouldBe 4
+        pivoted.df()["value"]["Bob"].type() shouldBe getType<Many<Int>>()
+        pivoted["value"]["Bob"] shouldBe manyOf(45, 87)
     }
 
     @Test
@@ -335,10 +335,9 @@ class PivotTests {
         val df = dataFrameOf(name, data)
         df[data].type() shouldBe getType<java.util.AbstractCollection<Int>>()
         val pivoted = df.pivot { name }.values { data }
-        pivoted.nrow() shouldBe 1
         pivoted.ncol() shouldBe 2
-        pivoted["set"].type() shouldBe getType<java.util.AbstractSet<Int>>()
-        pivoted["list"].type() shouldBe getType<java.util.AbstractList<Int>>()
+        pivoted.df()["set"].type() shouldBe getType<java.util.AbstractSet<Int>>()
+        pivoted.df()["list"].type() shouldBe getType<java.util.AbstractList<Int>>()
     }
 
     @Test
@@ -396,12 +395,11 @@ class PivotTests {
     @Test
     fun `pivot one value without index`() {
         val pivoted = typed.pivot { name and key }.with { value }
-        pivoted.nrow() shouldBe 1
         pivoted.columnNames() shouldBe typed.name.distinct().values()
-        pivoted["Alice"].asGroup().columnNames() shouldBe typed.key.distinct().values()
-        pivoted["Bob"].asGroup().columnNames() shouldBe listOf("age", "weight")
-        pivoted["Mark"].asGroup().columnNames() shouldBe typed.key.distinct().values()
-        pivoted["Alice"]["age"].type() shouldBe getType<Many<Int>>()
-        pivoted["Mark"]["weight"].type() shouldBe getType<Any?>()
+        pivoted.df()["Alice"].asGroup().columnNames() shouldBe typed.key.distinct().values()
+        pivoted.df()["Bob"].asGroup().columnNames() shouldBe listOf("age", "weight")
+        pivoted.df()["Mark"].asGroup().columnNames() shouldBe typed.key.distinct().values()
+        pivoted.df()["Alice"]["age"].type() shouldBe getType<Many<Int>>()
+        pivoted.df()["Mark"]["weight"].type() shouldBe getType<Any?>()
     }
 }

@@ -23,6 +23,10 @@ import kotlin.reflect.jvm.jvmErasure
 
 internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
 
+    companion object {
+        internal val markerInterfacePrefix = "_DataFrameType"
+    }
+
     private val registeredProperties = mutableSetOf<KProperty<*>>()
 
     private val registeredMarkers = mutableMapOf<KClass<*>, Marker>()
@@ -70,7 +74,7 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
             }
         }
 
-        return generate(targetSchema, "DataFrameType", isMutable)
+        return generate(targetSchema, markerInterfacePrefix, isMutable)
     }
 
     fun generate(

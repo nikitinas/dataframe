@@ -7,6 +7,7 @@ import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.filter
 import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
+import org.jetbrains.dataframe.impl.codeGen.ReplCodeGeneratorImpl
 import org.jetbrains.dataframe.impl.codeGen.process
 import org.jetbrains.dataframe.person.BaseTest
 import org.jetbrains.dataframe.select
@@ -17,35 +18,24 @@ class ReplCodeGenTests: BaseTest() {
 
     class Test1 {
         @DataSchema(isOpen = false)
-        interface DataFrameType
+        interface _DataFrameType
 
         @DataSchema(isOpen = false)
-        interface DataFrameType1 : DataFrameType
+        interface _DataFrameType1 : _DataFrameType
 
         @DataSchema(isOpen = false)
-        interface DataFrameType2 : DataFrameType
+        interface _DataFrameType2 : _DataFrameType
     }
 
     class Test2 {
         @DataSchema(isOpen = false)
-        interface DataFrameType
+        interface _DataFrameType
 
         @DataSchema(isOpen = false)
-        interface DataFrameType1
+        interface _DataFrameType1
 
         @DataSchema(isOpen = false)
-        interface DataFrameType2 : DataFrameType, DataFrameType1
-    }
-
-    class Test3 {
-
-        @DataSchema(isOpen = false)
-        interface DataFrameType {
-            val name: String
-            val age: Int
-            val city: String?
-            val weight: Int?
-        }
+        interface _DataFrameType2 : _DataFrameType, _DataFrameType1
     }
 
 
@@ -57,8 +47,8 @@ class ReplCodeGenTests: BaseTest() {
         val dfName = (DataFrameBase::class).qualifiedName
         val dfRowName = (DataRowBase::class).qualifiedName
         val dataCol = (DataColumn::class).qualifiedName!!
-        val marker = "DataFrameType"
-        val markerFull = Test1.DataFrameType::class.qualifiedName!!
+        val marker = ReplCodeGeneratorImpl.markerInterfacePrefix
+        val markerFull = Test1._DataFrameType::class.qualifiedName!!
 
         val expected = """
             @DataSchema(isOpen = false)
@@ -74,7 +64,7 @@ class ReplCodeGenTests: BaseTest() {
         """.trimIndent()
         code shouldBe expected
 
-        val code2 = repl.process<Test1.DataFrameType>()
+        val code2 = repl.process<Test1._DataFrameType>()
         code2 shouldBe ""
 
         val df3 = typed.filter { city != null }
@@ -89,7 +79,7 @@ class ReplCodeGenTests: BaseTest() {
 
         code3 shouldBe expected3
 
-        val code4 = repl.process<Test1.DataFrameType1>()
+        val code4 = repl.process<Test1._DataFrameType1>()
         code4 shouldBe ""
 
         val df5 = typed.filter { weight != null }
@@ -103,7 +93,7 @@ class ReplCodeGenTests: BaseTest() {
         """.trimIndent()
         code5 shouldBe expected5
 
-        val code6 = repl.process<Test1.DataFrameType2>()
+        val code6 = repl.process<Test1._DataFrameType2>()
         code6 shouldBe ""
     }
 
@@ -111,13 +101,13 @@ class ReplCodeGenTests: BaseTest() {
     fun `process markers union`(){
         val repl = ReplCodeGenerator.create()
         repl.process(typed.select { age and name })
-        repl.process<Test2.DataFrameType>() shouldBe ""
+        repl.process<Test2._DataFrameType>() shouldBe ""
         repl.process(typed.select { city and weight })
-        repl.process<Test2.DataFrameType1>() shouldBe ""
+        repl.process<Test2._DataFrameType1>() shouldBe ""
 
         val expected = """
             @DataSchema(isOpen = false)
-            interface ${Test2.DataFrameType2::class.simpleName!!} : ${Test2.DataFrameType::class.qualifiedName}, ${Test2.DataFrameType1::class.qualifiedName}
+            interface ${Test2._DataFrameType2::class.simpleName!!} : ${Test2._DataFrameType::class.qualifiedName}, ${Test2._DataFrameType1::class.qualifiedName}
         """.trimIndent()
 
         val code = repl.process(typed).declarations.trimIndent()
@@ -128,17 +118,17 @@ class ReplCodeGenTests: BaseTest() {
     fun `process wrong marker inheritance`(){
         val repl = ReplCodeGenerator.create()
         repl.process(typed.select { age and name })
-        repl.process<Test2.DataFrameType>() shouldBe ""
+        repl.process<Test2._DataFrameType>() shouldBe ""
         repl.process(typed.select { city and weight })
-        repl.process<Test1.DataFrameType1>() shouldBe "" // processed wrong marker (doesn't implement Test2.DataFrameType)
+        repl.process<Test1._DataFrameType1>() shouldBe "" // processed wrong marker (doesn't implement Test2.DataFrameType)
 
         val dfName = (DataFrameBase::class).qualifiedName
         val dfRowName = (DataRowBase::class).qualifiedName
         val dataCol = (DataColumn::class).qualifiedName!!
-        val marker = Test2.DataFrameType2::class.simpleName!!
+        val marker = Test2._DataFrameType2::class.simpleName!!
         val expected = """
             @DataSchema(isOpen = false)
-            interface $marker : ${Test2.DataFrameType::class.qualifiedName}
+            interface $marker : ${Test2._DataFrameType::class.qualifiedName}
             val $dfName<$marker>.city: $dataCol<kotlin.String?> @JvmName("${marker}_city") get() = this["city"] as $dataCol<kotlin.String?>
             val $dfRowName<$marker>.city: kotlin.String? @JvmName("${marker}_city") get() = this["city"] as kotlin.String?
             val $dfName<$marker>.weight: $dataCol<kotlin.Int?> @JvmName("${marker}_weight") get() = this["weight"] as $dataCol<kotlin.Int?>

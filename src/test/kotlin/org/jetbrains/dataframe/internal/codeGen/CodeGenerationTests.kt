@@ -12,6 +12,7 @@ import org.jetbrains.dataframe.dropNulls
 import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
 import org.jetbrains.dataframe.impl.codeGen.InterfaceGenerationMode
 import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
+import org.jetbrains.dataframe.impl.codeGen.ReplCodeGeneratorImpl
 import org.jetbrains.dataframe.impl.codeGen.generate
 import org.jetbrains.dataframe.internal.schema.extractSchema
 import org.jetbrains.dataframe.move
@@ -49,7 +50,7 @@ class CodeGenerationTests : BaseTest(){
 
         val codeGen = ReplCodeGenerator.create()
         val generated = codeGen.process(df, ::df)
-        val typeName = "DataFrameType"
+        val typeName = ReplCodeGeneratorImpl.markerInterfacePrefix
         val expectedDeclaration = """
             @DataSchema(isOpen = false)
             interface $typeName
@@ -73,7 +74,7 @@ class CodeGenerationTests : BaseTest(){
     fun `generate marker interface for row`() {
         val property = ::row
         val generated = ReplCodeGenerator.create().process(df[0], property)
-        val typeName = "DataFrameType"
+        val typeName = ReplCodeGeneratorImpl.markerInterfacePrefix
         val expectedDeclaration = """
             @DataSchema(isOpen = false)
             interface $typeName
@@ -90,8 +91,8 @@ class CodeGenerationTests : BaseTest(){
         val property = ::df
         val grouped = df.move { name and city }.under("nameAndCity")
         val generated = ReplCodeGenerator.create().process(grouped, property)
-        val type1 = "DataFrameType1"
-        val type2 = "DataFrameType"
+        val type1 = ReplCodeGeneratorImpl.markerInterfacePrefix + "1"
+        val type2 = ReplCodeGeneratorImpl.markerInterfacePrefix
         val declaration1 = """
             @DataSchema(isOpen = false)
             interface $type1
@@ -103,7 +104,7 @@ class CodeGenerationTests : BaseTest(){
 
         val declaration2 = """
             @DataSchema(isOpen = false)
-            interface DataFrameType
+            interface $type2
             val $dfName<$type2>.age: $dataCol<kotlin.Int> @JvmName("${type2}_age") get() = this["age"] as $dataCol<kotlin.Int>
             val $dfRowName<$type2>.age: kotlin.Int @JvmName("${type2}_age") get() = this["age"] as kotlin.Int
             val $dfName<$type2>.nameAndCity: $colGroup<$type1> @JvmName("${type2}_nameAndCity") get() = this["nameAndCity"] as $colGroup<$type1>
@@ -112,7 +113,7 @@ class CodeGenerationTests : BaseTest(){
             val $dfRowName<$type2>.weight: kotlin.Int? @JvmName("${type2}_weight") get() = this["weight"] as kotlin.Int?
             """.trimIndent()
 
-        val expectedConverter = "it.typed<DataFrameType>()"
+        val expectedConverter = "it.typed<$type2>()"
 
         generated.declarations shouldBe declaration1 + "\n" + declaration2
         generated.converter("it") shouldBe expectedConverter

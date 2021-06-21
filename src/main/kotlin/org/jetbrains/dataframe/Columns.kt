@@ -266,7 +266,7 @@ fun AnyCol.typeOfElement(): KType =
 
 fun AnyCol.elementTypeIsNullable(): Boolean = typeOfElement().isMarkedNullable
 
-fun AnyCol.isComparable() = isSubtypeOf<Comparable<*>>()
+fun AnyCol.isComparable() = isSubtypeOf<Comparable<*>?>()
 
 // TODO: remove by checking that type of column is always inferred
 fun AnyCol.guessType() = DataColumn.create(name, toList())

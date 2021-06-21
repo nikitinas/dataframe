@@ -1858,4 +1858,14 @@ class DataFrameTests : BaseTest() {
         summary shouldBe expected
     }
 
+    @Test
+    fun `pivot grouped max`() {
+
+        val pivoted = typed.pivot{ name }.groupBy{ city }.max()
+        pivoted.columns().drop(1).forEach {
+            it.kind() shouldBe ColumnKind.Group
+            val group = it.asGroup()
+            group.columnNames() shouldBe listOf("age", "weight")
+        }
+    }
 }

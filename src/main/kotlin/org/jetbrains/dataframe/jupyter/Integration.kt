@@ -6,7 +6,6 @@ import org.jetbrains.dataframe.api.aggregation.PivotAggregations
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
-import org.jetbrains.dataframe.io.renderToStringTable
 import org.jetbrains.dataframe.io.toHTML
 import org.jetbrains.dataframe.stubs.DataFrameToListNamedStub
 import org.jetbrains.dataframe.stubs.DataFrameToListTypedStub
@@ -31,12 +30,10 @@ internal class Integration : JupyterIntegration(){
 
         render<AnyFrame> { HTML(it.toHTML(config.display)) }
         render<FormattedFrame<*>> { HTML(it.toHTML(config.display)) }
-        render<AnyRow> { it.renderToStringTable() }
+        render<AnyRow> { HTML(it.toDataFrame().toHTML(config.display) { "DataRow [${it.ncol}]" }) }
         render<ColumnGroup<*>> { it.df }
-        render<AnyCol> { dataFrameOf(listOf(it)) }
+        render<AnyCol> { HTML(dataFrameOf(listOf(it)).toHTML(config.display) { "DataColumn [${it.nrow()}]" }) }
         render<GroupedDataFrame<*, *>> { it.plain() }
-        render<PivotAggregations<*>> { it.plain() }
-        render<GroupedPivotAggregations<*>> { it.plain() }
 
         import("org.jetbrains.dataframe.*")
         import("org.jetbrains.dataframe.annotations.*")

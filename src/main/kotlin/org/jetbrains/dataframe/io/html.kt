@@ -4,10 +4,11 @@ import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.RowColFormatter
 import org.jetbrains.dataframe.images.Image
 import org.jetbrains.dataframe.impl.truncate
+import org.jetbrains.dataframe.size
 
 internal val tooltipLimit = 1000
 
-fun <T> DataFrame<T>.toHTML(configuration: DisplayConfiguration = DisplayConfiguration.DEFAULT) = buildString {
+fun <T> DataFrame<T>.toHTML(configuration: DisplayConfiguration = DisplayConfiguration.DEFAULT, getFooter: (DataFrame<T>)->String = {"DataFrame [${it.size}]" }) = buildString {
     append("<html><body>")
     append("<table><tr>")
     columns().forEach {
@@ -37,8 +38,10 @@ fun <T> DataFrame<T>.toHTML(configuration: DisplayConfiguration = DisplayConfigu
         append("</tr>")
     }
     append("</table>")
+    val footer = getFooter(this@toHTML)
     if (limit < nrow())
-        append("<p>... only showing top $limit of ${nrow()} rows</p>")
+        append("<p>... $footer</p>")
+    else append("<p>$footer</p>")
     append("</body></html>")
 }
 

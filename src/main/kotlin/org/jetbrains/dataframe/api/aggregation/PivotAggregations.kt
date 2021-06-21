@@ -20,7 +20,7 @@ interface PivotAggregations<T> : Aggregatable<T> {
 
     fun <R> aggregate(body: PivotAggregateBody<T, R>): DataRow<T> = asGrouped().aggregate(body)[0]
 
-    fun plain(): DataRow<T> = aggregate { this }
+    fun frames(): DataRow<T> = aggregate { this }
 
     fun groupBy(columns: ColumnsSelector<T, *>): GroupedPivotAggregations<T>
     fun groupBy(vararg columns: String) = groupBy { columns.toColumns() }

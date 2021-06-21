@@ -28,10 +28,10 @@ class RenderingTests: BaseTest() {
             |------------|--------|-------------|------------|
             |Alice       |15      |London       |54          |
             |Bob         |45      |Dubai        |87          |
-            |Mark        |20      |Moscow       |null        |
-            |Mark        |40      |Milan        |null        |
+            |Mark        |20      |Moscow       |            |
+            |Mark        |40      |Milan        |            |
             |Bob         |30      |Tokyo        |68          |
-            |Alice       |20      |null         |55          |
+            |Alice       |20      |             |55          |
             |Mark        |30      |Moscow       |90          |
         """.trimIndent()
 

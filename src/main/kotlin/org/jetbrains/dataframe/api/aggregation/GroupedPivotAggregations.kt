@@ -21,7 +21,7 @@ interface GroupedPivotAggregations<out T> : Aggregatable<T> {
 
     fun <R> aggregate(body: PivotAggregateBody<T, R>): DataFrame<T>
 
-    fun plain(): DataFrame<T> = aggregate { this }
+    fun frames(): DataFrame<T> = aggregate { this }
 
     fun count(predicate: RowFilter<T>? = null) = aggregate { count(predicate) default 0 }
 

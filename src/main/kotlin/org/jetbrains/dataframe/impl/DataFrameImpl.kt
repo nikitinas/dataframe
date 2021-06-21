@@ -8,13 +8,14 @@ import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.shortPath
 import org.jetbrains.dataframe.columns.size
+import org.jetbrains.dataframe.impl.aggregation.AggregatableInternal
 import org.jetbrains.dataframe.impl.aggregation.toColumnWithPath
 import org.jetbrains.dataframe.impl.columns.addPath
 import org.jetbrains.dataframe.io.renderToString
 import java.lang.IllegalArgumentException
 import kotlin.reflect.KType
 
-internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T> {
+internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T>, AggregatableInternal<T> {
 
     private val nrow: Int = columns.firstOrNull()?.size ?: 0
 
@@ -67,7 +68,7 @@ internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T> {
 
     override fun columns() = columns
 
-    override fun <R> aggregateBase(body: AggregateBody<T, R>): DataFrame<T> {
+    override fun <R> aggregateInternal(body: AggregateBody<T, R>): DataFrame<T> {
 
         class DataFrameAggregateReceiver: AggregateReceiver<T>, DataFrame<T> by this {
 

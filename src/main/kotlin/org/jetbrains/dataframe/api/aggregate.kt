@@ -11,9 +11,6 @@ data class AggregateClause<T, G>(val df: DataFrame<T>, val selector: ColumnSelec
 
 fun <T, G> DataFrame<T>.aggregate(selector: ColumnSelector<T, DataFrame<G>>) = AggregateClause(this, selector)
 
-fun <T, G> GroupedDataFrame<T, G>.aggregate(body: GroupAggregator<G>) =
-    aggregateGroupBy(plain(), { groups }, removeColumns = true, body)
-
 internal fun <T, G> aggregateGroupBy(
     df: DataFrame<T>,
     selector: ColumnSelector<T, DataFrame<G>?>,

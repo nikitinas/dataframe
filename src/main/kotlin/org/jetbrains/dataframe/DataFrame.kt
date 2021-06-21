@@ -20,12 +20,7 @@ import org.jetbrains.dataframe.impl.put
 import org.jetbrains.dataframe.impl.toIndices
 
 internal open class SelectReceiverImpl<T>(df: DataFrame<T>, allowMissingColumns: Boolean) :
-    DataFrameReceiver<T>(df, allowMissingColumns), SelectReceiver<T> {
-
-    override fun <R> aggregateBase(body: AggregateBody<T, R>) = source.aggregateBase(body)
-
-    override fun remainingColumnsSelector() = source.remainingColumnsSelector()
-}
+    DataFrameReceiver<T>(df, allowMissingColumns), SelectReceiver<T>
 
 data class DataFrameSize(val ncol: Int, val nrow: Int) {
     override fun toString() = "$nrow x $ncol"

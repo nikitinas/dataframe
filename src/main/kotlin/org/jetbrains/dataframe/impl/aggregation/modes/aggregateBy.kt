@@ -19,5 +19,5 @@ internal fun <T> GroupByAggregations<T>.aggregateBy(
         row?.namedValues()?.forEach {
             if(!keyColumns.contains(it.name)) yield(it)
         }
-    }.typed<T>()
+    }.typed()
 }

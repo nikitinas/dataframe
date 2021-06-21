@@ -6,7 +6,7 @@ import org.jetbrains.dataframe.columns.shortPath
 import org.jetbrains.dataframe.getType
 import kotlin.reflect.KType
 
-abstract class GroupByReceiver<T> : AggregateReceiver<T> {
+abstract class GroupByReceiver<out T> : AggregateReceiver<T> {
 
     override fun pathForSingleColumn(column: AnyCol) = column.shortPath()
 

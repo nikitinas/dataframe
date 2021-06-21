@@ -6,6 +6,7 @@ import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregator
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataRow
+import org.jetbrains.dataframe.impl.aggregation.aggregateInternal
 import org.jetbrains.dataframe.impl.aggregation.getAggregateColumns
 import org.jetbrains.dataframe.impl.aggregation.getPath
 
@@ -17,7 +18,7 @@ internal fun <T, C, R> Aggregator<*, R>.aggregateFor(
 internal fun <T, C, R> Aggregatable<T>.aggregateFor(
     columns: AggregateColumnsSelector<T, C>,
     aggregator: Aggregator<C, R>
-) = aggregateBase {
+) = aggregateInternal {
     val cols = getAggregateColumns(columns)
     val isSingle = cols.size == 1
     cols.forEach { col ->

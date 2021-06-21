@@ -4,32 +4,31 @@ import org.jetbrains.dataframe.aggregation.Aggregatable
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregators
+import org.jetbrains.dataframe.impl.aggregation.columnValues
 import org.jetbrains.dataframe.impl.aggregation.comparableColumns
 import org.jetbrains.dataframe.impl.aggregation.modes.aggregateAll
 import org.jetbrains.dataframe.impl.aggregation.modes.aggregateFor
 import org.jetbrains.dataframe.impl.aggregation.modes.of
 import org.jetbrains.dataframe.impl.aggregation.numberColumns
+import org.jetbrains.dataframe.impl.aggregation.remainingColumnsSelector
 import org.jetbrains.dataframe.impl.aggregation.yieldOneOrMany
-import org.jetbrains.dataframe.impl.aggregation.yieldOneOrManyBy
 import org.jetbrains.dataframe.impl.columns.toColumns
 import kotlin.reflect.KProperty
 
 interface GroupedPivotAggregations<T> : Aggregatable<T> {
 
-    fun count(predicate: RowFilter<T>? = null) = aggregateBase { count(predicate) default 0 }
+    fun count(predicate: RowFilter<T>? = null) = aggregate { count(predicate) default 0 }
 
     fun values(vararg columns: Column, separate: Boolean = false) = values(separate) { columns.toColumns() }
     fun values(vararg columns: String, separate: Boolean = false) = values(separate) { columns.toColumns() }
     fun values(vararg columns: KProperty<*>, separate: Boolean = false) = values(separate) { columns.toColumns() }
-    fun values(separate: Boolean = false, columns: AggregateColumnsSelector<T, *>) = groupByValue(separate).yieldOneOrManyBy(columns) { it.toList() }
+    fun values(separate: Boolean = false, columns: AggregateColumnsSelector<T, *>) =
+        groupByValue(separate).aggregate { columnValues(columns) { it.toList() } }
 
     fun values(separate: Boolean = false) = values(separate, remainingColumnsSelector())
 
     fun <R> matches(yes: R, no: R) = aggregate { yes default no }
     fun matches() = matches(true, false)
-
-    // TODO: move to internal
-    override fun <R> aggregateBase(body: AggregateBody<T, R>): DataFrame<T> = aggregate(body as PivotAggregateBody<T, R>)
 
     fun <R> aggregate(body: PivotAggregateBody<T, R>): DataFrame<T>
 
@@ -41,7 +40,8 @@ interface GroupedPivotAggregations<T> : Aggregatable<T> {
 
     fun min(separate: Boolean = false) = minFor(separate, comparableColumns())
 
-    fun <R : Comparable<R>> minFor(separate: Boolean = false, columns: ColumnsSelector<T, R?>) = Aggregators.min.aggregateFor(groupByValue(separate), columns)
+    fun <R : Comparable<R>> minFor(separate: Boolean = false, columns: ColumnsSelector<T, R?>) =
+        Aggregators.min.aggregateFor(groupByValue(separate), columns)
 
     fun <R : Comparable<R>> min(columns: ColumnsSelector<T, R?>) = Aggregators.min.aggregateAll(this, columns)
 
@@ -57,7 +57,8 @@ interface GroupedPivotAggregations<T> : Aggregatable<T> {
 
     fun max(separate: Boolean = false) = maxFor(separate, comparableColumns())
 
-    fun <R : Comparable<R>> maxFor(separate: Boolean = false, columns: ColumnsSelector<T, R?>) = Aggregators.max.aggregateFor(groupByValue(separate), columns)
+    fun <R : Comparable<R>> maxFor(separate: Boolean = false, columns: ColumnsSelector<T, R?>) =
+        Aggregators.max.aggregateFor(groupByValue(separate), columns)
 
     fun <R : Comparable<R>> max(columns: ColumnsSelector<T, R?>) = Aggregators.max.aggregateAll(this, columns)
 
@@ -73,13 +74,15 @@ interface GroupedPivotAggregations<T> : Aggregatable<T> {
 
     fun sum(separate: Boolean = false) = sumFor(separate, numberColumns())
 
-    fun <R : Number> sumFor(separate: Boolean = false, columns: ColumnsSelector<T, R>): DataFrame<T> = Aggregators.sum.aggregateFor(groupByValue(separate), columns)
+    fun <R : Number> sumFor(separate: Boolean = false, columns: ColumnsSelector<T, R>): DataFrame<T> =
+        Aggregators.sum.aggregateFor(groupByValue(separate), columns)
 
     // endregion
 
     // region mean
 
-    fun <R : Number> mean(skipNa: Boolean = true, columns: ColumnsSelector<T, R?>): DataFrame<T> = Aggregators.mean(skipNa).aggregateFor(this, columns)
+    fun <R : Number> mean(skipNa: Boolean = true, columns: ColumnsSelector<T, R?>): DataFrame<T> =
+        Aggregators.mean(skipNa).aggregateFor(this, columns)
 
     fun mean(skipNa: Boolean = true): DataFrame<T> = mean(skipNa, numberColumns())
 
@@ -89,7 +92,8 @@ interface GroupedPivotAggregations<T> : Aggregatable<T> {
 
     fun std(separate: Boolean = false): DataFrame<T> = stdFor(separate, numberColumns())
 
-    fun <R : Number> stdFor(separate: Boolean = false, columns: AggregateColumnsSelector<T, R>): DataFrame<T> = Aggregators.std.aggregateFor(groupByValue(separate), columns)
+    fun <R : Number> stdFor(separate: Boolean = false, columns: AggregateColumnsSelector<T, R>): DataFrame<T> =
+        Aggregators.std.aggregateFor(groupByValue(separate), columns)
 
     fun <R : Number> std(columns: ColumnsSelector<T, R?>) = Aggregators.std.aggregateAll(this, columns)
 
@@ -114,7 +118,7 @@ inline fun <T, reified V> GroupedPivotAggregations<T>.with(noinline selector: Ro
             if (value is ColumnReference<*>) it[value]
             else value
         }
-        yieldOneOrMany(values, type)
+        yieldOneOrMany(emptyList(), values, type)
     }
 }
 

@@ -6,6 +6,7 @@ import org.jetbrains.dataframe.GroupedPivotAggregations
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregator
 import org.jetbrains.dataframe.ColumnsSelector
 import org.jetbrains.dataframe.DataFrame
+import org.jetbrains.dataframe.impl.aggregation.aggregateInternal
 import org.jetbrains.dataframe.impl.emptyPath
 import org.jetbrains.dataframe.impl.pathOf
 
@@ -35,7 +36,7 @@ internal fun <T, C, R> GroupByAggregations<T>.aggregateAll(
     aggregator: Aggregator<C, R>,
     columns: ColumnsSelector<T, C>,
     name: String?
-): DataFrame<T> = aggregateBase {
+): DataFrame<T> = aggregateInternal {
     val cols = get(columns)
     if (cols.size == 1)
         yield(pathOf(name ?: cols[0].name()), aggregator.aggregate(cols[0]))
@@ -46,7 +47,7 @@ internal fun <T, C, R> GroupByAggregations<T>.aggregateAll(
 internal fun <T, C, R> GroupedPivotAggregations<T>.aggregateAll(
     aggregator: Aggregator<C, R>,
     columns: ColumnsSelector<T, C>
-): DataFrame<T> = aggregateBase {
+): DataFrame<T> = aggregateInternal {
         val cols = get(columns)
         if (cols.size == 1)
             yield(emptyPath(), aggregator.aggregate(cols[0]))

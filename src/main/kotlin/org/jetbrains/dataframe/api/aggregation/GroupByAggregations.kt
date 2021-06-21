@@ -2,7 +2,9 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.aggregation.Aggregatable
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
+import org.jetbrains.dataframe.aggregation.GroupAggregator
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregators
+import org.jetbrains.dataframe.impl.aggregation.columnValues
 import org.jetbrains.dataframe.impl.aggregation.comparableColumns
 import org.jetbrains.dataframe.impl.aggregation.modes.aggregateValue
 import org.jetbrains.dataframe.impl.aggregation.modes.aggregateAll
@@ -10,8 +12,8 @@ import org.jetbrains.dataframe.impl.aggregation.modes.aggregateBy
 import org.jetbrains.dataframe.impl.aggregation.modes.aggregateFor
 import org.jetbrains.dataframe.impl.aggregation.modes.of
 import org.jetbrains.dataframe.impl.aggregation.numberColumns
+import org.jetbrains.dataframe.impl.aggregation.remainingColumnsSelector
 import org.jetbrains.dataframe.impl.aggregation.yieldOneOrMany
-import org.jetbrains.dataframe.impl.aggregation.yieldOneOrManyBy
 import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.columns.toComparableColumns
 
@@ -22,9 +24,11 @@ interface GroupByAggregations<out T> : Aggregatable<T> {
 
     fun values(vararg columns: Column): DataFrame<T> = values { columns.toColumns() }
     fun values(vararg columns: String): DataFrame<T> = values { columns.toColumns() }
-    fun values(columns: AggregateColumnsSelector<T, *>): DataFrame<T> = yieldOneOrManyBy(columns) { it.toList() }
+    fun values(columns: AggregateColumnsSelector<T, *>): DataFrame<T> = aggregate { columnValues(columns) { it.toList()}  }
 
     fun values(): DataFrame<T> = values(remainingColumnsSelector())
+
+    fun aggregate(body: GroupAggregator<T>): DataFrame<T>
 
     // region min
 
@@ -106,13 +110,13 @@ interface GroupByAggregations<out T> : Aggregatable<T> {
 inline fun <T, reified R : Number> GroupByAggregations<T>.meanOf(resultName: String = Aggregators.mean.name, skipNa: Boolean = false, crossinline selector: RowSelector<T, R>): DataFrame<T> =
     Aggregators.mean(skipNa).of(resultName, this, selector)
 
-inline fun <T, reified C> GroupByAggregations<T>.valueOf(
-    name: String,
+inline fun <T, reified C> GroupByAggregations<T>.with(
+    name: String = "value",
     crossinline expression: RowSelector<T, C>
 ): DataFrame<T> {
     val type = getType<C>()
     val path = listOf(name)
-    return aggregateBase {
+    return aggregate {
         yieldOneOrMany(path, map(expression), type)
     }
 }

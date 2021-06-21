@@ -8,6 +8,7 @@ import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.RowSelector
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.getType
+import org.jetbrains.dataframe.impl.aggregation.aggregateInternal
 import org.jetbrains.dataframe.impl.emptyPath
 import org.jetbrains.dataframe.impl.pathOf
 
@@ -56,7 +57,7 @@ internal inline fun <T, reified C, reified R> GroupByAggregations<T>.aggregateOf
 ): DataFrame<T> {
     val path = pathOf(resultName ?: "value")
     val type = getType<R>()
-    return aggregateBase {
+    return aggregateInternal {
         yield(path, aggregator.aggregateOf(this, selector), type, null, false)
     }
 }
@@ -65,6 +66,6 @@ internal inline fun <T, reified C, reified R> GroupByAggregations<T>.aggregateOf
 internal inline fun <T, reified C, R> GroupedPivotAggregations<T>.aggregateOf(
     crossinline selector: RowSelector<T, C>,
     aggregator: Aggregator<C, R>
-): DataFrame<T> = aggregateBase {
+): DataFrame<T> = aggregateInternal {
     yield(emptyPath(), aggregator.aggregateOf(this, selector))
 }

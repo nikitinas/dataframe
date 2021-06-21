@@ -105,7 +105,7 @@ interface DataFrameAggregations<out T> : Aggregatable<T>, DataFrameBase<T> {
 
     fun sum() = sumFor(numberColumns())
 
-    fun <R : Number> sumFor(columns: ColumnsSelector<T, R>): DataRow<T> = Aggregators.sum.aggregateFor(this, columns)
+    fun <R : Number> sumFor(columns: AggregateColumnsSelector<T, R>): DataRow<T> = Aggregators.sum.aggregateFor(this, columns)
     fun sumFor(vararg columns: String) = sumFor { columns.toColumnsOf() }
 
     fun sum(vararg columns: String): Number = sum { columns.toColumnsOf() }

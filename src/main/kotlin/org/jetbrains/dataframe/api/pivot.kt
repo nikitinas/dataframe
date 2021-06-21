@@ -3,7 +3,6 @@ package org.jetbrains.dataframe
 import org.jetbrains.dataframe.aggregation.AggregateReceiver
 import org.jetbrains.dataframe.aggregation.GroupByReceiver
 import org.jetbrains.dataframe.aggregation.PivotReceiver
-import org.jetbrains.dataframe.api.aggregation.PivotAggregations
 import org.jetbrains.dataframe.impl.aggregation.DataFramePivotImpl
 import org.jetbrains.dataframe.impl.aggregation.GroupByReceiverImpl
 import org.jetbrains.dataframe.impl.aggregation.ValueWithDefault

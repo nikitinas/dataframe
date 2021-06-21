@@ -44,7 +44,7 @@ interface GroupedPivotAggregations<out T> : Aggregatable<T> {
 
     fun min(separate: Boolean = false) = minFor(separate, comparableColumns())
 
-    fun <R : Comparable<R>> minFor(separate: Boolean = false, columns: ColumnsSelector<T, R?>) =
+    fun <R : Comparable<R>> minFor(separate: Boolean = false, columns: AggregateColumnsSelector<T, R?>) =
         Aggregators.min.aggregateFor(groupByValue(separate), columns)
 
     fun <R : Comparable<R>> min(columns: ColumnsSelector<T, R?>) = Aggregators.min.aggregateAll(this, columns)
@@ -61,7 +61,7 @@ interface GroupedPivotAggregations<out T> : Aggregatable<T> {
 
     fun max(separate: Boolean = false) = maxFor(separate, comparableColumns())
 
-    fun <R : Comparable<R>> maxFor(separate: Boolean = false, columns: ColumnsSelector<T, R?>) =
+    fun <R : Comparable<R>> maxFor(separate: Boolean = false, columns: AggregateColumnsSelector<T, R?>) =
         Aggregators.max.aggregateFor(groupByValue(separate), columns)
 
     fun <R : Comparable<R>> max(columns: ColumnsSelector<T, R?>) = Aggregators.max.aggregateAll(this, columns)
@@ -78,7 +78,7 @@ interface GroupedPivotAggregations<out T> : Aggregatable<T> {
 
     fun sum(separate: Boolean = false) = sumFor(separate, numberColumns())
 
-    fun <R : Number> sumFor(separate: Boolean = false, columns: ColumnsSelector<T, R>): DataFrame<T> =
+    fun <R : Number> sumFor(separate: Boolean = false, columns: AggregateColumnsSelector<T, R>): DataFrame<T> =
         Aggregators.sum.aggregateFor(groupByValue(separate), columns)
 
     // endregion
@@ -111,9 +111,6 @@ inline fun <T, reified R : Number> GroupedPivotAggregations<T>.meanOf(
     crossinline expression: RowSelector<T, R>
 ): DataFrame<T> = Aggregators.mean(skipNa).cast<Double>().of(this, expression)
 
-inline fun <T, reified R : Number> GroupedPivotAggregations<T>.sumOf(crossinline selector: RowSelector<T, R>) =
-    Aggregators.sum.of(this, selector)
-
 inline fun <T, reified V> GroupedPivotAggregations<T>.with(noinline selector: RowSelector<T, V>): DataFrame<T> {
     val type = getType<V>()
     return aggregateInternal {
@@ -125,5 +122,8 @@ inline fun <T, reified V> GroupedPivotAggregations<T>.with(noinline selector: Ro
         yieldOneOrMany(emptyList(), values, type)
     }
 }
+
+inline fun <T, reified R : Number> GroupedPivotAggregations<T>.sumOf(crossinline selector: RowSelector<T, R>) =
+    Aggregators.sum.of(this, selector)
 
 // endregion

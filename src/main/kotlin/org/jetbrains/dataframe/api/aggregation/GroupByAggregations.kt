@@ -82,7 +82,7 @@ interface GroupByAggregations<out T> : Aggregatable<T> {
 
     fun sum(): DataFrame<T> = sumFor(numberColumns())
 
-    fun <R : Number> sumFor(columns: ColumnsSelector<T, R>): DataFrame<T> = Aggregators.sum.aggregateFor(this, columns)
+    fun <R : Number> sumFor(columns: AggregateColumnsSelector<T, R>): DataFrame<T> = Aggregators.sum.aggregateFor(this, columns)
 
     fun <R : Number> sum(resultName: String, columns: ColumnsSelector<T, R?>) =
         Aggregators.sum.aggregateAll(resultName, this, columns)

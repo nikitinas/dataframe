@@ -2,7 +2,6 @@ package org.jetbrains.dataframe.jupyter
 
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.annotations.DataSchema
-import org.jetbrains.dataframe.api.aggregation.PivotAggregations
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator

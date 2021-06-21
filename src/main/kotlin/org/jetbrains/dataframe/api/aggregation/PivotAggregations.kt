@@ -1,4 +1,4 @@
-package org.jetbrains.dataframe.api.aggregation
+package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.Column
 import org.jetbrains.dataframe.ColumnSelector
@@ -12,7 +12,12 @@ import org.jetbrains.dataframe.RowSelector
 import org.jetbrains.dataframe.aggregation.Aggregatable
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
 import org.jetbrains.dataframe.aggregation.PivotAggregateBody
+import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregators
+import org.jetbrains.dataframe.impl.aggregation.modes.aggregateFor
+import org.jetbrains.dataframe.impl.aggregation.modes.of
+import org.jetbrains.dataframe.impl.aggregation.numberColumns
 import org.jetbrains.dataframe.impl.columns.toColumns
+import org.jetbrains.dataframe.sumOf
 import org.jetbrains.dataframe.with
 import kotlin.reflect.KProperty
 
@@ -39,7 +44,7 @@ interface PivotAggregations<T> : Aggregatable<T> {
 
     fun min(separate: Boolean = false): DataRow<T> = asGrouped().min(separate)[0]
 
-    fun <R : Comparable<R>> minFor(separate: Boolean = false, columns: ColumnsSelector<T, R?>): DataRow<T> = asGrouped().minFor(separate, columns)[0]
+    fun <R : Comparable<R>> minFor(separate: Boolean = false, columns: AggregateColumnsSelector<T, R?>): DataRow<T> = asGrouped().minFor(separate, columns)[0]
 
     fun <R : Comparable<R>> min(columns: ColumnsSelector<T, R?>): DataRow<T> = asGrouped().min(columns)[0]
 
@@ -55,7 +60,7 @@ interface PivotAggregations<T> : Aggregatable<T> {
 
     fun max(separate: Boolean = false): DataRow<T> = asGrouped().max(separate)[0]
 
-    fun <R : Comparable<R>> maxFor(separate: Boolean = false, columns: ColumnsSelector<T, R?>): DataRow<T> = asGrouped().maxFor(separate, columns)[0]
+    fun <R : Comparable<R>> maxFor(separate: Boolean = false, columns: AggregateColumnsSelector<T, R?>): DataRow<T> = asGrouped().maxFor(separate, columns)[0]
 
     fun <R : Comparable<R>> max(columns: ColumnsSelector<T, R?>): DataRow<T> = asGrouped().max(columns)[0]
 
@@ -66,6 +71,15 @@ interface PivotAggregations<T> : Aggregatable<T> {
     fun <R : Comparable<R>> maxByExpr(rowExpression: RowSelector<T, R>): DataRow<T> = asGrouped().maxByExpr(rowExpression)[0]
 
     // endregion
+
+    // region sum
+
+    fun sum(separate: Boolean = false) = asGrouped().sum(separate)[0]
+
+    fun <R : Number> sumFor(separate: Boolean = false, columns: AggregateColumnsSelector<T, R>): DataRow<T> =
+        asGrouped().sumFor(separate, columns)[0]
+
+    // endregion
 }
 
 @PublishedApi
@@ -74,5 +88,7 @@ internal fun <T> PivotAggregations<T>.asGrouped() = (this as DataFramePivotImpl<
 // region inlines
 
 inline fun <T, reified V> PivotAggregations<T>.with(noinline selector: RowSelector<T, V>): DataRow<T> = asGrouped().with(selector)[0]
+
+inline fun <T, reified R : Number> PivotAggregations<T>.sumOf(crossinline selector: RowSelector<T, R>): DataRow<T> = asGrouped().sumOf(selector)[0]
 
 // endregion

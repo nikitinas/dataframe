@@ -3,7 +3,6 @@ package org.jetbrains.dataframe.person
 import io.kotest.matchers.shouldBe
 import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.annotations.DataSchema
-import org.jetbrains.dataframe.api.aggregation.with
 import org.jetbrains.dataframe.sumOf
 import org.jetbrains.dataframe.columns.typeClass
 import org.jetbrains.dataframe.impl.columns.asGroup

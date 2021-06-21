@@ -1,7 +1,7 @@
 package org.jetbrains.dataframe.impl
 
 import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.aggregation.AggregateReceiver
+import org.jetbrains.dataframe.aggregation.GroupByReceiver
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnWithPath
@@ -9,6 +9,8 @@ import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.shortPath
 import org.jetbrains.dataframe.columns.size
 import org.jetbrains.dataframe.impl.aggregation.AggregatableInternal
+import org.jetbrains.dataframe.impl.aggregation.receivers.AggregateBodyInternal
+import org.jetbrains.dataframe.impl.aggregation.receivers.AggregateReceiverInternal
 import org.jetbrains.dataframe.impl.aggregation.toColumnWithPath
 import org.jetbrains.dataframe.impl.columns.addPath
 import org.jetbrains.dataframe.io.renderToString
@@ -68,9 +70,9 @@ internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T>, 
 
     override fun columns() = columns
 
-    override fun <R> aggregateInternal(body: AggregateBody<T, R>): DataFrame<T> {
+    override fun <R> aggregateInternal(body: AggregateBodyInternal<T, R>): DataFrame<T> {
 
-        class DataFrameAggregateReceiver: AggregateReceiver<T>, DataFrame<T> by this {
+        class DataFrameAggregateReceiver: GroupByReceiver<T>(), AggregateReceiverInternal<T>, DataFrame<T> by this {
 
             val values = mutableListOf<NamedValue>()
 

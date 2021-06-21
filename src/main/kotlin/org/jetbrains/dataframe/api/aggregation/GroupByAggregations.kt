@@ -2,12 +2,14 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.aggregation.Aggregatable
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
-import org.jetbrains.dataframe.aggregation.GroupAggregator
+import org.jetbrains.dataframe.aggregation.GroupByAggregateBody
+import org.jetbrains.dataframe.impl.aggregation.GroupedPivotImpl
+import org.jetbrains.dataframe.impl.aggregation.aggregateInternal
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregators
 import org.jetbrains.dataframe.impl.aggregation.columnValues
 import org.jetbrains.dataframe.impl.aggregation.comparableColumns
-import org.jetbrains.dataframe.impl.aggregation.modes.aggregateValue
 import org.jetbrains.dataframe.impl.aggregation.modes.aggregateAll
+import org.jetbrains.dataframe.impl.aggregation.modes.aggregateValue
 import org.jetbrains.dataframe.impl.aggregation.modes.aggregateBy
 import org.jetbrains.dataframe.impl.aggregation.modes.aggregateFor
 import org.jetbrains.dataframe.impl.aggregation.modes.of
@@ -19,16 +21,20 @@ import org.jetbrains.dataframe.impl.columns.toComparableColumns
 
 interface GroupByAggregations<out T> : Aggregatable<T> {
 
+    fun aggregate(body: GroupByAggregateBody<T>): DataFrame<T>
+
+    fun pivot(columns: ColumnsSelector<T, *>): GroupedPivotAggregations<T>
+    fun pivot(vararg columns: Column) = pivot { columns.toColumns() }
+    fun pivot(vararg columns: String) = pivot { columns.toColumns() }
+
     fun count(resultName: String = "count", predicate: RowFilter<T>? = null) =
         aggregateValue(resultName) { count(predicate) default 0 }
 
     fun values(vararg columns: Column): DataFrame<T> = values { columns.toColumns() }
     fun values(vararg columns: String): DataFrame<T> = values { columns.toColumns() }
-    fun values(columns: AggregateColumnsSelector<T, *>): DataFrame<T> = aggregate { columnValues(columns) { it.toList()}  }
+    fun values(columns: AggregateColumnsSelector<T, *>): DataFrame<T> = aggregateInternal { columnValues(columns) { it.toList()}  }
 
     fun values(): DataFrame<T> = values(remainingColumnsSelector())
-
-    fun aggregate(body: GroupAggregator<T>): DataFrame<T>
 
     // region min
 
@@ -116,7 +122,7 @@ inline fun <T, reified C> GroupByAggregations<T>.with(
 ): DataFrame<T> {
     val type = getType<C>()
     val path = listOf(name)
-    return aggregate {
+    return aggregateInternal {
         yieldOneOrMany(path, map(expression), type)
     }
 }

@@ -1,10 +1,12 @@
 package org.jetbrains.dataframe.impl
 
 import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.aggregation.GroupAggregator
+import org.jetbrains.dataframe.aggregation.GroupByAggregateBody
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.impl.aggregation.AggregatableInternal
+import org.jetbrains.dataframe.impl.aggregation.GroupedPivotImpl
+import org.jetbrains.dataframe.impl.aggregation.receivers.AggregateBodyInternal
 import org.jetbrains.dataframe.impl.columns.toColumns
 
 internal class GroupedDataFrameImpl<T, G>(val df: DataFrame<T>, override val groups: FrameColumn<G>, private val keyColumnsInGroups: ColumnsSelector<G, *>): GroupedDataFrame<T, G>,
@@ -30,7 +32,9 @@ internal class GroupedDataFrameImpl<T, G>(val df: DataFrame<T>, override val gro
 
     override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all().except(keyColumnsInGroups.toColumns()) }
 
-    override fun aggregate(body: GroupAggregator<G>) = aggregateGroupBy(plain(), { groups }, removeColumns = true, body).typed<G>()
+    override fun aggregate(body: GroupByAggregateBody<G>) = aggregateGroupBy(plain(), { groups }, removeColumns = true, body).typed<G>()
 
-    override fun <R> aggregateInternal(body: AggregateBody<G, R>) = aggregate(body as GroupAggregator<G>)
+    override fun <R> aggregateInternal(body: AggregateBodyInternal<G, R>) = aggregate(body as GroupByAggregateBody<G>)
+
+    override fun pivot(columns: ColumnsSelector<G, *>): GroupedPivotAggregations<G> = GroupedPivotImpl(this, columns)
 }

@@ -1,19 +1,16 @@
 package org.jetbrains.dataframe.aggregation
 
-import org.jetbrains.dataframe.ColumnPath
-import org.jetbrains.dataframe.columns.AnyCol
-import org.jetbrains.dataframe.columns.shortPath
-import org.jetbrains.dataframe.getType
-import kotlin.reflect.KType
+import org.jetbrains.dataframe.Column
+import org.jetbrains.dataframe.ColumnsSelector
+import org.jetbrains.dataframe.impl.aggregation.GroupAggregatorPivotImpl
+import org.jetbrains.dataframe.GroupedPivotAggregations
+import org.jetbrains.dataframe.impl.columns.toColumns
 
-abstract class GroupByReceiver<out T> : AggregateReceiver<T> {
+abstract class GroupByReceiver<out T> : AggregateReceiver<T>() {
 
-    override fun pathForSingleColumn(column: AnyCol) = column.shortPath()
-
-    override fun <R> yield(path: ColumnPath, value: R, type: KType?, default: R?) =
-        yield(path, value, type, default, false)
-
-    inline infix fun <reified R> R.into(name: String) = yield(listOf(name), this, getType<R>())
+    fun pivot(columns: ColumnsSelector<T, *>): GroupedPivotAggregations<T> = GroupAggregatorPivotImpl(this, columns)
+    fun pivot(vararg columns: Column) = pivot { columns.toColumns() }
+    fun pivot(vararg columns: String) = pivot { columns.toColumns() }
 }
 
-typealias GroupAggregator<G> = GroupByReceiver<G>.(GroupByReceiver<G>) -> Unit
+typealias GroupByAggregateBody<G> = GroupByReceiver<G>.(GroupByReceiver<G>) -> Unit

@@ -1,12 +1,12 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.aggregation.GroupAggregator
+import org.jetbrains.dataframe.aggregation.GroupByAggregateBody
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.aggregation.GroupByReceiverImpl
 
 data class AggregateClause<T, G>(val df: DataFrame<T>, val selector: ColumnSelector<T, DataFrame<G>>) {
-    fun with(body: GroupAggregator<G>) = aggregateGroupBy(df, selector, removeColumns = false, body)
+    fun with(body: GroupByAggregateBody<G>) = aggregateGroupBy(df, selector, removeColumns = false, body)
 }
 
 fun <T, G> DataFrame<T>.aggregate(selector: ColumnSelector<T, DataFrame<G>>) = AggregateClause(this, selector)
@@ -15,9 +15,8 @@ internal fun <T, G> aggregateGroupBy(
     df: DataFrame<T>,
     selector: ColumnSelector<T, DataFrame<G>?>,
     removeColumns: Boolean,
-    body: GroupAggregator<G>
+    body: GroupByAggregateBody<G>
 ): DataFrame<T> {
-
     val column = df.column(selector)
 
     val (df2, removedNodes) = df.doRemove(selector)

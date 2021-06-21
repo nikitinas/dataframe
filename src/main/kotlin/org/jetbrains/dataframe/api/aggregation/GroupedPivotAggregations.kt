@@ -2,7 +2,9 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.aggregation.Aggregatable
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
+import org.jetbrains.dataframe.aggregation.PivotAggregateBody
 import org.jetbrains.dataframe.columns.ColumnReference
+import org.jetbrains.dataframe.impl.aggregation.aggregateInternal
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregators
 import org.jetbrains.dataframe.impl.aggregation.columnValues
 import org.jetbrains.dataframe.impl.aggregation.comparableColumns
@@ -15,7 +17,9 @@ import org.jetbrains.dataframe.impl.aggregation.yieldOneOrMany
 import org.jetbrains.dataframe.impl.columns.toColumns
 import kotlin.reflect.KProperty
 
-interface GroupedPivotAggregations<T> : Aggregatable<T> {
+interface GroupedPivotAggregations<out T> : Aggregatable<T> {
+
+    fun <R> aggregate(body: PivotAggregateBody<T, R>): DataFrame<T>
 
     fun count(predicate: RowFilter<T>? = null) = aggregate { count(predicate) default 0 }
 
@@ -23,14 +27,12 @@ interface GroupedPivotAggregations<T> : Aggregatable<T> {
     fun values(vararg columns: String, separate: Boolean = false) = values(separate) { columns.toColumns() }
     fun values(vararg columns: KProperty<*>, separate: Boolean = false) = values(separate) { columns.toColumns() }
     fun values(separate: Boolean = false, columns: AggregateColumnsSelector<T, *>) =
-        groupByValue(separate).aggregate { columnValues(columns) { it.toList() } }
+        groupByValue(separate).aggregateInternal { columnValues(columns) { it.toList() } }
 
     fun values(separate: Boolean = false) = values(separate, remainingColumnsSelector())
 
     fun <R> matches(yes: R, no: R) = aggregate { yes default no }
     fun matches() = matches(true, false)
-
-    fun <R> aggregate(body: PivotAggregateBody<T, R>): DataFrame<T>
 
     fun groupByValue(flag: Boolean = true): GroupedPivotAggregations<T>
     fun default(value: Any?): GroupedPivotAggregations<T>
@@ -112,7 +114,7 @@ inline fun <T, reified R : Number> GroupedPivotAggregations<T>.sumOf(crossinline
 
 inline fun <T, reified V> GroupedPivotAggregations<T>.with(noinline selector: RowSelector<T, V>): DataFrame<T> {
     val type = getType<V>()
-    return aggregate {
+    return aggregateInternal {
         val values = map {
             val value = selector(it, it)
             if (value is ColumnReference<*>) it[value]

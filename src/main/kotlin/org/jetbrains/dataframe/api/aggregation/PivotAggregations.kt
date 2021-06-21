@@ -3,18 +3,25 @@ package org.jetbrains.dataframe.api.aggregation
 import org.jetbrains.dataframe.Column
 import org.jetbrains.dataframe.ColumnSelector
 import org.jetbrains.dataframe.ColumnsSelector
-import org.jetbrains.dataframe.DataFramePivot
+import org.jetbrains.dataframe.impl.aggregation.DataFramePivotImpl
 import org.jetbrains.dataframe.DataRow
+import org.jetbrains.dataframe.GroupedPivotAggregations
 import org.jetbrains.dataframe.RowFilter
 import org.jetbrains.dataframe.RowSelector
 import org.jetbrains.dataframe.aggregation.Aggregatable
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
-import org.jetbrains.dataframe.groupBy
+import org.jetbrains.dataframe.aggregation.PivotAggregateBody
 import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.with
 import kotlin.reflect.KProperty
 
 interface PivotAggregations<T> : Aggregatable<T> {
+
+    fun <R> aggregate(body: PivotAggregateBody<T, R>): DataRow<T> = asGrouped().aggregate(body)[0]
+
+    fun groupBy(columns: ColumnsSelector<T, *>): GroupedPivotAggregations<T>
+    fun groupBy(vararg columns: String) = groupBy { columns.toColumns() }
+    fun groupBy(vararg columns: Column) = groupBy { columns.toColumns() }
 
     fun count(predicate: RowFilter<T>? = null): DataRow<T> = asGrouped().count(predicate)[0]
 
@@ -59,7 +66,7 @@ interface PivotAggregations<T> : Aggregatable<T> {
 }
 
 @PublishedApi
-internal fun <T> PivotAggregations<T>.asGrouped() = (this as DataFramePivot<T>).groupBy { none() }
+internal fun <T> PivotAggregations<T>.asGrouped() = (this as DataFramePivotImpl<T>).groupBy { none() }
 
 // region inlines
 

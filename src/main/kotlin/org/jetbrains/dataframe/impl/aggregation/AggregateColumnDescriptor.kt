@@ -1,12 +1,12 @@
 package org.jetbrains.dataframe.impl.aggregation
 
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
-import org.jetbrains.dataframe.aggregation.AggregateReceiver
 import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.UnresolvedColumnsPolicy
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.shortPath
+import org.jetbrains.dataframe.impl.aggregation.receivers.AggregateReceiverInternal
 import org.jetbrains.dataframe.resolve
 
 internal class AggregateColumnDescriptor<C>(
@@ -28,5 +28,5 @@ internal fun <T, C> DataFrame<T>.getAggregateColumns(selector: AggregateColumnsS
     }
 }
 
-internal fun <T, C> AggregateReceiver<T>.getPath(col: AggregateColumnDescriptor<C>, isSingle: Boolean) =
+internal fun <T, C> AggregateReceiverInternal<T>.getPath(col: AggregateColumnDescriptor<C>, isSingle: Boolean) =
     col.newPath ?: if (isSingle) pathForSingleColumn(col.data) else col.data.shortPath()

@@ -58,7 +58,8 @@ internal inline fun <T, reified C, reified R> GroupByAggregations<T>.aggregateOf
     val path = pathOf(resultName ?: "value")
     val type = getType<R>()
     return aggregateInternal {
-        yield(path, aggregator.aggregateOf(this, selector), type, null, false)
+        val value = aggregator.aggregateOf(this, selector)
+        yield(path, value, type, null, false)
     }
 }
 

@@ -80,7 +80,10 @@ fun renderValueForRowTable(value: Any?, forHtml: Boolean): Pair<String, Int> = w
     else renderValueForStdout(value, valueToStringLimitForRowAsTable).let { it to it.length }
 }
 
-internal fun renderValueForHtml(value: Any?, truncate: Int) = renderValue(value).truncate(truncate).escapeHTML()
+internal fun renderValueForHtml(value: Any?, truncate: Int, nullClass: String? = null) = when{
+    value == null && nullClass != null -> "<div class=\"$nullClass\">null</div>"
+    else -> renderValue(value).truncate(truncate).escapeHTML()
+}
 
 internal fun renderValueForStdout(value: Any?, truncate: Int = valueToStringLimitDefault) = renderValue(value).truncate(truncate).escapeNewLines()
 
@@ -89,8 +92,6 @@ internal fun renderValue(value: Any?) =
         is AnyFrame -> "[${value.nrow()} x ${value.ncol()}]".let { if(value.nrow() == 1) it + " " + value[0].toString() else it}
         is Double -> value.format(6)
         is Many<*> -> if(value.isEmpty()) "" else value.toString()
-        null -> ""
-        "" -> "\"\""
         else -> value.toString()
     }
 

@@ -9,7 +9,13 @@ import org.jetbrains.dataframe.size
 internal val tooltipLimit = 1000
 
 fun <T> DataFrame<T>.toHTML(configuration: DisplayConfiguration = DisplayConfiguration.DEFAULT, getFooter: (DataFrame<T>)->String = {"DataFrame [${it.size}]" }) = buildString {
-    append("<html><body>")
+    val nullClass = "null"
+    val head = """<head><style type="text/css">
+            div.$nullClass{
+                color: #b3b3cc;
+            }
+        </style></head>""".trimIndent()
+    append("<html>$head<body>")
     append("<table><tr>")
     columns().forEach {
         append("<th style=\"text-align:left\">${it.name()}</th>")
@@ -29,7 +35,7 @@ fun <T> DataFrame<T>.toHTML(configuration: DisplayConfiguration = DisplayConfigu
                 }
                 else -> {
                     tooltip = renderValueForHtml(cellVal, tooltipLimit)
-                    content = renderValueForHtml(cellVal, configuration.cellContentLimit)
+                    content = renderValueForHtml(cellVal, configuration.cellContentLimit, nullClass)
                 }
             }
             val attributes = configuration.cellFormatter?.invoke(row, col)?.attributes()?.joinToString(";") { "${it.first}:${it.second}" }.orEmpty()

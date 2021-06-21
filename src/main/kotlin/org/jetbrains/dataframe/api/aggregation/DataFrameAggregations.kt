@@ -2,13 +2,16 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.aggregation.Aggregatable
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
+import org.jetbrains.dataframe.aggregation.GroupByAggregateBody
 import org.jetbrains.dataframe.columns.ColumnReference
+import org.jetbrains.dataframe.impl.aggregation.aggregateInternal
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregators
 import org.jetbrains.dataframe.impl.aggregation.comparableColumns
 import org.jetbrains.dataframe.impl.aggregation.modes.aggregateAll
 import org.jetbrains.dataframe.impl.aggregation.modes.aggregateFor
 import org.jetbrains.dataframe.impl.aggregation.modes.of
 import org.jetbrains.dataframe.impl.aggregation.numberColumns
+import org.jetbrains.dataframe.impl.aggregation.receivers.AggregateBodyInternal
 import org.jetbrains.dataframe.impl.aggregation.remainingColumns
 import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.columns.toColumnsOf
@@ -20,6 +23,8 @@ import org.jetbrains.dataframe.impl.zero
 import kotlin.reflect.KProperty
 
 interface DataFrameAggregations<out T> : Aggregatable<T>, DataFrameBase<T> {
+
+    fun aggregate(body: GroupByAggregateBody<T>): DataRow<T> = aggregateInternal(body as AggregateBodyInternal<T, Unit>)[0]
 
     fun count(predicate: RowFilter<T>? = null): Int =
         if (predicate == null) nrow() else rows().count { predicate(it, it) }
@@ -135,7 +140,7 @@ inline fun <T, reified D : Number> DataFrame<T>.meanOf(skipNa: Boolean = false, 
     return Aggregators.mean(skipNa).of(this, selector) ?: Double.NaN
 }
 
-inline fun <T, reified R: Number> DataFrameAggregations<T>.sum(noinline columns: ColumnsSelector<T, R>): R =
+inline fun <T, reified R: Number> DataFrameAggregations<T>.sum(noinline columns: ColumnsSelector<T, R?>): R =
     Aggregators.sum.aggregateAll(this, columns) ?: R::class.zero()
 
 inline fun <T, reified R : Number> DataFrameAggregations<T>.sumOf(crossinline selector: RowSelector<T, R>): R =

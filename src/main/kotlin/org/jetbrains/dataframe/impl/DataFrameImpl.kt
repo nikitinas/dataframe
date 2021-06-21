@@ -9,6 +9,7 @@ import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.shortPath
 import org.jetbrains.dataframe.columns.size
 import org.jetbrains.dataframe.impl.aggregation.AggregatableInternal
+import org.jetbrains.dataframe.impl.aggregation.GroupByReceiverImpl
 import org.jetbrains.dataframe.impl.aggregation.receivers.AggregateBodyInternal
 import org.jetbrains.dataframe.impl.aggregation.receivers.AggregateReceiverInternal
 import org.jetbrains.dataframe.impl.aggregation.toColumnWithPath
@@ -72,22 +73,10 @@ internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T>, 
 
     override fun <R> aggregateInternal(body: AggregateBodyInternal<T, R>): DataFrame<T> {
 
-        class DataFrameAggregateReceiver: GroupByReceiver<T>(), AggregateReceiverInternal<T>, DataFrame<T> by this {
-
-            val values = mutableListOf<NamedValue>()
-
-            override fun yield(value: NamedValue) = value.also { values.add(it) }
-
-            override fun <R> yield(path: ColumnPath, value: R, type: KType?, default: R?) = yield(path, value, type, default, false)
-
-            override fun pathForSingleColumn(column: AnyCol) = column.shortPath()
-        }
-
-        val receiver = DataFrameAggregateReceiver()
-        val result = body(receiver, receiver)
-        val values = if(result != Unit && receiver.values.isEmpty()) listOf(NamedValue.create(pathOf("value"), result, null, null, true))
-            else receiver.values
-        return values.map { it.toColumnWithPath() }.toDataFrame<T>()
+        val receiver = GroupByReceiverImpl(this)
+        body(receiver, receiver)
+        val result = receiver.compute()?.df() ?: DataFrame.empty(1)
+        return result.typed()
     }
 
     override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all() }

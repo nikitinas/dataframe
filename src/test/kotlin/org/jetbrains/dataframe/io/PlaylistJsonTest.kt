@@ -5,7 +5,7 @@ import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataFrameBase
 import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.DataRowBase
-import org.jetbrains.dataframe.aggregate
+import org.jetbrains.dataframe.aggregateColumn
 import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
@@ -304,7 +304,7 @@ class PlaylistJsonTest {
     @Test
     fun `aggregate by column`(){
 
-        val res = typed.aggregate { items }.with {
+        val res = typed.aggregateColumn { items }.with {
             minBy { snippet.publishedAt }.snippet into "earliest"
         }
 

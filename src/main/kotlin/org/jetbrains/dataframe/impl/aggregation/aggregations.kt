@@ -1,7 +1,7 @@
 package org.jetbrains.dataframe.impl.aggregation
 
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
-import org.jetbrains.dataframe.aggregation.AggregateSelectReceiver
+import org.jetbrains.dataframe.aggregation.SelectAggregatableColumnsReceiver
 import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.SelectReceiverImpl
@@ -28,9 +28,9 @@ internal fun <T, V> AggregateReceiverInternal<T>.yieldOneOrMany(
 @JvmName("toColumnSetForAggregate")
 internal fun <T, C> AggregateColumnsSelector<T, C>.toColumns(): Columns<C> = toColumns {
 
-    class AggregateSelectReceiverImpl<T>(df: DataFrame<T>) : SelectReceiverImpl<T>(df, true), AggregateSelectReceiver<T>
+    class SelectAggregatableColumnsReceiverImpl<T>(df: DataFrame<T>) : SelectReceiverImpl<T>(df, true), SelectAggregatableColumnsReceiver<T>
 
-    AggregateSelectReceiverImpl(it.df.typed())
+    SelectAggregatableColumnsReceiverImpl(it.df.typed())
 }
 
 internal fun <T, C, R> AggregateReceiverInternal<T>.columnValues(columns: AggregateColumnsSelector<T, C>,

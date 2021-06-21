@@ -1846,4 +1846,16 @@ class DataFrameTests : BaseTest() {
             }
         }
     }
+
+    @Test
+    fun `aggregate dataframe with pivot`(){
+        val summary = typed.aggregate {
+            count() into "count"
+            pivot { name }.max { age }
+            sum { weight } into "total weight"
+        }
+        val expected = dataFrameOf("count", "Alice", "Bob", "Mark", "total weight")(7, 20, 45, 40, 354)[0]
+        summary shouldBe expected
+    }
+
 }

@@ -6,7 +6,7 @@ import org.jetbrains.dataframe.columns.Columns
 import org.jetbrains.dataframe.impl.aggregation.ConfiguredAggregateColumn
 import org.jetbrains.dataframe.impl.pathOf
 
-interface AggregateSelectReceiver<out T> : SelectReceiver<T> {
+interface SelectAggregatableColumnsReceiver<out T> : SelectReceiver<T> {
 
     infix fun <C> Columns<C>.default(defaultValue: C): Columns<C> =
         ConfiguredAggregateColumn.withDefault(this, defaultValue)
@@ -18,4 +18,4 @@ interface AggregateSelectReceiver<out T> : SelectReceiver<T> {
     infix fun <C> Columns<C>.into(path: ColumnPath): Columns<C> = ConfiguredAggregateColumn.withPath(this, path)
 }
 
-typealias AggregateColumnsSelector<T, C> = AggregateSelectReceiver<T>.(AggregateSelectReceiver<T>) -> Columns<C>
+typealias AggregateColumnsSelector<T, C> = SelectAggregatableColumnsReceiver<T>.(SelectAggregatableColumnsReceiver<T>) -> Columns<C>

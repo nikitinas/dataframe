@@ -1,6 +1,7 @@
 package org.jetbrains.dataframe.impl.columns.missing
 
 import org.jetbrains.dataframe.AggregateBody
+import org.jetbrains.dataframe.ColumnsSelector
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataRow
@@ -45,4 +46,6 @@ internal class MissingColumnGroup<T> : MissingDataColumn<DataRow<T>>(), DataColu
     override fun get(firstIndex: Int, vararg otherIndices: Int) = throw UnsupportedOperationException()
 
     override fun distinct() = throw UnsupportedOperationException()
+
+    override fun <C> values(byRow: Boolean, columns: ColumnsSelector<T, C>) = throw UnsupportedOperationException()
 }

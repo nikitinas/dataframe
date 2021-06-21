@@ -1868,4 +1868,11 @@ class DataFrameTests : BaseTest() {
             group.columnNames() shouldBe listOf("age", "weight")
         }
     }
+
+    @Test
+    fun `find the longest string`() {
+        val longestCityName = "Taumatawhakatangihangakoauauotamateaturipukakapikimaungahoronukupokaiwhenuakitanatahu"
+        val updated = typed.update { city }.where { it == "Dubai" }.with(longestCityName)
+        updated.valuesNotNull { stringCols() }.maxByOrNull { it.length } shouldBe longestCityName
+    }
 }

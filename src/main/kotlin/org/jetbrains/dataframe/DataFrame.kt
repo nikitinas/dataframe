@@ -19,8 +19,8 @@ import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.put
 import org.jetbrains.dataframe.impl.toIndices
 
-internal open class SelectReceiverImpl<T>(df: DataFrame<T>, allowMissingColumns: Boolean) :
-    DataFrameReceiver<T>(df, allowMissingColumns), SelectReceiver<T>
+internal open class SelectReceiverImpl<T>(source: DataFrame<T>, allowMissingColumns: Boolean) :
+    DataFrameReceiver<T>(source, allowMissingColumns), SelectReceiver<T>
 
 data class DataFrameSize(val ncol: Int, val nrow: Int) {
     override fun toString() = "$nrow x $ncol"
@@ -110,6 +110,12 @@ interface DataFrame<out T> : DataFrameAggregations<T> {
     override fun ncol(): Int = columns().size
 
     override fun rows(): Iterable<DataRow<T>> = forwardIterable()
+
+    fun <C> values(byRow: Boolean = false, columns: ColumnsSelector<T, C>): Sequence<C>
+    fun values(byRow: Boolean = false): Sequence<Any?> = values(byRow) { all() }
+
+    fun <C> valuesNotNull(byRow: Boolean = false, columns: ColumnsSelector<T, C?>): Sequence<C> = values(byRow, columns).filterNotNull()
+    fun valuesNotNull(byRow: Boolean = false): Sequence<Any> = valuesNotNull(byRow) { all() }
 
     fun columnNames() = columns().map { it.name() }
 

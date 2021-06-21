@@ -80,6 +80,24 @@ internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T>, 
     }
 
     override fun remainingColumnsSelector(): ColumnsSelector<*, *> = { all() }
+
+    override fun <C> values(byRow: Boolean, columns: ColumnsSelector<T, C>): Sequence<C> {
+        val cols = get(columns)
+        return if (byRow) sequence {
+            indices().forEach { row ->
+                cols.forEach {
+                    yield(it[row])
+                }
+            }
+        }
+        else sequence {
+            cols.forEach { col ->
+                col.values().forEach {
+                    yield(it)
+                }
+            }
+        }
+    }
 }
 
 @PublishedApi

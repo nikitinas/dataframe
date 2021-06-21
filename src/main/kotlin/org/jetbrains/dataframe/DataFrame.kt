@@ -205,6 +205,8 @@ fun AnyFrame.getFrame(path: ColumnPath): AnyFrame = if(path.isNotEmpty()) this[p
 
 fun <T> AnyFrame.typed(): DataFrame<T> = this as DataFrame<T>
 
+fun <T> AnyRow.typed(): DataRow<T> = this as DataRow<T>
+
 fun <T> DataFrameBase<*>.typed(): DataFrameBase<T> = this as DataFrameBase<T>
 
 fun <T> DataRow<T>.toDataFrame(): DataFrame<T> = owner[index..index]

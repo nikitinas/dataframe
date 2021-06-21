@@ -1,6 +1,7 @@
 package org.jetbrains.dataframe.internal.codeGen
 
 import io.kotest.matchers.shouldBe
+import org.jetbrains.dataframe.AnyRow
 import org.jetbrains.dataframe.DataFrameBase
 import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.DataRowBase
@@ -45,8 +46,33 @@ class CodeGenerationTests : BaseTest(){
 
     @Test
     fun `generate marker interface`() {
-        val property = DataFrameTests::class.memberProperties.first { it.name == "df" }
-        val generated = ReplCodeGenerator.create().process(df, property)
+
+        val codeGen = ReplCodeGenerator.create()
+        val generated = codeGen.process(df, ::df)
+        val typeName = "DataFrameType"
+        val expectedDeclaration = """
+            @DataSchema(isOpen = false)
+            interface $typeName
+            """.trimIndent() + "\n" + expectedProperties(typeName, typeName)
+
+        val expectedConverter = "it.typed<$typeName>()"
+
+        generated.declarations shouldBe expectedDeclaration
+        generated.converter("it") shouldBe expectedConverter
+
+        val rowGenerated = codeGen.process(df[0], ::typedRow)
+        rowGenerated.hasDeclarations shouldBe false
+        rowGenerated.hasConverter shouldBe false
+    }
+
+    val row: AnyRow? = null
+
+    val typedRow: DataRow<Person> = typed[0]
+
+    @Test
+    fun `generate marker interface for row`() {
+        val property = ::row
+        val generated = ReplCodeGenerator.create().process(df[0], property)
         val typeName = "DataFrameType"
         val expectedDeclaration = """
             @DataSchema(isOpen = false)
@@ -61,7 +87,7 @@ class CodeGenerationTests : BaseTest(){
 
     @Test
     fun `generate marker interface for nested data frame`() {
-        val property = DataFrameTests::class.memberProperties.first { it.name == "df" }
+        val property = ::df
         val grouped = df.move { name and city }.under("nameAndCity")
         val generated = ReplCodeGenerator.create().process(grouped, property)
         val type1 = "DataFrameType1"

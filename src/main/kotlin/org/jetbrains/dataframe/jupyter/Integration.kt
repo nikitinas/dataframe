@@ -5,6 +5,7 @@ import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
+import org.jetbrains.dataframe.internal.codeGen.CodeWithConverter
 import org.jetbrains.dataframe.io.toHTML
 import org.jetbrains.dataframe.stubs.DataFrameToListNamedStub
 import org.jetbrains.dataframe.stubs.DataFrameToListTypedStub
@@ -12,6 +13,7 @@ import org.jetbrains.kotlinx.jupyter.api.*
 import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibrary
 import org.jetbrains.kotlinx.jupyter.api.libraries.*
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
 
 internal val newDataSchemas = mutableListOf<KClass<*>>()
 
@@ -38,18 +40,24 @@ internal class Integration : JupyterIntegration(){
         import("org.jetbrains.dataframe.annotations.*")
         import("org.jetbrains.dataframe.io.*")
 
-        updateVariable<AnyFrame> { df, property ->
-            codeGen.process(df, property).let {
-                val code = it.with(property.name)
-                if(code.isNotBlank())
-                {
-                    val result = execute(code)
-                    if(it.hasConverter)
-                        result.name
-                    else null
-                }
+        fun KotlinKernelHost.execute(codeWithConverter: CodeWithConverter, property: KProperty<*>): VariableName? {
+            val code = codeWithConverter.with(property.name)
+            return if(code.isNotBlank())
+            {
+                val result = execute(code)
+                if(codeWithConverter.hasConverter)
+                    result.name
                 else null
             }
+            else null
+        }
+
+        updateVariable<AnyFrame> { df, property ->
+            execute(codeGen.process(df, property), property)
+        }
+
+        updateVariable<AnyRow> { row, property ->
+            execute(codeGen.process(row, property), property)
         }
 
         updateVariable<DataFrameToListNamedStub> { stub, prop ->

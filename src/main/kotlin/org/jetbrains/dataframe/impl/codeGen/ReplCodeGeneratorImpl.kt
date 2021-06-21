@@ -1,7 +1,9 @@
 package org.jetbrains.dataframe.impl.codeGen
 
 import org.jetbrains.dataframe.AnyFrame
+import org.jetbrains.dataframe.AnyRow
 import org.jetbrains.dataframe.DataFrame
+import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.internal.codeGen.MarkersExtractor
 import org.jetbrains.dataframe.internal.codeGen.SchemaProcessor
 import org.jetbrains.dataframe.internal.codeGen.CodeWithConverter
@@ -29,11 +31,14 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
 
     private val generator: CodeGenerator = CodeGeneratorImpl()
 
-    private fun getMarkerClass(dataFrameType: KType): KClass<*>? =
-        when (dataFrameType.jvmErasure) {
-            DataFrame::class -> dataFrameType.arguments[0].type?.jvmErasure
+    private fun getMarkerClass(type: KType): KClass<*>? =
+        when (type.classifier) {
+            DataFrame::class -> type.arguments[0].type?.jvmErasure
+            DataRow::class -> type.arguments[0].type?.jvmErasure
             else -> null
         }
+
+    override fun process(row: AnyRow, property: KProperty<*>?) = process(row.df(), property)
 
     override fun process(df: AnyFrame, property: KProperty<*>?): CodeWithConverter {
 

@@ -202,7 +202,7 @@ class PivotTests {
 
         pivoted.ncol() shouldBe typed.name.ndistinct()
 
-        val cols = pivoted.df().getColumns { all().dfs() }
+        val cols = pivoted.df().columns { all().dfs() }
         cols.size shouldBe 2 * typed.name.ndistinct() * typed.key.ndistinct() - 2
         cols.forEach {
             when {

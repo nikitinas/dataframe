@@ -84,18 +84,11 @@ fun <T, C> DataFrame<T>.getColumnPath(selector: ColumnSelector<T, C>): ColumnPat
 fun <T, C> DataFrame<T>.getColumnPaths(selector: ColumnsSelector<T, C>): List<ColumnPath> =
     selector.toColumns().resolve(this, UnresolvedColumnsPolicy.Fail).map { it.path }
 
-internal fun <T, C> DataFrame<T>.getGroupColumns(selector: ColumnsSelector<T, DataRow<C>>) =
-    getColumnsWithPaths(selector).map { it.data.asGroup() }
-
 fun <T, C> DataFrame<T>.column(selector: ColumnSelector<T, C>): DataColumn<C> = get(selector)
 
 fun <T, C> DataFrame<T>.getColumnWithPath(selector: ColumnSelector<T, C>) = getColumnsWithPaths(selector).single()
 
-internal fun <T> DataFrame<T>.getColumns(columnNames: Array<out String>) = columnNames.map { this[it] }
-
 internal fun <T> DataFrame<T>.getColumns(columnNames: List<String>): List<AnyCol> = columnNames.map { this[it] }
-
-internal fun <T, C> DataFrame<T>.getColumns(selector: ColumnsSelector<T, C>): List<DataColumn<C>> = get(selector)
 
 internal fun <T> DataFrame<T>.new(columns: Iterable<AnyCol>) = dataFrameOf(columns).typed<T>()
 
@@ -120,6 +113,8 @@ interface DataFrame<out T> : DataFrameAggregations<T> {
     fun columnNames() = columns().map { it.name() }
 
     override fun columns(): List<AnyCol>
+    fun <C> columns(selector: ColumnsSelector<T, C>) = get(selector)
+
     override fun column(columnIndex: Int) = columns()[columnIndex]
 
     operator fun set(columnName: String, value: AnyCol)

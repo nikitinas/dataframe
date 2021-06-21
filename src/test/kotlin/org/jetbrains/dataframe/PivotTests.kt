@@ -44,7 +44,7 @@ class PivotTests {
         }
         pivoted.ncol shouldBe 3
         pivoted.nrow shouldBe 2
-        val cols = pivoted.getColumns { except(a).dfs() }
+        val cols = pivoted.columns { except(a).dfs() }
         cols.size shouldBe 4
         cols.forEach {
             it.type() shouldBe getType<Char>()

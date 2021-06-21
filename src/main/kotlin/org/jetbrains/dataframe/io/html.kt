@@ -8,11 +8,18 @@ import org.jetbrains.dataframe.size
 
 internal val tooltipLimit = 1000
 
-fun <T> DataFrame<T>.toHTML(configuration: DisplayConfiguration = DisplayConfiguration.DEFAULT, getFooter: (DataFrame<T>)->String = {"DataFrame [${it.size}]" }) = buildString {
+fun <T> DataFrame<T>.toHTML(
+    configuration: DisplayConfiguration = DisplayConfiguration.DEFAULT,
+    getFooter: (DataFrame<T>) -> String = { "DataFrame [${it.size}]" }
+) = buildString {
 
     val df = this@toHTML
     val nullClassName = "null"
     val expanderClassName = "expander"
+
+    append("<html>")
+
+    // region head
     val head = """<head><style type="text/css">
             div.$nullClassName{
                 color: #b3b3cc;
@@ -21,21 +28,29 @@ fun <T> DataFrame<T>.toHTML(configuration: DisplayConfiguration = DisplayConfigu
                 cursor: pointer;
             }
         </style></head>""".trimIndent()
-    append("<html>$head<body>")
+    append(head)
+
+    // endregion
+
+    // region body
+
+    append("<body>")
     val limit = configuration.rowsLimit
 
     val expandedDataFrames = mutableMapOf<String, String>()
     var expadedDataFrameId = 1
 
-    fun renderTable(df:AnyFrame, header: Boolean = true): String = buildString {
+    fun renderTable(df: AnyFrame): String = buildString {
         append("<table>")
-        if(header) {
-            append("<tr>")
-            df.columns().forEach {
-                append("<th style=\"text-align:left\">${it.name()}</th>")
-            }
+
+        // region header
+        append("<tr>")
+        df.columns().forEach {
+            append("<th style=\"text-align:left\">${it.name()}</th>")
         }
         append("</tr>")
+        // endregion
+
         df.rows().take(limit).forEach { row ->
             append("<tr>")
             df.columns().forEach { col ->
@@ -49,14 +64,14 @@ fun <T> DataFrame<T>.toHTML(configuration: DisplayConfiguration = DisplayConfigu
                     }
                     else -> {
                         tooltip = renderValueForHtml(cellVal, tooltipLimit)
-                        if(cellVal is AnyFrame) {
+                        if (cellVal is AnyFrame) {
                             val id = "df" + expadedDataFrameId++
-                            val expanded = renderTable(cellVal, true)
+                            val expanded = renderTable(cellVal)
                             expandedDataFrames[id] = expanded.replace("\"", "\\\"")
                             val collapsed = "[${cellVal.size}]"
-                            content = """<div id="$id"><a class="$expanderClassName" onClick="expand('$id');">$collapsed</a></div>"""
-                        }
-                        else content = renderValueForHtml(cellVal, configuration.cellContentLimit, nullClassName)
+                            content =
+                                """<div id="$id"><a class="$expanderClassName" onClick="expand('$id');">$collapsed</a></div>"""
+                        } else content = renderValueForHtml(cellVal, configuration.cellContentLimit, nullClassName)
                     }
                 }
                 val attributes = configuration.cellFormatter?.invoke(row, col)?.attributes()
@@ -67,6 +82,7 @@ fun <T> DataFrame<T>.toHTML(configuration: DisplayConfiguration = DisplayConfigu
         }
         append("</table>")
     }
+
     append(renderTable(df))
 
     val footer = getFooter(df)
@@ -75,15 +91,21 @@ fun <T> DataFrame<T>.toHTML(configuration: DisplayConfiguration = DisplayConfigu
     else append("<p>$footer</p>")
     append("</body>")
 
+    // endregion
+
+    // region script
     val script = """<script type="text/javascript">
       var data = {
-         ${expandedDataFrames.map { """${it.key}: "${it.value}",""" }.joinToString("\n") }
+         ${expandedDataFrames.map { """${it.key}: "${it.value}",""" }.joinToString("\n")}
       }
       function expand(id) {
         document.getElementById(id).innerHTML = data[id]
       }
     </script>"""
     append(script)
+
+    // endregion
+
     append("</html>")
 }
 

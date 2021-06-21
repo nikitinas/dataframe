@@ -1,14 +1,15 @@
 package org.jetbrains.dataframe.impl.aggregation.modes
 
+import org.jetbrains.dataframe.AggregateBody
 import org.jetbrains.dataframe.GroupByAggregations
 import org.jetbrains.dataframe.impl.aggregation.aggregateInternal
-import org.jetbrains.dataframe.impl.aggregation.receivers.AggregateBodyInternal
+import org.jetbrains.dataframe.impl.aggregation.receivers.internal
 
 @PublishedApi
 internal fun <T, R> GroupByAggregations<T>.aggregateValue(
     resultName: String,
-    body: AggregateBodyInternal<T, R>
+    body: AggregateBody<T, R>
 ) = aggregateInternal {
-    val value = body(this)
+    val value = body.internal()(this)
     yield(listOf(resultName), value)
 }

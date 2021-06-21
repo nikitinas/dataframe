@@ -19,7 +19,7 @@ internal fun <T, C, R> Aggregatable<T>.aggregateFor(
     columns: AggregateColumnsSelector<T, C>,
     aggregator: Aggregator<C, R>
 ) = aggregateInternal {
-    val cols = getAggregateColumns(columns)
+    val cols = df.getAggregateColumns(columns)
     val isSingle = cols.size == 1
     cols.forEach { col ->
         val path = getPath(col, isSingle)

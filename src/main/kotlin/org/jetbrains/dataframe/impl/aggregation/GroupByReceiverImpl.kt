@@ -6,13 +6,14 @@ import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.aggregation.GroupByReceiver
 import org.jetbrains.dataframe.NamedValue
+import org.jetbrains.dataframe.aggregation.AggregateReceiver
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.shortPath
 import org.jetbrains.dataframe.impl.aggregation.receivers.AggregateReceiverInternal
 import org.jetbrains.dataframe.toDataFrame
 import kotlin.reflect.KType
 
-internal class GroupByReceiverImpl<T>(internal val df: DataFrame<T>) : GroupByReceiver<T>(),
+internal class GroupByReceiverImpl<T>(override val df: DataFrame<T>) : GroupByReceiver<T>(),
     AggregateReceiverInternal<T>, DataFrame<T> by df {
 
     private val values = mutableListOf<NamedValue>()
@@ -52,6 +53,7 @@ internal class GroupByReceiverImpl<T>(internal val df: DataFrame<T>) : GroupByRe
                 }
                 value.value.aggregator.values.clear()
             }
+            is AggregateReceiverInternal<*> -> yield(value.copy(value = value.value.df))
             else -> values.add(value)
         }
         return value

@@ -402,4 +402,11 @@ class PivotTests {
         pivoted.df()["Alice"]["age"].type() shouldBe getType<Many<Int>>()
         pivoted.df()["Mark"]["weight"].type() shouldBe getType<Any?>()
     }
+
+    @Test
+    fun `pivot plain`() {
+        val pivoted = typed.pivot { name }.plain()
+        pivoted.columnNames() shouldBe typed.name.distinct().toList()
+        pivoted["Bob"] shouldBe typed.filter { name == "Bob" }
+    }
 }

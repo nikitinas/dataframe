@@ -21,6 +21,8 @@ interface GroupedPivotAggregations<out T> : Aggregatable<T> {
 
     fun <R> aggregate(body: PivotAggregateBody<T, R>): DataFrame<T>
 
+    fun plain(): DataFrame<T> = aggregate { this }
+
     fun count(predicate: RowFilter<T>? = null) = aggregate { count(predicate) default 0 }
 
     fun values(vararg columns: Column, separate: Boolean = false) = values(separate) { columns.toColumns() }
@@ -115,7 +117,7 @@ inline fun <T, reified R : Number> GroupedPivotAggregations<T>.sumOf(crossinline
 inline fun <T, reified V> GroupedPivotAggregations<T>.with(noinline selector: RowSelector<T, V>): DataFrame<T> {
     val type = getType<V>()
     return aggregateInternal {
-        val values = map {
+        val values = df.map {
             val value = selector(it, it)
             if (value is ColumnReference<*>) it[value]
             else value

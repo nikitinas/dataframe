@@ -58,7 +58,7 @@ internal inline fun <T, reified C, reified R> GroupByAggregations<T>.aggregateOf
     val path = pathOf(resultName ?: "value")
     val type = getType<R>()
     return aggregateInternal {
-        val value = aggregator.aggregateOf(this, selector)
+        val value = aggregator.aggregateOf(df, selector)
         yield(path, value, type, null, false)
     }
 }
@@ -68,5 +68,5 @@ internal inline fun <T, reified C, R> GroupedPivotAggregations<T>.aggregateOf(
     crossinline selector: RowSelector<T, C>,
     aggregator: Aggregator<C, R>
 ): DataFrame<T> = aggregateInternal {
-    yield(emptyPath(), aggregator.aggregateOf(this, selector))
+    yield(emptyPath(), aggregator.aggregateOf(df, selector))
 }

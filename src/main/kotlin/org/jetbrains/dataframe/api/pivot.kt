@@ -34,7 +34,7 @@ internal fun <T, R> aggregatePivot(
     body: PivotAggregateBody<T, R>
 ) {
 
-    aggregator.groupBy(columns).forEach { key, group ->
+    aggregator.df.groupBy(columns).forEach { key, group ->
 
         val keyValue = key.values()
         val path = keyValue.map { it.toString() }

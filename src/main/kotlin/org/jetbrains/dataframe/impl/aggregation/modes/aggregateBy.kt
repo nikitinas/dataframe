@@ -15,7 +15,7 @@ internal fun <T> GroupByAggregations<T>.aggregateBy(
     require(this is GroupedDataFrame<*, T>)
     val keyColumns = keys.columnNames().toSet()
     return aggregateInternal {
-        val row = body(this, this)
+        val row = body(df, df)
         row?.namedValues()?.forEach {
             if(!keyColumns.contains(it.name)) yield(it)
         }

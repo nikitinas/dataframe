@@ -37,7 +37,7 @@ internal fun <T, C, R> GroupByAggregations<T>.aggregateAll(
     columns: ColumnsSelector<T, C>,
     name: String?
 ): DataFrame<T> = aggregateInternal {
-    val cols = get(columns)
+    val cols = df[columns]
     if (cols.size == 1)
         yield(pathOf(name ?: cols[0].name()), aggregator.aggregate(cols[0]))
     else
@@ -48,7 +48,7 @@ internal fun <T, C, R> GroupedPivotAggregations<T>.aggregateAll(
     aggregator: Aggregator<C, R>,
     columns: ColumnsSelector<T, C>
 ): DataFrame<T> = aggregateInternal {
-        val cols = get(columns)
+        val cols = df[columns]
         if (cols.size == 1)
             yield(emptyPath(), aggregator.aggregate(cols[0]))
         else

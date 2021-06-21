@@ -3,6 +3,7 @@ package org.jetbrains.dataframe.api.aggregation
 import org.jetbrains.dataframe.Column
 import org.jetbrains.dataframe.ColumnSelector
 import org.jetbrains.dataframe.ColumnsSelector
+import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.impl.aggregation.DataFramePivotImpl
 import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.GroupedPivotAggregations
@@ -18,6 +19,8 @@ import kotlin.reflect.KProperty
 interface PivotAggregations<T> : Aggregatable<T> {
 
     fun <R> aggregate(body: PivotAggregateBody<T, R>): DataRow<T> = asGrouped().aggregate(body)[0]
+
+    fun plain(): DataRow<T> = aggregate { this }
 
     fun groupBy(columns: ColumnsSelector<T, *>): GroupedPivotAggregations<T>
     fun groupBy(vararg columns: String) = groupBy { columns.toColumns() }

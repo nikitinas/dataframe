@@ -8,7 +8,7 @@ import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.impl.emptyPath
 import kotlin.reflect.KType
 
-internal class PivotReceiverImpl<T>(internal val df: DataFrame<T>) : PivotReceiver<T>(), AggregateReceiverInternal<T>, DataFrame<T> by df {
+internal class PivotReceiverImpl<T>(override val df: DataFrame<T>) : PivotReceiver<T>(), AggregateReceiverInternal<T>, DataFrame<T> by df {
 
     internal val values = mutableListOf<NamedValue>()
 

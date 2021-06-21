@@ -123,7 +123,7 @@ inline fun <T, reified C> GroupByAggregations<T>.with(
     val type = getType<C>()
     val path = listOf(name)
     return aggregateInternal {
-        yieldOneOrMany(path, map(expression), type)
+        yieldOneOrMany(path, df.map(expression), type)
     }
 }
 

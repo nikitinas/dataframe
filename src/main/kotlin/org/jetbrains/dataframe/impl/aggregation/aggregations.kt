@@ -35,7 +35,7 @@ internal fun <T, C> AggregateColumnsSelector<T, C>.toColumns(): Columns<C> = toC
 
 internal fun <T, C, R> AggregateReceiverInternal<T>.columnValues(columns: AggregateColumnsSelector<T, C>,
                                                                  aggregator: (DataColumn<C>) -> List<R>){
-    val cols = getAggregateColumns(columns)
+    val cols = df.getAggregateColumns(columns)
     val isSingle = cols.size == 1
     cols.forEach { col ->
         val path = getPath(col, isSingle)

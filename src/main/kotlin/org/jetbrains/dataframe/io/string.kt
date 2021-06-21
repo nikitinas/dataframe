@@ -44,8 +44,10 @@ internal val valueToStringLimitDefault = 1000
 internal val valueToStringLimitForRowAsTable = 50
 
 internal fun AnyRow.renderToString(): String{
-    if(isEmpty()) return ""
-    return owner.columns().map {it.name() to it[index]}.filter{it.second != null}
+    fun Any?.skip() = this == null || (this is Many<*> && this.isEmpty())
+    val values = owner.columns().map {it.name() to it[index]}.filter{ !it.second.skip() }
+    if(values.isEmpty()) return ""
+    return values
         .map { "${it.first}:${renderValueForStdout(it.second)}" }.joinToString(prefix = "{ ", postfix = " }")
 }
 
@@ -89,9 +91,9 @@ internal fun renderValueForStdout(value: Any?, truncate: Int = valueToStringLimi
 
 internal fun renderValue(value: Any?) =
     when(value) {
-        is AnyFrame -> "[${value.nrow()} x ${value.ncol()}]".let { if(value.nrow() == 1) it + " " + value[0].toString() else it}
+        is AnyFrame -> "[${value.size}]".let { if(value.nrow() == 1) it + " " + value[0].toString() else it}
         is Double -> value.format(6)
-        is Many<*> -> if(value.isEmpty()) "" else value.toString()
+        is Many<*> -> if(value.isEmpty()) "[ ]" else value.toString()
         else -> value.toString()
     }
 

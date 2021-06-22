@@ -6,6 +6,7 @@ import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
 import org.jetbrains.dataframe.internal.codeGen.CodeWithConverter
+import org.jetbrains.dataframe.io.initHtml
 import org.jetbrains.dataframe.io.toHTML
 import org.jetbrains.dataframe.stubs.DataFrameToListNamedStub
 import org.jetbrains.dataframe.stubs.DataFrameToListTypedStub
@@ -27,13 +28,14 @@ internal class Integration : JupyterIntegration(){
 
         onLoaded {
             declare("dataFrameConfig" to config)
+            display(initHtml().toJupyter())
         }
 
-        render<AnyFrame> { HTML(it.toHTML(config.display)) }
-        render<FormattedFrame<*>> { HTML(it.toHTML(config.display)) }
-        render<AnyRow> { HTML(it.toDataFrame().toHTML(config.display) { "DataRow [${it.ncol}]" }) }
+        render<AnyFrame> { it.toHTML(config.display).toJupyter() }
+        render<FormattedFrame<*>> { it.toHTML(config.display).toJupyter() }
+        render<AnyRow> { it.toDataFrame().toHTML(config.display) { "DataRow [${it.ncol}]" }.toJupyter() }
         render<ColumnGroup<*>> { it.df }
-        render<AnyCol> { HTML(dataFrameOf(listOf(it)).toHTML(config.display) { "DataColumn [${it.nrow()}]" }) }
+        render<AnyCol> { dataFrameOf(listOf(it)).toHTML(config.display) { "DataColumn [${it.nrow()}]" }.toJupyter() }
         render<GroupedDataFrame<*, *>> { it.plain() }
 
         import("org.jetbrains.dataframe.*")

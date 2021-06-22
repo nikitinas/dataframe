@@ -1,0 +1,54 @@
+table.dataframe {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 12px;
+}
+table.dataframe a {
+    cursor: pointer;
+    color: #296eaa;
+    text-decoration: none;
+}
+table.dataframe a.expanded {
+    color: black;
+}
+table.dataframe a:hover {
+    color: #1a466c;
+    text-decoration: underline;
+}
+table.dataframe tr:nth-child(odd) {
+    background: rgb(245, 245, 245);
+}
+table.dataframe tr:nth-child(even) {
+    background: #FFF
+}
+table.dataframe tr:hover {
+    background: rgba(66, 165, 245, 0.2);
+}
+th.complex {
+    background-color: white;
+    border: 1px solid #ffffff;
+}
+table.dataframe th {
+    background-color: white;
+    padding: 6px;
+    border: 1px solid transparent;
+    text-align: left;
+}
+
+table.dataframe td {
+    padding: 6px;
+    border: 1px solid transparent;
+    text-align: left;
+}
+table.dataframe {
+    border: none;
+    border-collapse: collapse;
+}
+table.dataframe .leftBorder {
+    border-left-color: #aaa;
+}
+table.dataframe .rightBorder {
+    border-right-color: #aaa;
+}
+table.dataframe .rightAlign {
+    text-align: right;
+}

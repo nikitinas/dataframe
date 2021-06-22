@@ -49,7 +49,7 @@ class RenderingTests: BaseTest() {
         for(row in 0 until typed.nrow())
             formatter(typed[row], typed.age)!!.attributes().size shouldBe if(typed[row].age > 10) 3 else 2
 
-        formattedFrame.toHTML(DisplayConfiguration.DEFAULT) shouldContain "font-style:italic"
+        formattedFrame.toHTML(DisplayConfiguration.DEFAULT).toString() shouldContain "font-style:italic"
     }
 
     @Test

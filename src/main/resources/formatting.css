@@ -2,13 +2,16 @@ table.dataframe .formatNull {
     color: #b3b3cc;
 }
 table.dataframe .formatCurlyBrackets {
-    color: black;
-}
-table.dataframe .formatCurlyBrackets {
-    color: black;
+    color: #737373;
+    font-weight: bold;
 }
 table.dataframe .formatSquareBrackets {
-    color: black;
+    color: #737373;
+    font-weight: bold;
+}
+table.dataframe .formatComma {
+    color: #737373;
+    font-weight: bold;
 }
 table.dataframe .formatNumbers {
     color: black;
@@ -17,21 +20,21 @@ table.dataframe .formatDataframes {
     font-weight: bold;
 }
 table.dataframe .formatColumnNames {
-    color: #848080;
+    color: #737373;
     font-weight: bold;
-}
-table.dataframe .formatComma {
-    color: black;
 }
 table.dataframe td:hover .formatCurlyBrackets {
-    font-weight: bold;
+    color: black;
 }
 table.dataframe td:hover .formatSquareBrackets {
-    color: green;
+    color: black;
 }
 table.dataframe td:hover .formatColumnNames {
     color: black;
 }
 table.dataframe td:hover .formatNull {
+    color: black;
+}
+table.dataframe td:hover .formatComma {
     color: black;
 }

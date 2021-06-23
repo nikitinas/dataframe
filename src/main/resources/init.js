@@ -144,7 +144,7 @@ function renderTable(id) {
             if(value.frameId !== undefined) {
                 let frameId = value.frameId
                 let expanded = expandedFrames.has(frameId)
-                let aClass = expanded ? " class='expanded'" : ""
+                let aClass = expanded ? " class='dfexpanded'" : ""
                 let link = "<a" + aClass + " onClick='expandFrame(" + frameId + ", " + id + ");'>" + value.value + "</a>"
                 if(expanded) {
                     td.innerHTML = link +

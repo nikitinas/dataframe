@@ -10,19 +10,14 @@ import org.jetbrains.dataframe.RowColFormatter
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.index
-import org.jetbrains.dataframe.io.DataFrameFormatter.Companion.withClass
 import org.jetbrains.dataframe.isSubtypeOf
 import org.jetbrains.dataframe.owner
 import org.jetbrains.dataframe.size
 import org.jetbrains.kotlinx.jupyter.api.HTML
 import java.io.InputStreamReader
-import java.lang.Appendable
-import java.lang.StringBuilder
 import java.util.LinkedList
 
 internal val tooltipLimit = 1000
-
-internal val nullClassName = "null"
 
 internal data class DataFrameReference(val dfId: Int, val size: DataFrameSize)
 
@@ -52,7 +47,7 @@ internal fun tableJs(columns: List<ColumnDataForJs>, id: Int): String {
                 when(it) {
                     is String -> "\"" + it.escapeForHtmlInJs() + "\""
                     is DataFrameReference -> {
-                        val text = "DataFrame [${it.size}]"
+                        val text = "<b>DataFrame [${it.size}]</b>"
                         "{ frameId: ${it.dfId}, value: \"$text\" }"
                     }
                     else -> error("Unsupported value type: ${it.javaClass}")
@@ -248,7 +243,7 @@ internal class DataFrameFormatter(val nullClass: String, val curlyBracketsClass:
                     }
                 }
             is Number -> append(value.toString(), numberClass)
-            else -> append(value.toString())
+            else -> append(value.toString().escapeHTML())
         }
     }
 

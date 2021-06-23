@@ -10,6 +10,9 @@ table.dataframe a {
 table.dataframe a.expanded {
     color: black;
 }
+table.dataframe a.dfexpanded {
+    color: #737373;
+}
 table.dataframe a:hover {
     color: #1a466c;
     text-decoration: underline;

@@ -2,29 +2,35 @@ package org.jetbrains.dataframe.io
 
 import org.jetbrains.dataframe.AnyFrame
 import org.jetbrains.dataframe.DataFrame
+import org.jetbrains.dataframe.DataFrameSize
 import org.jetbrains.dataframe.RowColFormatter
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.images.Image
-import org.jetbrains.dataframe.isNumber
+import org.jetbrains.dataframe.isSubtypeOf
 import org.jetbrains.dataframe.size
 import org.jetbrains.kotlinx.jupyter.api.HTML
 import java.io.InputStreamReader
+import java.util.LinkedList
 
 internal val tooltipLimit = 1000
 
 internal val nullClassName = "null"
-internal val expanderClassName = "expander"
 
-internal data class ColumnDataForJs(val name: String, val nested: List<ColumnDataForJs>, val rightAlign: Boolean, val values: List<String>)
+internal data class DataFrameReference(val dfId: Int, val size: DataFrameSize)
 
-internal fun getResourceText(resource: String): String {
+internal data class ColumnDataForJs(val name: String, val nested: List<ColumnDataForJs>, val rightAlign: Boolean, val values: List<Any>)
+
+internal fun getResourceText(resource: String, vararg replacement: Pair<String, Any>): String {
     val res = DataFrame::class.java.getResourceAsStream(resource) ?: error("Resource '$resource' not found")
-    return InputStreamReader(res).readText()
+    var template = InputStreamReader(res).readText()
+    replacement.forEach {
+        template = template.replace(it.first, it.second.toString())
+    }
+    return template
 }
 
 internal fun tableJs(columns: List<ColumnDataForJs>, id: Int): String {
-    val template = getResourceText("/table.js")
     var index = 0
     val data = buildString {
         append("[")
@@ -32,77 +38,57 @@ internal fun tableJs(columns: List<ColumnDataForJs>, id: Int): String {
             val children = col.nested.map { dfs(it) }
             val colIndex = index++
             val values = col.values.joinToString(",", prefix = "[", postfix = "]") {
-                "\"" + it.escapeQuotes() + "\""
+                when(it) {
+                    is String -> "\"" + it.escapeForHtmlInJs() + "\""
+                    is DataFrameReference -> {
+                        val text = "DataFrame [${it.size}]"
+                        "{ frameId: ${it.dfId}, value: \"$text\" }"
+                    }
+                    else -> error("Unsupported value type: ${it.javaClass}")
+                }
             }
-            append("{ name: \"${col.name.escapeQuotes()}\", children: $children, rightAlign: ${col.rightAlign}, values: $values }, \n")
+            append("{ name: \"${col.name.escapeForHtmlInJs()}\", children: $children, rightAlign: ${col.rightAlign}, values: $values }, \n")
             return colIndex
         }
         columns.forEach { dfs(it) }
         append("]")
     }
-    return template.replace("COLUMNS", data).replace("ID", id.toString())
+    val js = getResourceText("/addTable.js", "COLUMNS" to data, "ID" to id)
+    return js
 }
 
 internal var tableId = 0
 
-internal fun tableJs(df: AnyFrame, id: Int, configuration: DisplayConfiguration = DisplayConfiguration.DEFAULT, limit: Int): String {
+// TODO: use configuration.cellFormatter to format cells (currently disabled)
+
+internal fun AnyFrame.toHtmlData(configuration: DisplayConfiguration = DisplayConfiguration.DEFAULT, limit: Int): HtmlData {
+
+    val scripts = mutableListOf<String>()
+    val queue = LinkedList<Pair<AnyFrame, Int>>()
 
     fun AnyCol.toJs(): ColumnDataForJs {
-        val values = values().take(limit).map { renderValueForHtml(it, configuration.cellContentLimit, nullClassName)}
-        return ColumnDataForJs(name(), if (this is ColumnGroup<*>) columns().map { it.toJs() } else emptyList(), isNumber(), values)
-    }
-
-    val data = df.columns().map { it.toJs() }
-    return tableJs(data, id)
-}
-
-internal fun renderTable(df: AnyFrame, configuration: DisplayConfiguration = DisplayConfiguration.DEFAULT, limit: Int): String = buildString {
-    append("<table>")
-
-    // region header
-    append("<thead>")
-    append("<tr>")
-    df.columns().forEach {
-        append("<th style=\"text-align:left\">${it.name()}</th>")
-    }
-    append("</tr>")
-    append("</thead>")
-    // endregion
-
-    append("<tbody>")
-    df.rows().take(limit).forEach { row ->
-        append("<tr>")
-        df.columns().forEach { col ->
-            val cellVal = row[col]
-            val tooltip: String
-            val content: String
-            when (cellVal) {
-                is Image -> {
-                    tooltip = cellVal.url
-                    content = "<img src=\"${cellVal.url}\"/>"
-                }
-                else -> {
-                    tooltip = renderValueForHtml(cellVal, tooltipLimit)
-       /*             if (cellVal is AnyFrame) {
-                        val id = "df" + expandedDataFrameId++
-                        val expanded = renderTable(cellVal)
-                        expandedDataFrames[id] = expanded.replace("\"", "\\\"")
-                        val collapsed = "[${cellVal.size}]"
-                        content =
-                            """<div id="$id"><a class="$expanderClassName" onClick="expand('$id');">$collapsed</a></div>"""
-                    } else  */
-                        content = renderValueForHtml(cellVal, configuration.cellContentLimit, nullClassName)
-                }
+        val values = values().take(limit).map {
+            if(it is AnyFrame){
+                val id = tableId++
+                queue.add(it to id)
+                DataFrameReference(id, it.size)
             }
-            val attributes = configuration.cellFormatter?.invoke(row, col)?.attributes()
-                ?.joinToString(";") { "${it.first}:${it.second}" }.orEmpty()
-
-            append("<td style=\"text-align:left;$attributes\" title=\"$tooltip\">$content</td>")
+            else renderValueForHtml(it, configuration.cellContentLimit, nullClassName)
         }
-        append("</tr>")
+        return ColumnDataForJs(name(), if (this is ColumnGroup<*>) columns().map { it.toJs() } else emptyList(), isSubtypeOf<Number?>(), values)
     }
-    append("</tbody>")
-    append("</table>")
+
+    val id = tableId++
+    queue.add(this to id)
+    while(!queue.isEmpty()){
+        val (nextDf, nextId) = queue.pop()
+        val preparedColumns = nextDf.columns().map { it.toJs() }
+        val js = tableJs(preparedColumns, nextId)
+        scripts.add(js)
+    }
+    val body = getResourceText("/table.html", "ID" to id)
+    val script = scripts.joinToString("\n") + "\n" + getResourceText("/renderTable.js", "ID" to id)
+    return HtmlData("", body, script)
 }
 
 data class HtmlData(val style: String, val body: String, val script: String){
@@ -124,7 +110,7 @@ data class HtmlData(val style: String, val body: String, val script: String){
 
     fun toJupyter() = HTML(toString())
 
-    operator fun plus(other: HtmlData) = HtmlData(style + other.style, body + other.body, script + other.script)
+    operator fun plus(other: HtmlData) = HtmlData(style + "\n" + other.style, body + "\n" + other.body, script + "\n" + other.script)
 }
 
 internal fun initHtml() : HtmlData = HtmlData(style = getResourceText("/table.css"), script = getResourceText("/init.js"), body="")
@@ -135,54 +121,23 @@ fun <T> DataFrame<T>.toHTML(
     getFooter: (DataFrame<T>) -> String = { "DataFrame [${it.size}]" }
 ): HtmlData {
 
-    val df = this@toHTML
-
-    val id = tableId++
-
     val style = """
             div.$nullClassName{
                 color: #b3b3cc;
             }
-            a.$expanderClassName {
-                cursor: pointer;
-            }
         """.trimIndent()
-
-    // region body
 
     val limit = configuration.rowsLimit
 
-    val expandedDataFrames = mutableMapOf<String, String>()
-    var expadedDataFrameId = 1
+    val footer = getFooter(this)
+    val bodyFooter = if (limit < nrow())
+        "<p>... $footer</p>"
+    else "<p>$footer</p>"
 
-    var body = getResourceText("/table.html").replace("ID", id.toString())
+    val tableHtml = toHtmlData(configuration, limit)
+    val html = tableHtml + HtmlData(style, bodyFooter, "")
 
-    val footer = getFooter(df)
-    if (limit < nrow())
-        body += "<p>... $footer</p>"
-    else body += "<p>$footer</p>"
-
-    // endregion
-
-    // region script
-
-    val script = tableJs(df, id, configuration, limit)
-
-    /*
-    """<script type="text/javascript">
-      var data = {
-         ${expandedDataFrames.map { """${it.key}: "${it.value}",""" }.joinToString("\n")}
-      }
-      function expand(id) {
-        document.getElementById(id).innerHTML = data[id]
-      } 
-    </script>""" */
-
-    // endregion
-
-    val html = HtmlData(style, body, script)
-    return if(includeInit) initHtml() + html
-    else html
+    return if(includeInit) initHtml() + html else html
 }
 
 data class DisplayConfiguration(
@@ -197,7 +152,9 @@ data class DisplayConfiguration(
 
 internal fun String.escapeNewLines() = replace("\n", "\\n")
 
-internal fun String.escapeQuotes() = replace("\"", "\\\"")
+internal fun String.escapeForHtmlInJs() = replace("\"", "\\\"").escapeNewLines()
+
+internal fun String.escapeForHtmlInJsMultiline() = replace("\"", "\\\"").replace("\n", "<br>")
 
 internal fun String.escapeHTML(): String {
     val str = this

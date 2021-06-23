@@ -8,7 +8,7 @@ table.dataframe a {
     text-decoration: none;
 }
 table.dataframe a.expanded {
-    color: black;
+    color: #1a466c;
 }
 table.dataframe a:hover {
     color: #1a466c;
@@ -38,7 +38,12 @@ table.dataframe td {
     padding: 6px;
     border: 1px solid transparent;
     text-align: left;
+    vertical-align: top;
 }
+table.dataframe th.bottomBorder {
+    border-bottom-color: black;
+}
+
 table.dataframe {
     border: none;
     border-collapse: collapse;

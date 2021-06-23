@@ -24,7 +24,7 @@ class HtmlRenderingTests: BaseTest() {
     }
 
     @Test
-    @Ignore
+   // @Ignore
     fun test() {
         typed.group{ name and age }.into("group").browse()
     }

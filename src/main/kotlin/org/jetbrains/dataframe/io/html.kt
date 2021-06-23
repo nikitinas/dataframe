@@ -217,7 +217,7 @@ internal class DataFrameFormatter(val nullClass: String, val curlyBracketsClass:
             is AnyRow -> {
                 fun Any?.skip() = this == null || (this is Many<*> && this.isEmpty())
                 val values = value.owner.columns().map { it.name() to it[value.index] }.filter { !it.second.skip() }
-                if (values.isEmpty()) append("{ }", curlyBracketsClass)
+                if (values.isEmpty()) append("{ }", nullClass)
                 else {
                     append("{ ", curlyBracketsClass)
                     var first = true
@@ -234,7 +234,7 @@ internal class DataFrameFormatter(val nullClass: String, val curlyBracketsClass:
             is AnyFrame -> append("DataFrame [${value.size}]", dataFrameClass)
             is AnyMany ->
                 when {
-                    value.isEmpty() -> append("[ ]", squareBracketsClass)
+                    value.isEmpty() -> append("[ ]", nullClass)
                     else -> {
                         append("[", squareBracketsClass)
                         var first = true

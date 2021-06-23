@@ -2,10 +2,13 @@ table.dataframe .formatNull {
     color: #b3b3cc;
 }
 table.dataframe .formatCurlyBrackets {
-    color: #848080;
+    color: black;
+}
+table.dataframe .formatCurlyBrackets {
+    color: black;
 }
 table.dataframe .formatSquareBrackets {
-    color: #848080;
+    color: black;
 }
 table.dataframe .formatNumbers {
     color: black;
@@ -15,7 +18,20 @@ table.dataframe .formatDataframes {
 }
 table.dataframe .formatColumnNames {
     color: #848080;
+    font-weight: bold;
 }
 table.dataframe .formatComma {
-    color: #848080;
+    color: black;
+}
+table.dataframe td:hover .formatCurlyBrackets {
+    font-weight: bold;
+}
+table.dataframe td:hover .formatSquareBrackets {
+    color: green;
+}
+table.dataframe td:hover .formatColumnNames {
+    color: black;
+}
+table.dataframe td:hover .formatNull {
+    color: black;
 }

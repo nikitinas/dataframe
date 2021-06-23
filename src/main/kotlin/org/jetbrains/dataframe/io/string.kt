@@ -51,11 +51,6 @@ internal fun AnyRow.renderToString(): String{
         .map { "${it.first}:${renderValueForStdout(it.second)}" }.joinToString(prefix = "{ ", postfix = " }")
 }
 
-/*
-fun AnyRow.renderToStringTableHtml() = renderToStringTable(true).replace("\n","<br>").replace(" ", "&nbsp;")
-    .let {  """<p style="font-family: Courier New">$it</p>""" }
-*/
-
 fun AnyRow.renderToStringTable(forHtml: Boolean = false): String{
     if(size() == 0) return ""
     val pairs =  owner.columns().map {it.name() to renderValueForRowTable(it[index], forHtml)}

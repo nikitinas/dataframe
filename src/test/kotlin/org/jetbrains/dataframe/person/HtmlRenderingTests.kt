@@ -26,6 +26,6 @@ class HtmlRenderingTests: BaseTest() {
     @Test
     @Ignore
     fun test() {
-        typed.group{ name and age }.into("group").groupBy{city}.plain().browse()
+        typed.group{ name and age }.into("group").browse()
     }
 }

@@ -1,0 +1,21 @@
+table.dataframe .formatNull {
+    color: #b3b3cc;
+}
+table.dataframe .formatCurlyBrackets {
+    color: #848080;
+}
+table.dataframe .formatSquareBrackets {
+    color: #848080;
+}
+table.dataframe .formatNumbers {
+    color: black;
+}
+table.dataframe .formatDataframes {
+    font-weight: bold;
+}
+table.dataframe .formatColumnNames {
+    color: #848080;
+}
+table.dataframe .formatComma {
+    color: #848080;
+}

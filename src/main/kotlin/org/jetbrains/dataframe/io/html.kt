@@ -1,16 +1,23 @@
 package org.jetbrains.dataframe.io
 
 import org.jetbrains.dataframe.AnyFrame
+import org.jetbrains.dataframe.AnyMany
+import org.jetbrains.dataframe.AnyRow
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataFrameSize
+import org.jetbrains.dataframe.Many
 import org.jetbrains.dataframe.RowColFormatter
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.images.Image
+import org.jetbrains.dataframe.index
+import org.jetbrains.dataframe.io.DataFrameFormatter.Companion.withClass
 import org.jetbrains.dataframe.isSubtypeOf
+import org.jetbrains.dataframe.owner
 import org.jetbrains.dataframe.size
 import org.jetbrains.kotlinx.jupyter.api.HTML
 import java.io.InputStreamReader
+import java.lang.Appendable
+import java.lang.StringBuilder
 import java.util.LinkedList
 
 internal val tooltipLimit = 1000
@@ -20,6 +27,10 @@ internal val nullClassName = "null"
 internal data class DataFrameReference(val dfId: Int, val size: DataFrameSize)
 
 internal data class ColumnDataForJs(val name: String, val nested: List<ColumnDataForJs>, val rightAlign: Boolean, val values: List<Any>)
+
+internal val formatter = DataFrameFormatter("formatNull", "formatCurlyBrackets", "formatNumbers", "formatDataframes", "formatComma", "formatColumnNames", "formatSquareBrackets")
+
+internal fun getResources(vararg resource: String) = resource.joinToString(separator = "\n") { getResourceText(it) }
 
 internal fun getResourceText(resource: String, vararg replacement: Pair<String, Any>): String {
     val res = DataFrame::class.java.getResourceAsStream(resource) ?: error("Resource '$resource' not found")
@@ -60,6 +71,7 @@ internal fun tableJs(columns: List<ColumnDataForJs>, id: Int): String {
 internal var tableId = 0
 
 // TODO: use configuration.cellFormatter to format cells (currently disabled)
+// TODO: display tooltips for column headers and data
 
 internal fun AnyFrame.toHtmlData(configuration: DisplayConfiguration = DisplayConfiguration.DEFAULT, limit: Int): HtmlData {
 
@@ -73,7 +85,7 @@ internal fun AnyFrame.toHtmlData(configuration: DisplayConfiguration = DisplayCo
                 queue.add(it to id)
                 DataFrameReference(id, it.size)
             }
-            else renderValueForHtml(it, configuration.cellContentLimit, nullClassName)
+            else formatter.format(it, configuration.cellContentLimit)
         }
         return ColumnDataForJs(name(), if (this is ColumnGroup<*>) columns().map { it.toJs() } else emptyList(), isSubtypeOf<Number?>(), values)
     }
@@ -113,19 +125,13 @@ data class HtmlData(val style: String, val body: String, val script: String){
     operator fun plus(other: HtmlData) = HtmlData(style + "\n" + other.style, body + "\n" + other.body, script + "\n" + other.script)
 }
 
-internal fun initHtml() : HtmlData = HtmlData(style = getResourceText("/table.css"), script = getResourceText("/init.js"), body="")
+internal fun initHtml() : HtmlData = HtmlData(style = getResources("/table.css", "/formatting.css"), script = getResourceText("/init.js"), body="")
 
 fun <T> DataFrame<T>.toHTML(
     configuration: DisplayConfiguration = DisplayConfiguration.DEFAULT,
     includeInit: Boolean = false,
     getFooter: (DataFrame<T>) -> String = { "DataFrame [${it.size}]" }
 ): HtmlData {
-
-    val style = """
-            div.$nullClassName{
-                color: #b3b3cc;
-            }
-        """.trimIndent()
 
     val limit = configuration.rowsLimit
 
@@ -135,7 +141,7 @@ fun <T> DataFrame<T>.toHTML(
     else "<p>$footer</p>"
 
     val tableHtml = toHtmlData(configuration, limit)
-    val html = tableHtml + HtmlData(style, bodyFooter, "")
+    val html = tableHtml + HtmlData("", bodyFooter, "")
 
     return if(includeInit) initHtml() + html else html
 }
@@ -169,4 +175,81 @@ internal fun String.escapeHTML(): String {
             }
         }
     }
+}
+
+internal class DataFrameFormatter(val nullClass: String, val curlyBracketsClass: String, val numberClass: String, val dataFrameClass: String, val commaClass: String, val colNameClass: String, val squareBracketsClass: String) {
+
+    companion object {
+        private fun String.withClass(css: String) = "<span class=\"$css\">$this</span>"
+    }
+
+    private class FormatBuilder(val limit: Int) {
+
+        private var length: Int = 0
+        private val sb = StringBuilder()
+
+        val isFull get() = length >= limit
+
+        fun append(str: String, css: String? = null){
+            if(isFull) return
+            val truncate = length + str.length > limit
+            val s = if(truncate) str.substring(0, limit - length) else str
+            length += s.length
+            if(css != null)
+                sb.append(s.withClass(css))
+            else sb.append(s)
+            if(truncate || isFull) sb.append("...")
+        }
+
+        override fun toString() = sb.toString()
+    }
+
+    fun format(value: Any?, limit: Int): String {
+        val builder = FormatBuilder(limit)
+        builder.render(value)
+        return builder.toString()
+    }
+
+    private fun FormatBuilder.render(value: Any?) {
+        if(isFull) return
+        when (value) {
+            null -> append("null", nullClass)
+            is AnyRow -> {
+                fun Any?.skip() = this == null || (this is Many<*> && this.isEmpty())
+                val values = value.owner.columns().map { it.name() to it[value.index] }.filter { !it.second.skip() }
+                if (values.isEmpty()) append("{ }", curlyBracketsClass)
+                else {
+                    append("{ ", curlyBracketsClass)
+                    var first = true
+                    values.forEach {
+                        if(isFull) return
+                        if (first) first = false
+                        else append(", ", commaClass)
+                        append(it.first + ": ", colNameClass)
+                        render(it.second)
+                    }
+                    append(" }", curlyBracketsClass)
+                }
+            }
+            is AnyFrame -> append("DataFrame [${value.size}]", dataFrameClass)
+            is AnyMany ->
+                when {
+                    value.isEmpty() -> append("[ ]", squareBracketsClass)
+                    else -> {
+                        append("[", squareBracketsClass)
+                        var first = true
+                        value.forEach {
+                            if(isFull) return
+                            if (first) first = false
+                            else append(", ", commaClass)
+                            render(it)
+                        }
+                        append("]", squareBracketsClass)
+                    }
+                }
+            is Number -> append(value.toString(), numberClass)
+            else -> append(value.toString())
+        }
+    }
+
 }

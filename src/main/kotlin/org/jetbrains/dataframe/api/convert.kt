@@ -12,8 +12,10 @@ import org.jetbrains.dataframe.impl.catchSilent
 import org.jetbrains.dataframe.impl.columns.DataColumnInternal
 import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.columns.typed
+import org.jetbrains.dataframe.io.isURL
 import org.jetbrains.dataframe.io.toDataFrame
 import java.math.BigDecimal
+import java.net.URL
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -227,6 +229,10 @@ internal object Parsers : DataFrameParserOptions {
         return null
     }
 
+    private fun String.toUrlOrNull(): URL? {
+        return if (isURL(this)) catchSilent { URL(this) } else null
+    }
+
     private fun String.toBooleanOrNull() =
         when (uppercase(Locale.getDefault())) {
             "T" -> true
@@ -272,7 +278,8 @@ internal object Parsers : DataFrameParserOptions {
         stringParser { it.toBigDecimalOrNull() },
         stringParser { it.toLocalDateOrNull() },
         stringParser { it.toLocalTimeOrNull() },
-        stringParser { it.toLocalDateTimeOrNull() }
+        stringParser { it.toLocalDateTimeOrNull() },
+        stringParser { it.toUrlOrNull() }
     )
 
     private val parsersMap = All.associateBy { it.type }

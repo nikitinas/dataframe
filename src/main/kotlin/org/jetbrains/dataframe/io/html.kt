@@ -15,6 +15,7 @@ import org.jetbrains.dataframe.owner
 import org.jetbrains.dataframe.size
 import org.jetbrains.kotlinx.jupyter.api.HTML
 import java.io.InputStreamReader
+import java.net.URL
 import java.util.LinkedList
 
 internal val tooltipLimit = 1000
@@ -122,6 +123,8 @@ data class HtmlData(val style: String, val body: String, val script: String){
 
 internal fun initHtml() : HtmlData = HtmlData(style = getResources("/table.css", "/formatting.css"), script = getResourceText("/init.js"), body="")
 
+fun <T> DataFrame<T>.html() = toHTML(includeInit = true).toString()
+
 fun <T> DataFrame<T>.toHTML(
     configuration: DisplayConfiguration = DisplayConfiguration.DEFAULT,
     includeInit: Boolean = false,
@@ -185,15 +188,19 @@ internal class DataFrameFormatter(val nullClass: String, val curlyBracketsClass:
 
         val isFull get() = length >= limit
 
-        fun append(str: String, css: String? = null){
+        fun append(prefix: String, content: String, postfix: String) {
             if(isFull) return
-            val truncate = length + str.length > limit
-            val s = if(truncate) str.substring(0, limit - length) else str
+            val truncate = length + content.length > limit
+            val s = if(truncate) content.substring(0, limit - length) else content
             length += s.length
-            if(css != null)
-                sb.append(s.withClass(css))
-            else sb.append(s)
+            sb.append(prefix + s + postfix)
             if(truncate || isFull) sb.append("...")
+        }
+
+        fun appendCss(str: String, css: String? = null) {
+            if(css != null)
+                append("<span class=\"$css\">", str, "</span>")
+            else append("", str, "")
         }
 
         override fun toString() = sb.toString()
@@ -208,42 +215,43 @@ internal class DataFrameFormatter(val nullClass: String, val curlyBracketsClass:
     private fun FormatBuilder.render(value: Any?) {
         if(isFull) return
         when (value) {
-            null -> append("null", nullClass)
+            null -> appendCss("null", nullClass)
             is AnyRow -> {
                 fun Any?.skip() = this == null || (this is Many<*> && this.isEmpty())
                 val values = value.owner.columns().map { it.name() to it[value.index] }.filter { !it.second.skip() }
-                if (values.isEmpty()) append("{ }", nullClass)
+                if (values.isEmpty()) appendCss("{ }", nullClass)
                 else {
-                    append("{ ", curlyBracketsClass)
+                    appendCss("{ ", curlyBracketsClass)
                     var first = true
                     values.forEach {
                         if(isFull) return
                         if (first) first = false
-                        else append(", ", commaClass)
-                        append(it.first + ": ", colNameClass)
+                        else appendCss(", ", commaClass)
+                        appendCss(it.first + ": ", colNameClass)
                         render(it.second)
                     }
-                    append(" }", curlyBracketsClass)
+                    appendCss(" }", curlyBracketsClass)
                 }
             }
-            is AnyFrame -> append("DataFrame [${value.size}]", dataFrameClass)
+            is AnyFrame -> appendCss("DataFrame [${value.size}]", dataFrameClass)
             is AnyMany ->
                 when {
-                    value.isEmpty() -> append("[ ]", nullClass)
+                    value.isEmpty() -> appendCss("[ ]", nullClass)
                     else -> {
-                        append("[", squareBracketsClass)
+                        appendCss("[", squareBracketsClass)
                         var first = true
                         value.forEach {
                             if(isFull) return
                             if (first) first = false
-                            else append(", ", commaClass)
+                            else appendCss(", ", commaClass)
                             render(it)
                         }
-                        append("]", squareBracketsClass)
+                        appendCss("]", squareBracketsClass)
                     }
                 }
-            is Number -> append(value.toString(), numberClass)
-            else -> append(value.toString().escapeHTML())
+            is Number -> appendCss(value.toString(), numberClass)
+            is URL -> append("<a href='$value' target='_blank'>",value.toString(),"</a>")
+            else -> appendCss(value.toString().escapeHTML())
         }
     }
 

@@ -2,9 +2,13 @@ package org.jetbrains.dataframe.rendering
 
 import io.kotest.matchers.shouldBe
 import org.jetbrains.dataframe.columnOf
+import org.jetbrains.dataframe.dataFrameOf
+import org.jetbrains.dataframe.getType
 import org.jetbrains.dataframe.io.renderToStringTable
+import org.jetbrains.dataframe.parse
 import org.jetbrains.dataframe.toDataFrame
 import org.junit.Test
+import java.net.URL
 
 class RenderingTests {
 
@@ -21,5 +25,11 @@ class RenderingTests {
         rendered.contains("А") shouldBe true
         rendered.contains("...") shouldBe true
         rendered.contains("Саша") shouldBe false
+    }
+
+    @Test
+    fun `parse url`(){
+        val df = dataFrameOf("url")("http://www.google.com").parse()
+        df["url"].type() shouldBe getType<URL>()
     }
 }

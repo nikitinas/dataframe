@@ -1,13 +1,19 @@
 package org.jetbrains.dataframe.person
 
+import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import org.jetbrains.dataframe.AnyFrame
 import org.jetbrains.dataframe.DataFrame
+import org.jetbrains.dataframe.dataFrameOf
 import org.jetbrains.dataframe.group
 import org.jetbrains.dataframe.groupBy
 import org.jetbrains.dataframe.into
+import org.jetbrains.dataframe.io.html
 import org.jetbrains.dataframe.io.read
 import org.jetbrains.dataframe.io.toHTML
+import org.jetbrains.dataframe.parse
 import org.jetbrains.dataframe.print
+import org.jetbrains.kotlinx.jupyter.findNthSubstring
 import org.junit.Ignore
 import org.junit.Test
 import java.awt.Desktop
@@ -27,5 +33,15 @@ class HtmlRenderingTests: BaseTest() {
    // @Ignore
     fun test() {
         typed.group{ name and age }.into("group").browse()
+    }
+
+    @Test
+    fun `render url`() {
+        val address = "http://www.google.com"
+        val df = dataFrameOf("url")(address).parse()
+        val html = df.html()
+        println(html)
+        html shouldContain "href"
+        html.findNthSubstring(address, 2) shouldNotBe -1
     }
 }

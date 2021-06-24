@@ -5,7 +5,6 @@ import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.NamedValue
 import org.jetbrains.dataframe.aggregation.AggregateReceiver
-import org.jetbrains.dataframe.aggregation.AggregateReceiverWithDefault
 import org.jetbrains.dataframe.columns.AnyCol
 import kotlin.reflect.KType
 
@@ -25,7 +24,7 @@ internal interface AggregateReceiverInternal<out T> {
 }
 
 @PublishedApi
-internal fun <T> AggregateReceiver<T>.internal() = this as AggregateReceiverInternal<T>
+internal fun <T> AggregateReceiver<T>.internal(): AggregateReceiverInternal<T> = this as AggregateReceiverInternal<T>
 
 internal fun <T, R> AggregateBody<T, R>.internal() = this as AggregateBodyInternal<T, R>
 

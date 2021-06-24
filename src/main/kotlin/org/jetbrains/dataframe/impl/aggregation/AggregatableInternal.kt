@@ -5,7 +5,7 @@ import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.aggregation.Aggregatable
 import org.jetbrains.dataframe.impl.aggregation.receivers.AggregateBodyInternal
 
-internal interface AggregatableInternal<out T>: Aggregatable<T> {
+internal interface AggregatableInternal<out T> : Aggregatable<T> {
 
     fun <R> aggregateInternal(body: AggregateBodyInternal<T, R>): DataFrame<T>
 
@@ -15,4 +15,4 @@ internal interface AggregatableInternal<out T>: Aggregatable<T> {
 internal fun <T> Aggregatable<T>.remainingColumnsSelector() = (this as AggregatableInternal).remainingColumnsSelector()
 
 @PublishedApi
-internal fun <T, R> Aggregatable<T>.aggregateInternal(body: AggregateBodyInternal<T, R>) = (this as AggregatableInternal).aggregateInternal(body)
+internal fun <T, R> Aggregatable<T>.aggregateInternal(body: AggregateBodyInternal<T, R>): DataFrame<T> = (this as AggregatableInternal).aggregateInternal(body)

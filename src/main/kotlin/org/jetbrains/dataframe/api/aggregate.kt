@@ -5,11 +5,11 @@ import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.values
 import org.jetbrains.dataframe.impl.aggregation.GroupByReceiverImpl
 
-data class AggregateClause<T, G>(val df: DataFrame<T>, val selector: ColumnSelector<T, DataFrame<G>>) {
-    fun with(body: GroupByAggregateBody<G>) = aggregateGroupBy(df, selector, removeColumns = false, body)
+public data class AggregateClause<T, G>(val df: DataFrame<T>, val selector: ColumnSelector<T, DataFrame<G>>) {
+    public fun with(body: GroupByAggregateBody<G>): DataFrame<T> = aggregateGroupBy(df, selector, removeColumns = false, body)
 }
 
-fun <T, G> DataFrame<T>.aggregateColumn(selector: ColumnSelector<T, DataFrame<G>>) = AggregateClause(this, selector)
+public fun <T, G> DataFrame<T>.aggregateColumn(selector: ColumnSelector<T, DataFrame<G>>): AggregateClause<T, G> = AggregateClause(this, selector)
 
 internal fun <T, G> aggregateGroupBy(
     df: DataFrame<T>,
@@ -41,4 +41,3 @@ internal fun <T, G> aggregateGroupBy(
     val src = if (removeColumns) df2 else df
     return src.insert(columnsToInsert)
 }
-

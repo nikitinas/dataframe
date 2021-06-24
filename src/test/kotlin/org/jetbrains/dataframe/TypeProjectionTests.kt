@@ -11,10 +11,10 @@ import org.junit.Test
 class TypeProjectionTests {
     class TypeInferenceTest1 {
         interface A<T>
-        interface X<T>: A<List<T>>
+        interface X<T> : A<List<T>>
 
         @Test
-        fun test(){
+        fun test() {
             X::class.createTypeUsing<A<List<Int>>>() shouldBe getType<X<Int>>()
             A::class.createTypeUsing<X<Int>>() shouldBe getType<A<List<Int>>>()
         }
@@ -22,10 +22,10 @@ class TypeProjectionTests {
 
     class TypeInferenceTest2 {
         interface A<out T>
-        interface B<T>: A<A<T>>
-        interface C<T>: A<B<T>>
+        interface B<T> : A<A<T>>
+        interface C<T> : A<B<T>>
         interface D<T>
-        interface X<T: Number, V: Number>: C<T>, D<V>
+        interface X<T : Number, V : Number> : C<T>, D<V>
 
         @Test
         fun test() {
@@ -35,7 +35,7 @@ class TypeProjectionTests {
     }
 
     @Test
-    fun `collection to list projection`(){
+    fun `collection to list projection`() {
         List::class.createTypeUsing<Collection<Int>?>() shouldBe getType<List<Int>?>()
         Collection::class.createTypeUsing<List<Int>>() shouldBe getType<Collection<Int>>()
     }

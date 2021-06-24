@@ -11,12 +11,12 @@ internal enum class CompareResult {
     fun isEqual() = this == Equals
 
     fun combine(other: CompareResult) =
-            when (this) {
-                Equals -> other
-                None -> None
-                IsDerived -> if (other == Equals || other == IsDerived) this else None
-                IsSuper -> if (other == Equals || other == IsSuper) this else None
-            }
+        when (this) {
+            Equals -> other
+            None -> None
+            IsDerived -> if (other == Equals || other == IsDerived) this else None
+            IsSuper -> if (other == Equals || other == IsSuper) this else None
+        }
 
     companion object {
         fun compareNullability(thisIsNullable: Boolean, otherIsNullable: Boolean) = when {

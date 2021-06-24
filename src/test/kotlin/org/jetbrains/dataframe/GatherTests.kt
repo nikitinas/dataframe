@@ -3,8 +3,8 @@ package org.jetbrains.dataframe
 import io.kotest.matchers.shouldBe
 import org.intellij.lang.annotations.Language
 import org.jetbrains.dataframe.annotations.DataSchema
-import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
+import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.io.readJsonStr
@@ -59,19 +59,32 @@ class GatherTests {
     //region Generated code
 
     @DataSchema(isOpen = false)
-    interface Marker1{
+    interface Marker1 {
         val c1: String
         val c2: String
         val c3: String?
     }
-    val DataFrameBase<Marker1>.c1: DataColumn<String> @JvmName("Marker1_c1") get() = this["c1"] as DataColumn<String>
-    val DataRowBase<Marker1>.c1: String @JvmName("Marker1_c1") get() = this["c1"] as String
-    val DataFrameBase<Marker1>.c2: DataColumn<String> @JvmName("Marker1_c2") get() = this["c2"] as DataColumn<String>
-    val DataRowBase<Marker1>.c2: String @JvmName("Marker1_c2") get() = this["c2"] as String
-    val DataFrameBase<Marker1>.c3: DataColumn<String?> @JvmName("Marker1_c3") get() = this["c3"] as DataColumn<String?>
-    val DataRowBase<Marker1>.c3: String? @JvmName("Marker1_c3") get() = this["c3"] as String?
+    val DataFrameBase<Marker1>.c1: DataColumn<String>
+        @JvmName("Marker1_c1")
+        get() = this["c1"] as DataColumn<String>
+    val DataRowBase<Marker1>.c1: String
+        @JvmName("Marker1_c1")
+        get() = this["c1"] as String
+    val DataFrameBase<Marker1>.c2: DataColumn<String>
+        @JvmName("Marker1_c2")
+        get() = this["c2"] as DataColumn<String>
+    val DataRowBase<Marker1>.c2: String
+        @JvmName("Marker1_c2")
+        get() = this["c2"] as String
+    val DataFrameBase<Marker1>.c3: DataColumn<String?>
+        @JvmName("Marker1_c3")
+        get() = this["c3"] as DataColumn<String?>
+    val DataRowBase<Marker1>.c3: String?
+        @JvmName("Marker1_c3")
+        get() = this["c3"] as String?
+
     @DataSchema(isOpen = false)
-    interface Marker2{
+    interface Marker2 {
         val c1: String
         val c2: String
         val c3: String?
@@ -83,13 +96,13 @@ class GatherTests {
     val DataFrameBase<Marker2>.c3: DataColumn<String?> @JvmName("Marker2_c3") get() = this["c3"] as DataColumn<String?>
     val DataRowBase<Marker2>.c3: String? @JvmName("Marker2_c3") get() = this["c3"] as String?
     @DataSchema(isOpen = false)
-    interface Marker3{
+    interface Marker3 {
         val c1: String
     }
     val DataFrameBase<Marker3>.c1: DataColumn<String> @JvmName("Marker3_c1") get() = this["c1"] as DataColumn<String>
     val DataRowBase<Marker3>.c1: String @JvmName("Marker3_c1") get() = this["c1"] as String
     @DataSchema
-    interface Marker{
+    interface Marker {
         val name: String
         val normal: DataRow<Marker1>
         val reversed: DataRow<Marker2>
@@ -110,21 +123,19 @@ class GatherTests {
 
     @Test
     fun gather() {
-
         val mode by column<String>()
         val gathered = typed.gather { except(name) }.into(mode)
 
         val expected = typed.groupBy { name }.mapNotNullGroups {
-
             val cols = columns().drop(1).map { it.asGroup() } // drop 'name' column
             val dataRows = cols.map { it[0] }
 
             val newDf = listOf(
-                    name.replaceAll(MutableList(cols.size){ name[0] }),
-                    mode.withValues(cols.map { it.name }),
-                column("c1", dataRows.map { it.tryGet("c1") as? String}),
-                column("c2", dataRows.map { it.tryGet("c2") as? String}),
-                column("c3", dataRows.map { it.tryGet("c3") as? String})
+                name.replaceAll(MutableList(cols.size) { name[0] }),
+                mode.withValues(cols.map { it.name }),
+                column("c1", dataRows.map { it.tryGet("c1") as? String }),
+                column("c2", dataRows.map { it.tryGet("c2") as? String }),
+                column("c3", dataRows.map { it.tryGet("c3") as? String })
             ).asDataFrame<Unit>()
 
             newDf

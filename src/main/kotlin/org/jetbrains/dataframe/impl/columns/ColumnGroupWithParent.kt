@@ -1,10 +1,12 @@
 package org.jetbrains.dataframe.impl.columns
 
-import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.ColumnResolutionContext
+import org.jetbrains.dataframe.DataRow
+import org.jetbrains.dataframe.MapColumnReference
 import org.jetbrains.dataframe.columns.AnyCol
-import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.BaseColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
+import org.jetbrains.dataframe.columns.ColumnReference
 import kotlin.reflect.KProperty
 
 internal class ColumnGroupWithParent<T>(override val parent: MapColumnReference?, override val source: ColumnGroup<T>) : ColumnWithParent<DataRow<T>>, DataColumnGroup<T> by (source as DataColumnGroup<T>) {
@@ -30,5 +32,5 @@ internal class ColumnGroupWithParent<T>(override val parent: MapColumnReference?
 
     override fun resolveSingle(context: ColumnResolutionContext) = super<ColumnWithParent>.resolveSingle(context)
 
-    override fun resolve(context: ColumnResolutionContext) =  super<ColumnWithParent>.resolve(context)
+    override fun resolve(context: ColumnResolutionContext) = super<ColumnWithParent>.resolve(context)
 }

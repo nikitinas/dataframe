@@ -1,10 +1,11 @@
 package org.jetbrains.dataframe.io
 
 import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.impl.*
 import org.jetbrains.dataframe.columns.values
+import org.jetbrains.dataframe.impl.renderType
+import org.jetbrains.dataframe.impl.truncate
 
-fun <T, G> GroupedDataFrame<T, G>.print() = println(this)
+public fun <T, G> GroupedDataFrame<T, G>.print(): Unit = println(this)
 
 internal fun AnyFrame.renderToString(limit: Int = 20, truncate: Int = 40): String {
     val sb = StringBuilder()
@@ -13,7 +14,7 @@ internal fun AnyFrame.renderToString(limit: Int = 20, truncate: Int = 40): Strin
 
     val outputRows = limit.coerceAtMost(nrow())
     val output = columns().map { it.values.take(limit).map { renderValueForStdout(it, truncate) } }
-    val header = columns().map { "${it.name()}:${renderType(it)}"}
+    val header = columns().map { "${it.name()}:${renderType(it)}" }
     val columnLengths = output.mapIndexed { col, values -> (values + header[col]).map { it.length }.maxOrNull()!! + 1 }
 
     sb.append("|")
@@ -28,24 +29,25 @@ internal fun AnyFrame.renderToString(limit: Int = 20, truncate: Int = 40): Strin
     }
     sb.appendLine()
 
-    for(row in 0 until outputRows){
+    for (row in 0 until outputRows) {
         sb.append("|")
-        for(col in output.indices){
+        for (col in output.indices) {
             sb.append(output[col][row].padEnd(columnLengths[col]) + "|")
         }
         sb.appendLine()
     }
-    if(nrow() > limit)
+    if (nrow() > limit) {
         sb.appendLine("...")
+    }
     return sb.toString()
 }
 
 internal val valueToStringLimitDefault = 1000
 internal val valueToStringLimitForRowAsTable = 50
 
-internal fun AnyRow.renderToString(): String{
-    if(isEmpty()) return ""
-    return owner.columns().map {it.name() to it[index]}.filter{it.second != null}
+internal fun AnyRow.renderToString(): String {
+    if (isEmpty()) return ""
+    return owner.columns().map { it.name() to it[index] }.filter { it.second != null }
         .map { "${it.first}:${renderValueForStdout(it.second)}" }.joinToString(prefix = "{ ", postfix = " }")
 }
 
@@ -54,23 +56,23 @@ fun AnyRow.renderToStringTableHtml() = renderToStringTable(true).replace("\n","<
     .let {  """<p style="font-family: Courier New">$it</p>""" }
 */
 
-fun AnyRow.renderToStringTable(forHtml: Boolean = false): String{
-    if(size() == 0) return ""
-    val pairs =  owner.columns().map {it.name() to renderValueForRowTable(it[index], forHtml)}
-    val width = pairs.map { it.first.length + it.second.second}.maxOrNull()!! + 4
+public fun AnyRow.renderToStringTable(forHtml: Boolean = false): String {
+    if (size() == 0) return ""
+    val pairs = owner.columns().map { it.name() to renderValueForRowTable(it[index], forHtml) }
+    val width = pairs.map { it.first.length + it.second.second }.maxOrNull()!! + 4
     return pairs.joinToString("\n") {
         it.first + " ".repeat(width - it.first.length - it.second.second) + it.second.first
     }
 }
 
-internal fun renderCollectionName(value: Collection<*>) = when(value) {
+internal fun renderCollectionName(value: Collection<*>) = when (value) {
     is List -> "List"
-    is Map<*,*> -> "Map"
+    is Map<*, *> -> "Map"
     is Set -> "Set"
     else -> value.javaClass.simpleName
 }
 
-fun renderValueForRowTable(value: Any?, forHtml: Boolean): Pair<String, Int> = when(value) {
+public fun renderValueForRowTable(value: Any?, forHtml: Boolean): Pair<String, Int> = when (value) {
     is AnyFrame -> "DataFrame [${value.nrow()} x ${value.ncol()}]".let {
         if (value.nrow() == 1) it + " " + value[0].toString() else it
     } to "DataFrame".length
@@ -85,13 +87,13 @@ internal fun renderValueForHtml(value: Any?, truncate: Int) = renderValue(value)
 internal fun renderValueForStdout(value: Any?, truncate: Int = valueToStringLimitDefault) = renderValue(value).truncate(truncate).escapeNewLines()
 
 internal fun renderValue(value: Any?) =
-    when(value) {
-        is AnyFrame -> "[${value.nrow()} x ${value.ncol()}]".let { if(value.nrow() == 1) it + " " + value[0].toString() else it}
+    when (value) {
+        is AnyFrame -> "[${value.nrow()} x ${value.ncol()}]".let { if (value.nrow() == 1) it + " " + value[0].toString() else it }
         is Double -> value.format(6)
-        is Many<*> -> if(value.isEmpty()) "" else value.toString()
+        is Many<*> -> if (value.isEmpty()) "" else value.toString()
         null -> ""
         "" -> "\"\""
         else -> value.toString()
     }
 
-fun Double.format(digits: Int) = "%.${digits}f".format(this)
+public fun Double.format(digits: Int): String = "%.${digits}f".format(this)

@@ -1,38 +1,33 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.columns.AnyCol
-import org.jetbrains.dataframe.columns.AnyColumn
-import org.jetbrains.dataframe.columns.ColumnAccessor
-import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.columns.name
+import org.jetbrains.dataframe.columns.*
 import org.jetbrains.dataframe.impl.ReadonlyTreeNode
 import org.jetbrains.dataframe.impl.columns.withDf
 import org.jetbrains.dataframe.impl.getAncestor
 import org.jetbrains.dataframe.impl.removeAt
 
-fun <T> DataFrame<T>.insert(path: ColumnPath, column: AnyCol) = insertColumns(this, listOf(ColumnToInsert(path, column)))
+public fun <T> DataFrame<T>.insert(path: ColumnPath, column: AnyCol): DataFrame<T> = insertColumns(this, listOf(ColumnToInsert(path, column)))
 
-fun <T> DataFrame<T>.insert(column: AnyCol) = InsertClause(this, column)
+public fun <T> DataFrame<T>.insert(column: AnyCol): InsertClause<T> = InsertClause(this, column)
 
-inline fun <T, reified R> DataFrame<T>.insert(noinline expression: RowSelector<T, R>) = insert("", expression)
+public inline fun <T, reified R> DataFrame<T>.insert(noinline expression: RowSelector<T, R>): InsertClause<T> = insert("", expression)
 
-inline fun <T, reified R> DataFrame<T>.insert(name: String, noinline expression: RowSelector<T, R>) = insert(newColumn(name, expression))
+public inline fun <T, reified R> DataFrame<T>.insert(name: String, noinline expression: RowSelector<T, R>): InsertClause<T> = insert(newColumn(name, expression))
 
-data class InsertClause<T>(val df: DataFrame<T>, val column: AnyCol)
+public data class InsertClause<T>(val df: DataFrame<T>, val column: AnyCol)
 
-fun <T> InsertClause<T>.into(path: ColumnPath) = df.insert(path, column.rename(path.last()))
-fun <T> InsertClause<T>.into(reference: ColumnAccessor<*>) = into(reference.path())
+public fun <T> InsertClause<T>.into(path: ColumnPath): DataFrame<T> = df.insert(path, column.rename(path.last()))
+public fun <T> InsertClause<T>.into(reference: ColumnAccessor<*>): DataFrame<T> = into(reference.path())
 
-fun <T> InsertClause<T>.under(path: ColumnPath) = df.insert(path + column.name, column)
-fun <T> InsertClause<T>.under(selector: ColumnSelector<T, *>) = under(df.getColumnPath(selector))
+public fun <T> InsertClause<T>.under(path: ColumnPath): DataFrame<T> = df.insert(path + column.name, column)
+public fun <T> InsertClause<T>.under(selector: ColumnSelector<T, *>): DataFrame<T> = under(df.getColumnPath(selector))
 
-fun <T> InsertClause<T>.after(name: String) = df.add(column).move(column).after(name)
-fun <T> InsertClause<T>.after(selector: ColumnSelector<T, *>) = after(df.getColumnPath(selector))
+public fun <T> InsertClause<T>.after(name: String): DataFrame<T> = df.add(column).move(column).after(name)
+public fun <T> InsertClause<T>.after(selector: ColumnSelector<T, *>): DataFrame<T> = after(df.getColumnPath(selector))
 
-fun <T> InsertClause<T>.at(position: Int) = df.add(column).move(column).to(position)
+public fun <T> InsertClause<T>.at(position: Int): DataFrame<T> = df.add(column).move(column).to(position)
 
-fun <T> InsertClause<T>.after(path: ColumnPath): DataFrame<T> {
+public fun <T> InsertClause<T>.after(path: ColumnPath): DataFrame<T> {
     val colPath = path.removeAt(path.size - 1) + column.name()
     return df.insert(colPath, column).move(colPath).after(path)
 }
@@ -57,7 +52,6 @@ internal fun <T> insertColumns(
     treeNode: ReadonlyTreeNode<ReferenceData>?,
     depth: Int
 ): DataFrame<T> {
-
     if (columns.isEmpty()) return df ?: DataFrame.empty().typed()
 
     val childDepth = depth + 1
@@ -141,9 +135,9 @@ internal fun <T> insertColumns(
             val newDf = insertColumns<Unit>(null, columns, treeNode?.get(name), childDepth)
             DataColumn.create(name, newDf) // new node needs to be created
         }
-        if (insertionIndex == Int.MAX_VALUE)
+        if (insertionIndex == Int.MAX_VALUE) {
             newColumns.add(newCol)
-        else {
+        } else {
             newColumns.add(insertionIndex + insertionIndexOffset, newCol)
             insertionIndexOffset++
         }

@@ -1,9 +1,9 @@
 package org.jetbrains.dataframe.impl.aggregation
 
-import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
 import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.UnresolvedColumnsPolicy
+import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
 import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.shortPath
 import org.jetbrains.dataframe.impl.aggregation.receivers.AggregateReceiverInternal

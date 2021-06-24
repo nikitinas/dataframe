@@ -1,32 +1,20 @@
 package org.jetbrains.dataframe.io
 
-import com.beust.klaxon.JsonArray
-import com.beust.klaxon.JsonObject
-import com.beust.klaxon.KlaxonJson
-import com.beust.klaxon.Parser
-import com.beust.klaxon.json
+import com.beust.klaxon.*
 import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.columns.AnyColumn
-import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.columns.name
+import org.jetbrains.dataframe.columns.*
 import org.jetbrains.dataframe.impl.ColumnNameGenerator
 import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.createDataCollector
-import org.jetbrains.dataframe.columns.type
-import org.jetbrains.dataframe.columns.values
 import java.io.File
 import java.io.FileWriter
-import java.lang.StringBuilder
 import java.net.URL
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
-import kotlin.reflect.full.withNullability
 
-fun DataFrame.Companion.readJson(file: File) = readJson(file.toURI().toURL())
+public fun DataFrame.Companion.readJson(file: File): AnyFrame = readJson(file.toURI().toURL())
 
-fun DataFrame.Companion.readJson(path: String): AnyFrame {
+public fun DataFrame.Companion.readJson(path: String): AnyFrame {
     val url = when {
         isURL(path) -> URL(path).toURI()
         else -> File(path).toURI()
@@ -35,10 +23,10 @@ fun DataFrame.Companion.readJson(path: String): AnyFrame {
 }
 
 @Suppress("UNCHECKED_CAST")
-fun DataFrame.Companion.readJson(url: URL): AnyFrame =
-        catchHttpResponse(url) { readJson(Parser.default().parse(it)) }
+public fun DataFrame.Companion.readJson(url: URL): AnyFrame =
+    catchHttpResponse(url) { readJson(Parser.default().parse(it)) }
 
-fun DataFrame.Companion.readJsonStr(text: String) = readJson(Parser.default().parse(StringBuilder(text)))
+public fun DataFrame.Companion.readJsonStr(text: String): DataFrame<Any?> = readJson(Parser.default().parse(StringBuilder(text)))
 
 private fun readJson(parsed: Any?) = when (parsed) {
     is JsonArray<*> -> fromJsonList(parsed.value)
@@ -50,31 +38,30 @@ private val arrayColumnName = "array"
 internal val valueColumnName = "value"
 
 internal fun fromJsonList(records: List<*>): AnyFrame {
-
-    fun AnyFrame.isSingleUnnamedColumn() = ncol == 1 && column(0).name.let { it  == valueColumnName || it == arrayColumnName }
+    fun AnyFrame.isSingleUnnamedColumn() = ncol == 1 && column(0).name.let { it == valueColumnName || it == arrayColumnName }
 
     var hasPrimitive = false
     var hasArray = false
     // list element type can be JsonObject, JsonArray or primitive
     val nameGenerator = ColumnNameGenerator()
     records.forEach {
-                when (it) {
-                    is JsonObject -> it.entries.forEach {
-                        nameGenerator.addIfAbsent(it.key)
-                    }
-                    is JsonArray<*> -> hasArray = true
-                    null -> {}
-                    else -> hasPrimitive = true
-                }
+        when (it) {
+            is JsonObject -> it.entries.forEach {
+                nameGenerator.addIfAbsent(it.key)
             }
+            is JsonArray<*> -> hasArray = true
+            null -> {}
+            else -> hasPrimitive = true
+        }
+    }
 
-    val valueColumn = if(hasPrimitive){
+    val valueColumn = if (hasPrimitive) {
         nameGenerator.addUnique(valueColumnName)
-    }else valueColumnName
+    } else valueColumnName
 
-    val arrayColumn = if(hasArray){
+    val arrayColumn = if (hasArray) {
         nameGenerator.addUnique(arrayColumnName)
-    }else arrayColumnName
+    } else arrayColumnName
 
     val columns: List<AnyColumn> = nameGenerator.names.map { colName ->
         when {
@@ -126,7 +113,7 @@ internal fun fromJsonList(records: List<*>): AnyFrame {
             }
         }
     }
-    if(columns.isEmpty()) return DataFrame.empty(records.size)
+    if (columns.isEmpty()) return DataFrame.empty(records.size)
     return columns.toDataFrame()
 }
 
@@ -138,26 +125,25 @@ internal fun KlaxonJson.encodeRow(frame: DataFrameBase<*>, index: Int): JsonObje
             else -> col[index]?.toString()
         }?.let { col.name to it }
     }
-    if(values.isEmpty()) return null
+    if (values.isEmpty()) return null
     return obj(values)
 }
 
-internal fun KlaxonJson.encodeFrame(frame: AnyFrame) : JsonArray<*> {
-
+internal fun KlaxonJson.encodeFrame(frame: AnyFrame): JsonArray<*> {
     val allColumns = frame.columns()
 
     val valueColumn = allColumns.filter { it.name.startsWith(valueColumnName) }
         .maxByOrNull { it.name }?.let { valueCol ->
-            if(valueCol.kind() != ColumnKind.Value) null
+            if (valueCol.kind() != ColumnKind.Value) null
             else {
                 // check that value in this column is not null only when other values are null
                 val isValidValueColumn = frame.rows().all { row ->
-                    if (valueCol[row] != null)
+                    if (valueCol[row] != null) {
                         allColumns.all { col ->
                             if (col.name != valueCol.name) col[row] == null
                             else true
                         }
-                    else true
+                    } else true
                 }
                 if (isValidValueColumn) valueCol
                 else null
@@ -166,16 +152,16 @@ internal fun KlaxonJson.encodeFrame(frame: AnyFrame) : JsonArray<*> {
 
     val arrayColumn = frame.columns().filter { it.name.startsWith(arrayColumnName) }
         .maxByOrNull { it.name }?.let { arrayCol ->
-            if(arrayCol.kind() == ColumnKind.Group) null
+            if (arrayCol.kind() == ColumnKind.Group) null
             else {
                 // check that value in this column is not null only when other values are null
                 val isValidArrayColumn = frame.rows().all { row ->
-                    if (arrayCol[row] != null)
+                    if (arrayCol[row] != null) {
                         allColumns.all { col ->
                             if (col.name != arrayCol.name) col[row] == null
                             else true
                         }
-                    else true
+                    } else true
                 }
                 if (isValidArrayColumn) arrayCol
                 else null
@@ -185,19 +171,19 @@ internal fun KlaxonJson.encodeFrame(frame: AnyFrame) : JsonArray<*> {
     val arraysAreFrames = arrayColumn?.kind() == ColumnKind.Frame
 
     val data = frame.indices().map { rowIndex ->
-        valueColumn?.get(rowIndex) ?: arrayColumn?.get(rowIndex)?.let { if(arraysAreFrames) encodeFrame(it as AnyFrame) else null } ?: encodeRow(frame, rowIndex)
+        valueColumn?.get(rowIndex) ?: arrayColumn?.get(rowIndex)?.let { if (arraysAreFrames) encodeFrame(it as AnyFrame) else null } ?: encodeRow(frame, rowIndex)
     }
     return array(data)
 }
 
-fun AnyFrame.writeJsonStr(prettyPrint: Boolean = false, canonical: Boolean = false): String {
+public fun AnyFrame.writeJsonStr(prettyPrint: Boolean = false, canonical: Boolean = false): String {
     return json {
         encodeFrame(this@writeJsonStr)
     }.toJsonString(prettyPrint, canonical)
 }
 
-fun AnyFrame.writeJson(file: File, prettyPrint: Boolean = false, canonical: Boolean = false) {
+public fun AnyFrame.writeJson(file: File, prettyPrint: Boolean = false, canonical: Boolean = false) {
     FileWriter(file).write(writeJsonStr(prettyPrint, canonical))
 }
 
-fun AnyFrame.writeJson(path: String, prettyPrint: Boolean = false, canonical: Boolean = false) = writeJson(File(path), prettyPrint, canonical)
+public fun AnyFrame.writeJson(path: String, prettyPrint: Boolean = false, canonical: Boolean = false): Unit = writeJson(File(path), prettyPrint, canonical)

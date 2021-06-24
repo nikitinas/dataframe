@@ -1,9 +1,8 @@
 package org.jetbrains.dataframe.impl.columns.missing
 
 import org.jetbrains.dataframe.ColumnResolutionContext
-import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.impl.columns.DataColumnInternal
 import kotlin.reflect.KType
 

@@ -15,10 +15,11 @@ internal class DataFrameSchema(val columns: Map<String, ColumnSchema>) {
         var result = CompareResult.Equals
         columns.forEach {
             val otherColumn = other.columns[it.key]
-            if (otherColumn == null)
+            if (otherColumn == null) {
                 result = result.combine(CompareResult.IsDerived)
-            else
+            } else {
                 result = result.combine(it.value.compare(otherColumn))
+            }
             if (result == CompareResult.None) return CompareResult.None
         }
         other.columns.forEach {
@@ -46,8 +47,7 @@ internal fun Iterable<DataFrameSchema>.intersectSchemas(): DataFrameSchema {
         if (first) {
             schema.columns.forEach { collectedTypes.put(it.key, mutableSetOf(it.value)) }
             first = false
-        }
-        else {
+        } else {
             collectedTypes.forEach { entry ->
                 val otherType = schema.columns[entry.key]
                 if (otherType == null) {
@@ -63,11 +63,11 @@ internal fun Iterable<DataFrameSchema>.intersectSchemas(): DataFrameSchema {
         val kind = columnKinds.first()
         when {
             columnKinds.size > 1 -> ColumnSchema.Value(getType<Any>().withNullability(it.value.any { it.nullable }))
-            kind == ColumnKind.Value -> ColumnSchema.Value(baseType(it.value.map { (it as ColumnSchema.Value).type }
-                .toSet()))
+            kind == ColumnKind.Value -> ColumnSchema.Value(baseType(it.value.map { (it as ColumnSchema.Value).type }.toSet()))
             kind == ColumnKind.Frame -> ColumnSchema.Frame( // intersect only not empty schemas
                 it.value.mapNotNull { (it as ColumnSchema.Frame).schema.takeIf { it.columns.isNotEmpty() } }.intersectSchemas(),
-                it.value.any { it.nullable })
+                it.value.any { it.nullable }
+            )
             kind == ColumnKind.Group -> ColumnSchema.Map(it.value.map { (it as ColumnSchema.Map).schema }.intersectSchemas())
             else -> throw RuntimeException()
         }

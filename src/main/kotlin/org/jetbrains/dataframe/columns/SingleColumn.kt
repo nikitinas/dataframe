@@ -2,9 +2,9 @@ package org.jetbrains.dataframe.columns
 
 import org.jetbrains.dataframe.ColumnResolutionContext
 
-interface SingleColumn<out C> : Columns<C> {
+public interface SingleColumn<out C> : Columns<C> {
 
-    override fun resolve(context: ColumnResolutionContext) = resolveSingle(context)?.let { listOf(it) } ?: emptyList()
+    override fun resolve(context: ColumnResolutionContext): List<ColumnWithPath<C>> = resolveSingle(context)?.let { listOf(it) } ?: emptyList()
 
-    fun resolveSingle(context: ColumnResolutionContext): ColumnWithPath<C>?
+    public fun resolveSingle(context: ColumnResolutionContext): ColumnWithPath<C>?
 }

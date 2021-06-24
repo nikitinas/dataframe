@@ -1,3 +1,3 @@
 package org.jetbrains.dataframe
 
-fun <T> DataRow<T>.transpose() = dataFrameOf(owner.columnNames().toColumn(), values.toColumnGuessType())
+public fun <T> DataRow<T>.transpose(): DataFrame<*> = dataFrameOf(owner.columnNames().toColumn(), values.toColumnGuessType())

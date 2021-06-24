@@ -4,20 +4,15 @@ import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.DataColumn
 import kotlin.reflect.KProperty
 
-inline fun <reified T : Comparable<T>> DataColumn<T?>.median() = asSequence().filterNotNull().asIterable().median()
+public inline fun <reified T : Comparable<T>> DataColumn<T?>.median(): Double = asSequence().filterNotNull().asIterable().median()
 
-inline fun <T, reified D : Comparable<D>> DataFrame<T>.median(col: ColumnReference<D?>): Double = get(col).median()
-inline fun <T, reified D : Comparable<D>> DataFrame<T>.median(crossinline selector: RowSelector<T, D?>): Double =
-    rows().asSequence().map {
-        selector(
-            it,
-            it
-        )
-    }.filterNotNull().asIterable().median()
+public inline fun <T, reified D : Comparable<D>> DataFrame<T>.median(col: ColumnReference<D?>): Double = get(col).median()
+public inline fun <T, reified D : Comparable<D>> DataFrame<T>.median(crossinline selector: RowSelector<T, D?>): Double =
+    rows().asSequence().map { selector(it, it) }.filterNotNull().asIterable().median()
 
-inline fun <T, reified D : Comparable<D>> DataFrame<T>.median(col: KProperty<D?>): Double = get(col).median()
+public inline fun <T, reified D : Comparable<D>> DataFrame<T>.median(col: KProperty<D?>): Double = get(col).median()
 
-inline fun <reified T : Comparable<T>> Iterable<T>.median(): Double {
+public inline fun <reified T : Comparable<T>> Iterable<T>.median(): Double {
     val sorted = sorted()
     val size = sorted.size
     val index = size / 2
@@ -29,5 +24,8 @@ inline fun <reified T : Comparable<T>> Iterable<T>.median(): Double {
     }
 }
 
-inline fun <T, G, reified R : Comparable<R>> GroupedDataFrame<T, G>.median(columnName: String = "median", noinline selector: RowSelector<G, R>) =
+public inline fun <T, G, reified R : Comparable<R>> GroupedDataFrame<T, G>.median(
+    columnName: String = "median",
+    noinline selector: RowSelector<G, R>
+): DataFrame<G> =
     aggregate { median(selector) into columnName }

@@ -2,7 +2,6 @@ package org.jetbrains.dataframe.impl
 
 import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.Predicate
-import org.jetbrains.dataframe.Selector
 import java.math.BigDecimal
 import java.math.BigInteger
 import kotlin.reflect.KClass
@@ -10,7 +9,6 @@ import kotlin.reflect.KClass
 internal infix fun <T> (Predicate<T>).and(other: Predicate<T>): Predicate<T> = { this(it) && other(it) }
 
 internal fun <T> T.toIterable(getNext: (T) -> T?) = Iterable<T> {
-
     object : Iterator<T> {
 
         var current: T? = null
@@ -38,20 +36,20 @@ internal fun <T> T.toIterable(getNext: (T) -> T?) = Iterable<T> {
 
 internal fun <T> List<T>.removeAt(index: Int) = subList(0, index) + subList(index + 1, size)
 
-internal inline fun <reified T: Any> Int.cast() = convert(this, T::class)
+internal inline fun <reified T : Any> Int.cast() = convert(this, T::class)
 
-internal fun <T: Any> convert(src:Int, targetType: KClass<T>): T = when(targetType) {
+internal fun <T : Any> convert(src: Int, targetType: KClass<T>): T = when (targetType) {
     Double::class -> src.toDouble() as T
     Long::class -> src.toLong() as T
     Float::class -> src.toFloat() as T
     BigDecimal::class -> src.toBigDecimal() as T
-    else -> throw NotImplementedError("Casting int to ${targetType} is not supported")
+    else -> throw NotImplementedError("Casting int to $targetType is not supported")
 }
 
 internal fun BooleanArray.toIndices(): List<Int> {
     val res = ArrayList<Int>(size)
-    for(i in 0 until size)
-        if(this[i]) res.add(i)
+    for (i in 0 until size)
+        if (this[i]) res.add(i)
     return res
 }
 
@@ -73,7 +71,7 @@ internal fun <T> Iterable<T>.rollingHash(): Int {
     return hash
 }
 
-fun <T> Iterable<T>.asList() = when (this) {
+public fun <T> Iterable<T>.asList(): List<T> = when (this) {
     is List<T> -> this
     else -> this.toList()
 }
@@ -87,7 +85,7 @@ internal fun emptyPath(): ColumnPath = emptyList()
 internal fun pathOf(name: String): ColumnPath = listOf(name)
 
 @PublishedApi
-internal fun <T:Number> KClass<T>.zero(): T = when(this){
+internal fun <T : Number> KClass<T>.zero(): T = when (this) {
     Int::class -> 0 as T
     Byte::class -> 0.toByte() as T
     Short::class -> 0.toShort() as T
@@ -100,4 +98,4 @@ internal fun <T:Number> KClass<T>.zero(): T = when(this){
     else -> TODO()
 }
 
-internal fun <T> catchSilent(body: ()->T): T? = try { body() } catch (_:Throwable){ null }
+internal fun <T> catchSilent(body: () -> T): T? = try { body() } catch (_: Throwable) { null }

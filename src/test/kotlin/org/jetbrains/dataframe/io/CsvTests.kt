@@ -1,11 +1,7 @@
 package org.jetbrains.dataframe.io
 
 import io.kotest.matchers.shouldBe
-import org.jetbrains.dataframe.DataFrame
-import org.jetbrains.dataframe.allNulls
-import org.jetbrains.dataframe.convert
-import org.jetbrains.dataframe.dataFrameOf
-import org.jetbrains.dataframe.getType
+import org.jetbrains.dataframe.*
 import org.junit.Test
 import java.io.StringWriter
 
@@ -13,9 +9,8 @@ private const val PATH_TO_DATA = "src/test/resources/testCSV.csv"
 
 class CsvTests {
 
-
     @Test
-    fun readNulls(){
+    fun readNulls() {
         val src = """
             first,second
             2,,
@@ -30,11 +25,12 @@ class CsvTests {
     }
 
     @Test
-    fun write(){
-
+    fun write() {
         val df = dataFrameOf("col1", "col2")(
-            1,null,
-            2,null
+            1,
+            null,
+            2,
+            null
         ).convert("col2").to<String>()
 
         val str = StringWriter()
@@ -57,7 +53,6 @@ class CsvTests {
         df["double"].type() shouldBe getType<Double?>()
         df["time"].type() shouldBe getType<java.time.LocalDateTime>()
 
-
         println(df)
     }
 
@@ -77,7 +72,7 @@ class CsvTests {
     @Test
     fun `read first rows`() {
         val expected =
-            listOf("","user_id","name","duplicate","username","duplicate_1","duplicate_1_1","double","number","time","empty")
+            listOf("", "user_id", "name", "duplicate", "username", "duplicate_1", "duplicate_1_1", "double", "number", "time", "empty")
         val dfHeader = DataFrame.readCSV(PATH_TO_DATA, readLines = 0)
         dfHeader.nrow() shouldBe 0
         dfHeader.columnNames() shouldBe expected

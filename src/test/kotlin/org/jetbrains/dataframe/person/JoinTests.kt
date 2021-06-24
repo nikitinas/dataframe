@@ -9,13 +9,13 @@ import org.junit.Test
 class JoinTests : BaseTest() {
 
     val df2 = dataFrameOf("name", "origin", "grade", "age")(
-            "Alice", "London", 3, "young",
-            "Alice", "London", 5, "old",
-            "Bob", "Tokyo", 4, "young",
-            "Bob", "Paris", 5, "old",
-            "Mark", "Moscow", 1, "young",
-            "Mark", "Moscow", 2, "old",
-            "Bob", "Paris", 4, null
+        "Alice", "London", 3, "young",
+        "Alice", "London", 5, "old",
+        "Bob", "Tokyo", 4, "young",
+        "Bob", "Paris", 5, "old",
+        "Mark", "Moscow", 1, "young",
+        "Mark", "Moscow", 2, "old",
+        "Bob", "Paris", 4, null
     )
 
 // Generated Code
@@ -26,7 +26,6 @@ class JoinTests : BaseTest() {
         val origin: String?
         val grade: Int
     }
-
 
     val DataRowBase<Person2>.name @JvmName("get-name") get() = this["name"] as String
     val DataRowBase<Person2>.origin get() = this["origin"] as String?
@@ -39,7 +38,6 @@ class JoinTests : BaseTest() {
 
     @Test
     fun `inner join`() {
-
         val res = typed.innerJoin(typed2) { name and it.city.match(right.origin) }
         res.ncol() shouldBe 6
         res.nrow() shouldBe 7
@@ -51,7 +49,6 @@ class JoinTests : BaseTest() {
 
     @Test
     fun `left join`() {
-
         val res = typed.leftJoin(typed2) { name and it.city.match(right.origin) }
 
         res.ncol() shouldBe 6
@@ -64,7 +61,6 @@ class JoinTests : BaseTest() {
 
     @Test
     fun `right join`() {
-
         val res = typed.rightJoin(typed2) { name and it.city.match(right.origin) }
 
         res.ncol() shouldBe 6
@@ -80,7 +76,6 @@ class JoinTests : BaseTest() {
 
     @Test
     fun `outer join`() {
-
         val res = typed.outerJoin(typed2) { name and it.city.match(right.origin) }
         println(res)
         res.ncol() shouldBe 6
@@ -95,7 +90,6 @@ class JoinTests : BaseTest() {
 
     @Test
     fun `filter join`() {
-
         val res = typed.filterJoin(typed2) { city.match(right.origin) }
         val expected = typed.innerJoin(typed2.select { origin }) { city.match(right.origin) }
         res shouldBe expected
@@ -103,7 +97,6 @@ class JoinTests : BaseTest() {
 
     @Test
     fun `filter not join`() {
-
         val res = typed.excludeJoin(typed2) { city.match(right.origin) }
         res.nrow() shouldBe 3
         res.city.toSet() shouldBe typed.city.toSet() - typed2.origin.toSet()

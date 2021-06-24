@@ -12,8 +12,7 @@ class PivotTests {
     val df = dataFrameOf(a, b, c)
 
     @Test
-    fun `simple pivot`(){
-
+    fun `simple pivot`() {
         val pivoted = df.pivot(b).groupBy(a).values(c)
         pivoted.columnNames() shouldBe listOf("a", "q", "w")
         pivoted.nrow shouldBe 2
@@ -22,8 +21,7 @@ class PivotTests {
     }
 
     @Test
-    fun `pivot with rename`(){
-
+    fun `pivot with rename`() {
         val pivoted = df.pivot(b).groupBy(a).values { c default '?' into "d" and (c into "e") }
         pivoted.columnNames() shouldBe listOf("a", "q", "w")
         pivoted.nrow shouldBe 2
@@ -37,7 +35,6 @@ class PivotTests {
 
     @Test
     fun `pivot aggregate with default`() {
-
         val pivoted = df.pivot(b).groupBy(a).aggregate {
             get(c).first() default '-' into "first"
             get(c).last() into "last" default '?'

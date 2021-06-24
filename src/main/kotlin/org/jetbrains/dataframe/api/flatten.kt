@@ -6,13 +6,12 @@ import org.jetbrains.dataframe.impl.columns.toColumns
 
 internal val defaultSeparator: CharSequence = "_"
 
-fun <T> DataFrame<T>.flatten(separator: CharSequence = defaultSeparator) = flatten(separator) { all() }
+public fun <T> DataFrame<T>.flatten(separator: CharSequence = defaultSeparator): DataFrame<T> = flatten(separator) { all() }
 
-fun <T, C> DataFrame<T>.flatten(
+public fun <T, C> DataFrame<T>.flatten(
     separator: CharSequence = defaultSeparator,
     selector: ColumnsSelector<T, C>
 ): DataFrame<T> {
-
     val rootColumns = getColumnsWithPaths { selector.toColumns().filter { it.isGroup() }.top() }
     val rootPrefixes = rootColumns.map { it.path }.toSet()
     val nameGenerator = ColumnNameGenerator()

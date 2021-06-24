@@ -4,11 +4,7 @@ import org.jetbrains.dataframe.AnyFrame
 import org.jetbrains.dataframe.AnyRow
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataRow
-import org.jetbrains.dataframe.internal.codeGen.MarkersExtractor
-import org.jetbrains.dataframe.internal.codeGen.SchemaProcessor
-import org.jetbrains.dataframe.internal.codeGen.CodeWithConverter
-import org.jetbrains.dataframe.internal.codeGen.GeneratedField
-import org.jetbrains.dataframe.internal.codeGen.Marker
+import org.jetbrains.dataframe.internal.codeGen.*
 import org.jetbrains.dataframe.internal.schema.DataFrameSchema
 import org.jetbrains.dataframe.internal.schema.extractSchema
 import org.jetbrains.dataframe.stubs.DataFrameToListNamedStub
@@ -21,7 +17,7 @@ import kotlin.reflect.KType
 import kotlin.reflect.full.superclasses
 import kotlin.reflect.jvm.jvmErasure
 
-internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
+internal class ReplCodeGeneratorImpl : ReplCodeGenerator {
 
     companion object {
         internal val markerInterfacePrefix = "_DataFrameType"
@@ -45,7 +41,6 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
     override fun process(row: AnyRow, property: KProperty<*>?) = process(row.df(), property)
 
     override fun process(df: AnyFrame, property: KProperty<*>?): CodeWithConverter {
-
         var targetSchema = df.extractSchema()
         var isMutable = false
 
@@ -65,8 +60,9 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
                         // property scheme is valid for current data frame, but we should also check that all compatible open markers are implemented by it
                         val requiredBaseMarkers =
                             getRequiredMarkers(columnSchema, registeredMarkers.values)
-                        if (requiredBaseMarkers.all { currentMarker.implements(it) })
-                            return CodeWithConverter(""){ it }
+                        if (requiredBaseMarkers.all { currentMarker.implements(it) }) {
+                            return CodeWithConverter("") { it }
+                        }
                         // use current marker scheme as a target for generation of new marker interface, so that available properties won't change
                         targetSchema = columnSchema
                     }
@@ -82,7 +78,6 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
         name: String,
         isOpen: Boolean
     ): CodeWithConverter {
-
         val result = generator.generate(schema, name, false, true, isOpen, registeredMarkers.values)
 
         result.newMarkers.forEach {
@@ -92,14 +87,13 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
     }
 
     override fun process(markerClass: KClass<*>): Code {
-
         val newMarkers = mutableListOf<Marker>()
 
         fun resolve(clazz: KClass<*>): Marker {
             val processed = registeredMarkers[clazz]
-            if(processed != null) return processed
+            if (processed != null) return processed
             val temp = generatedMarkers[clazz.simpleName!!]
-            if(temp != null){
+            if (temp != null) {
                 val baseClasses = clazz.superclasses.filter { it != Any::class }
 
                 val baseClassNames = baseClasses.map {
@@ -108,7 +102,7 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
 
                 val tempBaseClassNames = temp.baseMarkers.map { it.value.shortName }.sorted()
 
-                if(baseClassNames == tempBaseClassNames){
+                if (baseClassNames == tempBaseClassNames) {
                     val newBaseMarkers = baseClasses.map { resolve(it) }
                     val newMarker = Marker(clazz.qualifiedName!!, temp.isOpen, temp.fields, newBaseMarkers)
                     registeredMarkers[markerClass] = newMarker
@@ -131,8 +125,9 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
         val sourceSchema = df.extractSchema()
         val marker = MarkersExtractor.get(stub.interfaceClass)
         val requestedSchema = marker.schema
-        if (!requestedSchema.compare(sourceSchema).isSuperOrEqual())
+        if (!requestedSchema.compare(sourceSchema).isSuperOrEqual()) {
             throw Exception() // TODO
+        }
         val interfaceName = stub.interfaceClass.simpleName!!
         val interfaceFullName = stub.interfaceClass.qualifiedName!!
         val className = interfaceName + "Impl"
@@ -156,15 +151,15 @@ internal class ReplCodeGeneratorImpl: ReplCodeGenerator {
     ): CodeWithConverter {
         val override = if (interfaceName != null) "override " else ""
         val baseTypes = if (interfaceName != null) " : $interfaceName" else ""
-        val classDeclaration = "data class ${className}(" +
-                fields.map {
-                    "${override}val ${it.fieldName}: ${it.renderFieldType()}"
-                }.joinToString() + ") " + baseTypes
+        val classDeclaration = "data class $className(" +
+            fields.map {
+                "${override}val ${it.fieldName}: ${it.renderFieldType()}"
+            }.joinToString() + ") " + baseTypes
 
         fun converter(argumentName: String) = "$argumentName.df.rows().map { $className(" +
-                fields.map {
-                    "it[\"${it.columnName}\"] as ${it.renderFieldType()}"
-                }.joinToString() + ")}"
+            fields.map {
+                "it[\"${it.columnName}\"] as ${it.renderFieldType()}"
+            }.joinToString() + ")}"
 
         return CodeWithConverter(classDeclaration, ::converter)
     }

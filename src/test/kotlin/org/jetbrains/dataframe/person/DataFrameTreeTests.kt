@@ -3,44 +3,11 @@ package org.jetbrains.dataframe.person
 import io.kotest.assertions.fail
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import org.jetbrains.dataframe.AnyFrame
-import org.jetbrains.dataframe.AnyRow
-import org.jetbrains.dataframe.ColumnKind
-import org.jetbrains.dataframe.DataFrame
-import org.jetbrains.dataframe.DataFrameBase
-import org.jetbrains.dataframe.DataRow
-import org.jetbrains.dataframe.DataRowBase
-import org.jetbrains.dataframe.Many
-import org.jetbrains.dataframe.add
-import org.jetbrains.dataframe.after
+import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.annotations.DataSchema
-import org.jetbrains.dataframe.max
-import org.jetbrains.dataframe.sumOf
-import org.jetbrains.dataframe.append
-import org.jetbrains.dataframe.at
-import org.jetbrains.dataframe.by
-import org.jetbrains.dataframe.dfsOf
-import org.jetbrains.dataframe.column
-import org.jetbrains.dataframe.columnGroup
-import org.jetbrains.dataframe.columnList
-import org.jetbrains.dataframe.columnOf
-import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
+import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.toAccessor
-import org.jetbrains.dataframe.dataFrameOf
-import org.jetbrains.dataframe.distinct
-import org.jetbrains.dataframe.dropNulls
-import org.jetbrains.dataframe.duplicate
-import org.jetbrains.dataframe.emptyDataFrame
-import org.jetbrains.dataframe.emptyMany
-import org.jetbrains.dataframe.explode
-import org.jetbrains.dataframe.filter
-import org.jetbrains.dataframe.forEach
-import org.jetbrains.dataframe.frameColumn
-import org.jetbrains.dataframe.getColumnPath
-import org.jetbrains.dataframe.getType
-import org.jetbrains.dataframe.group
-import org.jetbrains.dataframe.groupBy
 import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
 import org.jetbrains.dataframe.impl.codeGen.InterfaceGenerationMode
 import org.jetbrains.dataframe.impl.codeGen.generate
@@ -48,42 +15,6 @@ import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.typed
-import org.jetbrains.dataframe.index
-import org.jetbrains.dataframe.insert
-import org.jetbrains.dataframe.into
-import org.jetbrains.dataframe.intoRows
-import org.jetbrains.dataframe.inward
-import org.jetbrains.dataframe.isEmpty
-import org.jetbrains.dataframe.isGroup
-import org.jetbrains.dataframe.join
-import org.jetbrains.dataframe.map
-import org.jetbrains.dataframe.mapNotNullGroups
-import org.jetbrains.dataframe.mergeRows
-import org.jetbrains.dataframe.minus
-import org.jetbrains.dataframe.move
-import org.jetbrains.dataframe.moveTo
-import org.jetbrains.dataframe.moveToLeft
-import org.jetbrains.dataframe.moveToRight
-import org.jetbrains.dataframe.pivot
-import org.jetbrains.dataframe.plus
-import org.jetbrains.dataframe.print
-import org.jetbrains.dataframe.remove
-import org.jetbrains.dataframe.rename
-import org.jetbrains.dataframe.select
-import org.jetbrains.dataframe.sortBy
-import org.jetbrains.dataframe.split
-import org.jetbrains.dataframe.subcolumn
-import org.jetbrains.dataframe.toDefinition
-import org.jetbrains.dataframe.toGrouped
-import org.jetbrains.dataframe.toMany
-import org.jetbrains.dataframe.toTop
-import org.jetbrains.dataframe.typed
-import org.jetbrains.dataframe.under
-import org.jetbrains.dataframe.ungroup
-import org.jetbrains.dataframe.update
-import org.jetbrains.dataframe.with
-import org.jetbrains.dataframe.with2
-import org.jetbrains.dataframe.withNull
 import org.junit.Test
 
 class DataFrameTreeTests : BaseTest() {
@@ -194,7 +125,6 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun `group indexing`() {
-
         df2[nameAndCity][city] shouldBe typed.city
         typed2.nameAndCity.city shouldBe typed.city
         df2["nameAndCity"]["city"] shouldBe typed.city
@@ -212,7 +142,6 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun `slice`() {
-
         val expected = typed[0..2].name
         val actual = typed2[0..2].nameAndCity.name
         actual shouldBe expected
@@ -220,7 +149,6 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun `filter`() {
-
         val expected = typed.filter { city == null }.select { weight }
         typed2.filter { nameAndCity.city == null }.select { weight } shouldBe expected
         df2.filter { it[nameAndCity][city] == null }.select { weight } shouldBe expected
@@ -241,7 +169,6 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun `move`() {
-
         val actual = typed2.move { nameAndCity.name }.into("name")
         actual.columnNames() shouldBe listOf("nameAndCity", "name", "age", "weight")
         actual.getColumnGroup("nameAndCity").columnNames() shouldBe listOf("city")
@@ -249,14 +176,12 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun `groupBy`() {
-
         val expected = typed.groupBy { name }.max { age }
         typed2.groupBy { nameAndCity.name }.max { age } shouldBe expected
     }
 
     @Test
     fun `distinct`() {
-
         val duplicated = typed2 + typed2
         duplicated.nrow() shouldBe typed2.nrow() * 2
         val dist = duplicated.nameAndCity.distinct()
@@ -266,7 +191,6 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun selectDfs() {
-
         val cols = typed2.select { dfs { it.hasNulls } }
         cols shouldBe typed2.select { nameAndCity.city and weight }
     }
@@ -284,14 +208,13 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun pivot() {
-
         val modified = df.append("Alice", 55, "Moscow", 100)
         val df2 = modified.move { name and city }.under("nameAndCity")
         val typed2 = df2.typed<GroupedPerson>()
 
         val expected = modified.typed<Person>().groupBy { name and city }.map { key, group ->
-            val value = if(key.city == "Moscow") group.age.toMany()
-                        else group.age[0]
+            val value = if (key.city == "Moscow") group.age.toMany()
+            else group.age[0]
             (key.name to key.city.toString()) to value
         }.plus("Bob" to "Moscow" to emptyMany<Int>()).toMap()
 
@@ -364,7 +287,6 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun splitCols() {
-
         val split = typed2.split { nameAndCity.name }.by { it.toCharArray().toList() }.inward().into { "char$it" }
         split.columnNames() shouldBe typed2.columnNames()
         split.nrow() shouldBe typed2.nrow()
@@ -378,7 +300,6 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun `split into rows`() {
-
         val split = typed2.split { nameAndCity.name }.by { it.toCharArray().toList() }.intoRows()
         val merged = split.mergeRows { nameAndCity.name }
         val joined = merged.update { nameAndCity.name }.cast<List<Char>>().with { it.joinToString("") }
@@ -403,7 +324,6 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun `merge rows into table`() {
-
         val info by columnGroup()
         val moved = typed.group { except(name) }.into(info)
         val merged = moved.mergeRows { info }
@@ -458,7 +378,6 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun `group cols`() {
-
         val joined = typed2.move { dfs() }.into { path(it.path.joinToString(".")) }
         val grouped = joined.group { nameContains(".") }.into { it.name.substringBefore(".") }
         val expected = typed2.rename { nameAndCity.all() }.into { it.path.joinToString(".") }
@@ -559,7 +478,6 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun `add frame column`() {
-
         val frameCol by frameColumn()
         val added = typed2.add(frameCol) { nameAndCity.duplicate(3) }
         added[frameCol].kind() shouldBe ColumnKind.Frame
@@ -567,7 +485,6 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun `insert column`() {
-
         val colName = "reversed"
         fun DataFrame<GroupedPerson>.check() {
             nameAndCity.ncol() shouldBe 3
@@ -598,7 +515,6 @@ class DataFrameTreeTests : BaseTest() {
         res.nameAndCity.name.hasNulls() shouldBe true
     }
 
-
     @Test
     fun `create data frame from map column`() {
         val df = dataFrameOf(typed.name, typed2.nameAndCity)
@@ -627,7 +543,7 @@ class DataFrameTreeTests : BaseTest() {
 
     @Test
     fun `filter not null without arguments`() {
-        typed2.dropNulls() shouldBe typed.dropNulls { weight }.group {name and city}.into("nameAndCity")
+        typed2.dropNulls() shouldBe typed.dropNulls { weight }.group { name and city }.into("nameAndCity")
     }
 
     @Test

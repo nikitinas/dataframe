@@ -1,17 +1,18 @@
 package org.jetbrains.dataframe.impl.columns
 
 import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.createTypeWithArgument
+import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.impl.renderSchema
-import java.lang.UnsupportedOperationException
 import kotlin.reflect.KType
 
 internal val anyRowType = createTypeWithArgument<AnyRow>()
 
-internal open class ColumnGroupImpl<T>(override val df: DataFrame<T>, val name: String) : ColumnGroup<T>, DataColumnInternal<DataRow<T>>,
-    DataColumnGroup<T>, DataFrame<T> by df {
+internal open class ColumnGroupImpl<T>(override val df: DataFrame<T>, val name: String) :
+    ColumnGroup<T>,
+    DataColumnInternal<DataRow<T>>,
+    DataColumnGroup<T>,
+    DataFrame<T> by df {
 
     override fun values() = df.rows()
 
@@ -72,7 +73,7 @@ internal open class ColumnGroupImpl<T>(override val df: DataFrame<T>, val name: 
     override fun forceResolve() = ResolvingColumnGroup(df, name)
 }
 
-internal class ResolvingColumnGroup<T>(df: DataFrame<T>, name: String): ColumnGroupImpl<T>(df, name){
+internal class ResolvingColumnGroup<T>(df: DataFrame<T>, name: String) : ColumnGroupImpl<T>(df, name) {
 
     override fun resolveSingle(context: ColumnResolutionContext) = context.df.getColumn<DataRow<T>>(name, context.unresolvedColumnsPolicy)?.addPath(context.df)
 }

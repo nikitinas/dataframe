@@ -9,19 +9,21 @@ import org.jetbrains.dataframe.internal.codeGen.CodeWithConverter
 import org.jetbrains.dataframe.io.toHTML
 import org.jetbrains.dataframe.stubs.DataFrameToListNamedStub
 import org.jetbrains.dataframe.stubs.DataFrameToListTypedStub
-import org.jetbrains.kotlinx.jupyter.api.*
+import org.jetbrains.kotlinx.jupyter.api.HTML
+import org.jetbrains.kotlinx.jupyter.api.KotlinKernelHost
+import org.jetbrains.kotlinx.jupyter.api.VariableName
 import org.jetbrains.kotlinx.jupyter.api.annotations.JupyterLibrary
-import org.jetbrains.kotlinx.jupyter.api.libraries.*
+import org.jetbrains.kotlinx.jupyter.api.declare
+import org.jetbrains.kotlinx.jupyter.api.libraries.JupyterIntegration
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 internal val newDataSchemas = mutableListOf<KClass<*>>()
 
 @JupyterLibrary
-internal class Integration : JupyterIntegration(){
+internal class Integration : JupyterIntegration() {
 
     override fun Builder.onLoaded() {
-
         val codeGen = ReplCodeGenerator.create()
         val config = JupyterConfiguration()
 
@@ -42,14 +44,12 @@ internal class Integration : JupyterIntegration(){
 
         fun KotlinKernelHost.execute(codeWithConverter: CodeWithConverter, property: KProperty<*>): VariableName? {
             val code = codeWithConverter.with(property.name)
-            return if(code.isNotBlank())
-            {
+            return if (code.isNotBlank()) {
                 val result = execute(code)
-                if(codeWithConverter.hasConverter)
+                if (codeWithConverter.hasConverter) {
                     result.name
-                else null
-            }
-            else null
+                } else null
+            } else null
         }
 
         updateVariable<AnyFrame> { df, property ->
@@ -91,10 +91,10 @@ internal class Integration : JupyterIntegration(){
     }
 }
 
-fun KotlinKernelHost.useSchemas(schemaClasses: Iterable<KClass<*>>){
+public fun KotlinKernelHost.useSchemas(schemaClasses: Iterable<KClass<*>>) {
     newDataSchemas.addAll(schemaClasses)
 }
 
-fun KotlinKernelHost.useSchemas(vararg schemaClasses: KClass<*>) = useSchemas(schemaClasses.asIterable())
+public fun KotlinKernelHost.useSchemas(vararg schemaClasses: KClass<*>): Unit = useSchemas(schemaClasses.asIterable())
 
-inline fun <reified T> KotlinKernelHost.useSchema() = useSchemas(T::class)
+public inline fun <reified T> KotlinKernelHost.useSchema(): Unit = useSchemas(T::class)

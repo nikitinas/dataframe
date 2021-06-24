@@ -4,21 +4,21 @@ import org.jetbrains.dataframe.AnyRow
 import org.jetbrains.dataframe.ColumnPath
 import org.jetbrains.dataframe.ColumnResolutionContext
 import org.jetbrains.dataframe.impl.columns.RenamedColumnReference
-import org.jetbrains.dataframe.impl.columns.getColumn
 import org.jetbrains.dataframe.impl.columns.addPath
+import org.jetbrains.dataframe.impl.columns.getColumn
 
 /**
  * Column with type and name/path
  */
-interface ColumnReference<out C> : SingleColumn<C> {
+public interface ColumnReference<out C> : SingleColumn<C> {
 
-    fun name(): String
+    public fun name(): String
 
-    fun rename(newName: String): ColumnReference<C>
+    public fun rename(newName: String): ColumnReference<C>
 
-    fun path(): ColumnPath = listOf(name)
+    public fun path(): ColumnPath = listOf(name)
 
-    operator fun invoke(row: AnyRow) = row[this]
+    public operator fun invoke(row: AnyRow): C = row[this]
 
     override fun resolveSingle(context: ColumnResolutionContext): ColumnWithPath<C>? {
         return context.df.getColumn<C>(name, context.unresolvedColumnsPolicy)?.addPath(listOf(name), context.df)

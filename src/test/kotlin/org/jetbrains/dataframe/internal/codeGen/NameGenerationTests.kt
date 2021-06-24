@@ -15,7 +15,7 @@ class NameGenerationTests {
     val df = dataFrameOf("first column", "second column")(3, 5)
 
     @DataSchema
-    interface DataRecord{
+    interface DataRecord {
         @ColumnName("first column")
         val `first column`: Int
         @ColumnName("second column")
@@ -23,12 +23,11 @@ class NameGenerationTests {
     }
 
     @Test
-    fun `interface generation`(){
-
+    fun `interface generation`() {
         val codeGen = CodeGenerator.create()
         val code = codeGen.generate(df.extractSchema(), "DataType", true, false, isOpen = false, emptyList()).code
 
-        val expected ="""
+        val expected = """
             @DataSchema(isOpen = false)
             interface DataType{
             	@ColumnName("first column")
@@ -42,8 +41,7 @@ class NameGenerationTests {
     }
 
     @Test
-    fun `properties generation`(){
-
+    fun `properties generation`() {
         val codeGen = ReplCodeGenerator.create()
         val code = codeGen.process<DataRecord>().split("\n")
         code.size shouldBe 4

@@ -5,34 +5,30 @@ import org.jetbrains.dataframe.impl.GroupedDataFrameImpl
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.impl.columns.isTable
 
-typealias GroupKey = List<Any?>
+public typealias GroupKey = List<Any?>
 
-interface GroupedDataFrame<out T, out G>: GroupByAggregations<G> {
+public interface GroupedDataFrame<out T, out G> : GroupByAggregations<G> {
 
-    val groups: FrameColumn<G>
+    public val groups: FrameColumn<G>
 
-    val keys: DataFrame<T>
+    public val keys: DataFrame<T>
 
-    fun plain(): DataFrame<T>
+    public fun plain(): DataFrame<T>
 
-    fun ungroup() = groups.union().typed<G>()
+    public fun ungroup(): DataFrame<G> = groups.union().typed()
 
-    operator fun get(vararg values: Any?) = get(values.toList())
-    operator fun get(key: GroupKey): DataFrame<T>
+    public operator fun get(vararg values: Any?): DataFrame<T> = get(values.toList())
+    public operator fun get(key: GroupKey): DataFrame<T>
 
-    fun <R> mapGroups(transform: Selector<DataFrame<G>?, DataFrame<R>?>): GroupedDataFrame<T, R>
+    public fun <R> mapGroups(transform: Selector<DataFrame<G>?, DataFrame<R>?>): GroupedDataFrame<T, R>
 
-    data class Entry<T, G>(val key: DataRow<T>, val group: DataFrame<G>?)
+    public data class Entry<T, G>(val key: DataRow<T>, val group: DataFrame<G>?)
 }
 
 internal fun <T, G> DataFrame<T>.toGrouped(groupedColumnName: String): GroupedDataFrame<T, G> =
     GroupedDataFrameImpl(this, this[groupedColumnName] as FrameColumn<G>) { none() }
 
 internal fun <T> DataFrame<T>.toGrouped(): GroupedDataFrame<T, T> {
-
     val groupCol = columns().single { it.isTable() }.asTable() as FrameColumn<T>
     return toGrouped { groupCol }
 }
-
-
-

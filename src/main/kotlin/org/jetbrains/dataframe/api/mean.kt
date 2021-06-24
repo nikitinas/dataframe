@@ -4,11 +4,11 @@ import java.math.BigDecimal
 import kotlin.reflect.KClass
 
 @JvmName("meanT?")
-fun <T : Number> Sequence<T?>.mean(clazz: KClass<*>, skipNa: Boolean = true): Double = filterNotNull().mean(clazz, skipNa)
+public fun <T : Number> Sequence<T?>.mean(clazz: KClass<*>, skipNa: Boolean = true): Double = filterNotNull().mean(clazz, skipNa)
 
-fun <T: Number> Iterable<T>.mean(clazz: KClass<*>, skipNaN: Boolean) = asSequence().mean(clazz, skipNaN)
+public fun <T : Number> Iterable<T>.mean(clazz: KClass<*>, skipNaN: Boolean): Double = asSequence().mean(clazz, skipNaN)
 
-fun <T: Number> Sequence<T>.mean(clazz: KClass<*>, skipNaN: Boolean): Double {
+public fun <T : Number> Sequence<T>.mean(clazz: KClass<*>, skipNaN: Boolean): Double {
     return when (clazz) {
         Double::class -> (this as Sequence<Double>).mean(skipNaN)
         Float::class -> (this as Sequence<Float>).mean(skipNaN)
@@ -22,87 +22,87 @@ fun <T: Number> Sequence<T>.mean(clazz: KClass<*>, skipNaN: Boolean): Double {
     }
 }
 
-fun Sequence<Double>.mean(skipNaN: Boolean): Double {
+public fun Sequence<Double>.mean(skipNaN: Boolean): Double {
     var count = 0
     var sum: Double = 0.toDouble()
     for (element in this) {
-        if(element.isNaN()) {
-            if(skipNaN) continue
+        if (element.isNaN()) {
+            if (skipNaN) continue
             else return Double.NaN
         }
         sum += element
         count++
     }
-    return if(count > 0) sum / count else Double.NaN
+    return if (count > 0) sum / count else Double.NaN
 }
 
 @JvmName("meanFloat")
-fun Sequence<Float>.mean(skipNaN: Boolean): Double {
+public fun Sequence<Float>.mean(skipNaN: Boolean): Double {
     var count = 0
     var sum: Double = 0.toDouble()
     for (element in this) {
-        if(element.isNaN()) {
-            if(skipNaN) continue
+        if (element.isNaN()) {
+            if (skipNaN) continue
             else return Double.NaN
         }
         sum += element
         count++
     }
-    return if(count > 0) sum / count else Double.NaN
+    return if (count > 0) sum / count else Double.NaN
 }
 
 @JvmName("doubleMean")
-fun Iterable<Double>.mean(skipNaN: Boolean): Double = asSequence().mean(skipNaN)
+public fun Iterable<Double>.mean(skipNaN: Boolean): Double = asSequence().mean(skipNaN)
 
 @JvmName("floatMean")
-fun Iterable<Float>.mean(skipNaN: Boolean): Double = asSequence().mean(skipNaN)
+public fun Iterable<Float>.mean(skipNaN: Boolean): Double = asSequence().mean(skipNaN)
 
 @JvmName("intMean")
-fun Iterable<Int>.mean(): Double =
+public fun Iterable<Int>.mean(): Double =
     if (this is Collection) {
-        if(size > 0) sumOf { it.toDouble() } / size else Double.NaN
+        if (size > 0) sumOf { it.toDouble() } / size else Double.NaN
     } else {
         var count = 0
-        val sum = sumOf { count++;it.toDouble() }
-        if(count > 0) sum / count else Double.NaN
+        val sum = sumOf { count++; it.toDouble() }
+        if (count > 0) sum / count else Double.NaN
     }
 
 @JvmName("shortMean")
-fun Iterable<Short>.mean(): Double =
+public fun Iterable<Short>.mean(): Double =
     if (this is Collection) {
-        if(size > 0) sumOf { it.toDouble() } / size else Double.NaN
+        if (size > 0) sumOf { it.toDouble() } / size else Double.NaN
     } else {
         var count = 0
-        val sum = sumOf { count++;it.toDouble() }
-        if(count > 0) sum / count else Double.NaN
+        val sum = sumOf { count++; it.toDouble() }
+        if (count > 0) sum / count else Double.NaN
     }
 
 @JvmName("byteMean")
-fun Iterable<Byte>.mean(): Double =
+public fun Iterable<Byte>.mean(): Double =
     if (this is Collection) {
-        if(size > 0) sumOf { it.toDouble() } / size else Double.NaN
+        if (size > 0) sumOf { it.toDouble() } / size else Double.NaN
     } else {
         var count = 0
-        val sum = sumOf { count++;it.toDouble() }
-        if(count > 0) sum / count else Double.NaN
+        val sum = sumOf { count++; it.toDouble() }
+        if (count > 0) sum / count else Double.NaN
     }
 
 @JvmName("longMean")
-fun Iterable<Long>.mean(): Double =
+public fun Iterable<Long>.mean(): Double =
     if (this is Collection) {
-        if(size > 0) sumOf { it.toDouble() } / size else Double.NaN
+        if (size > 0) sumOf { it.toDouble() } / size else Double.NaN
     } else {
         var count = 0
-        val sum = sumOf { count++;it.toDouble() }
-        if(count > 0) sum / count else Double.NaN
+        val sum = sumOf { count++; it.toDouble() }
+        if (count > 0) sum / count else Double.NaN
     }
 
 @JvmName("bigDecimalMean")
-fun Iterable<BigDecimal>.mean(): Double =
+public fun Iterable<BigDecimal>.mean(): Double =
     if (this is Collection) {
-        if(size > 0) sum().toDouble() / size else Double.NaN
+        if (size > 0) sum().toDouble() / size else Double.NaN
     } else {
         var count = 0
-        val sum = sumOf { count++;it.toDouble() }
-        if(count > 0) sum / count else Double.NaN
+        val sum = sumOf { count++; it.toDouble() }
+        if (count > 0) sum / count else Double.NaN
     }

@@ -13,8 +13,7 @@ import org.jetbrains.dataframe.person.BaseTest
 import org.jetbrains.dataframe.select
 import org.junit.Test
 
-class ReplCodeGenTests: BaseTest() {
-
+class ReplCodeGenTests : BaseTest() {
 
     class Test1 {
         @DataSchema(isOpen = false)
@@ -37,7 +36,6 @@ class ReplCodeGenTests: BaseTest() {
         @DataSchema(isOpen = false)
         interface _DataFrameType2 : _DataFrameType, _DataFrameType1
     }
-
 
     @Test
     fun `process derived markers`() {
@@ -98,7 +96,7 @@ class ReplCodeGenTests: BaseTest() {
     }
 
     @Test
-    fun `process markers union`(){
+    fun `process markers union`() {
         val repl = ReplCodeGenerator.create()
         repl.process(typed.select { age and name })
         repl.process<Test2._DataFrameType>() shouldBe ""
@@ -115,7 +113,7 @@ class ReplCodeGenTests: BaseTest() {
     }
 
     @Test
-    fun `process wrong marker inheritance`(){
+    fun `process wrong marker inheritance`() {
         val repl = ReplCodeGenerator.create()
         repl.process(typed.select { age and name })
         repl.process<Test2._DataFrameType>() shouldBe ""
@@ -138,6 +136,4 @@ class ReplCodeGenTests: BaseTest() {
         val code = repl.process(typed).declarations.trimIndent()
         code shouldBe expected
     }
-
-
 }

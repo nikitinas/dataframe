@@ -6,12 +6,6 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.max
-import org.jetbrains.dataframe.mean
-import org.jetbrains.dataframe.meanOf
-import org.jetbrains.dataframe.min
-import org.jetbrains.dataframe.sum
-import org.jetbrains.dataframe.sumOf
 import org.jetbrains.dataframe.columns.size
 import org.jetbrains.dataframe.columns.toAccessor
 import org.jetbrains.dataframe.columns.typeClass
@@ -23,14 +17,12 @@ import org.jetbrains.dataframe.io.renderValueForStdout
 import org.junit.Test
 import java.math.BigDecimal
 import java.time.LocalDate
-import kotlin.IllegalArgumentException
 import kotlin.reflect.jvm.jvmErasure
 
 class DataFrameTests : BaseTest() {
 
     @Test
     fun `create with columns`() {
-
         dataFrameOf("name", "age", "city", "weight")(df.columns()) shouldBe df
 
         dataFrameOf("name", "age", "city", "weight")(
@@ -50,7 +42,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `create with columnOf`() {
-
         val col = columnOf("Alice", "Bob")
         val d = dataFrameOf("name")(col)
         d.nrow shouldBe 2
@@ -59,7 +50,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `create with unnamed columns`() {
-
         val a = columnOf("Alice", "Bob")
         val b = columnOf(1, 2)
         val d = dataFrameOf(a, b)
@@ -71,7 +61,6 @@ class DataFrameTests : BaseTest() {
 
     @Test(expected = IllegalArgumentException::class)
     fun `create with duplicate columns`() {
-
         val a = columnOf("Alice", "Bob") named "col"
         val b = columnOf(1, 2) named "col"
         val d = dataFrameOf(a, b)
@@ -79,7 +68,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `create column reference`() {
-
         val name by column<String>()
         val col = name.withValues("Alice", "Bob")
         val df = col.toDataFrame()
@@ -89,7 +77,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `add values to column reference`() {
-
         val name by column<String>()
         val values = listOf("Alice", "Bob")
         val col1 = name.withValues(values)
@@ -170,7 +157,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `null indexing`() {
-
         val i = 5
 
         fun String?.check() = this shouldBe null
@@ -193,7 +179,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `incorrect column nullability`() {
-
         val col =
             column<Int>().named("weight") // non-nullable column definition is incorrect here, because actual dataframe has nulls in this column
 
@@ -213,7 +198,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `update`() {
-
         fun AnyFrame.check() {
             column(1).name() shouldBe "age"
             ncol() shouldBe typed.ncol()
@@ -236,7 +220,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `conditional update`() {
-
         fun AnyFrame.check() {
             column(1).name() shouldBe "age"
             ncol() shouldBe typed.ncol()
@@ -259,7 +242,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `update cells by index`() {
-
         val res = typed.update { age }.at(2, 4).with(100)
         val expected = typed.map { if (index == 2 || index == 4) 100 else age }
         res.age.toList() shouldBe expected
@@ -267,7 +249,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `update cells by index range`() {
-
         val res = typed.update { age }.at(2..4).with(100)
         val expected = typed.map { if (index in 2..4) 100 else age }
         res.age.toList() shouldBe expected
@@ -301,7 +282,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `resetToNull`() {
-
         val updated = typed.update { all() }.withNull()
 
         updated.columns().forEach {
@@ -311,7 +291,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `sort`() {
-
         val expected = listOf(null, "London", "Dubai", "Tokyo", "Milan", "Moscow", "Moscow")
 
         fun AnyFrame.check() = this[city].toList() shouldBe expected
@@ -328,7 +307,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `sort nulls first`() {
-
         val expected = typed.city.toList().sortedBy { it }
 
         fun AnyFrame.check() = this[city].toList() shouldBe expected
@@ -341,7 +319,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `sort nulls last`() {
-
         val expected = typed.city.toList().filterNotNull().sortedBy { it } + listOf(null)
 
         fun AnyFrame.check() = this[city].toList() shouldBe expected
@@ -381,7 +358,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `filter`() {
-
         val expected = listOf("Bob", "Bob", "Mark")
         fun AnyFrame.check() = this[name].toList() shouldBe expected
 
@@ -402,7 +378,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `drop nulls 1`() {
-
         fun AnyFrame.check() = rows().forEach { get("weight") shouldNotBe null }
 
         typed.dropNulls(typed.weight).check()
@@ -417,7 +392,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `drop where all null`() {
-
         val filtered = typed.update { weight }.where { name == "Alice" }.withNull()
         val expected = typed.nrow() - 1
 
@@ -437,9 +411,8 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `drop where any null`() {
-
         val filtered = typed.update { weight }.where { name == "Alice" }.withNull()
-        val expected = filtered.count { weight != null && city != null}
+        val expected = filtered.count { weight != null && city != null }
 
         fun AnyFrame.check() = nrow() shouldBe expected
 
@@ -554,8 +527,8 @@ class DataFrameTests : BaseTest() {
     fun `select with rename 2`() {
         val res = typed.select { name named "Name" }
         res.columnNames() shouldBe listOf("Name")
-        df.select { name named "Name"} shouldBe res
-        df.select { it["name"] named "Name"} shouldBe res
+        df.select { name named "Name" } shouldBe res
+        df.select { it["name"] named "Name" } shouldBe res
     }
 
     @Test
@@ -583,7 +556,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `groupBy`() {
-
         fun AnyFrame.check() {
             nrow() shouldBe 3
             this["name"].toList() shouldBe listOf("Alice", "Bob", "Mark")
@@ -611,7 +583,7 @@ class DataFrameTests : BaseTest() {
             all { weight != null } into "all with weights"
             maxBy { age }.city into "oldest origin"
             sortBy { age }.first().city into "youngest origin"
-            pivot { city.map { "from $it"} }.count()
+            pivot { city.map { "from $it" } }.count()
             age.toList() into "ages"
         }.check()
 
@@ -666,7 +638,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `groupBy invoked at column`() {
-
         typed.weight.groupBy(typed.name).mean() shouldBe typed.groupBy { name }.mean { weight }
     }
 
@@ -778,7 +749,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `remove one column`() {
-
         val expected = listOf("name", "city", "weight")
         fun check(body: () -> AnyFrame) = body().columnNames() shouldBe expected
 
@@ -797,7 +767,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `remove two columns`() {
-
         val expected = listOf("name", "city")
         fun check(body: () -> AnyFrame) = body().columnNames() shouldBe expected
 
@@ -820,7 +789,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `merge similar dataframes`() {
-
         val res = typed + typed + typed
         res.name.size() shouldBe 3 * typed.nrow()
         res.rows().forEach { it.values() shouldBe typed[it.index % typed.nrow()].values() }
@@ -828,13 +796,14 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `merge different dataframes`() {
-
         val height by column<Int>()
         val heightOrNull = height.nullable()
 
         val other = dataFrameOf(name, height)(
-            "Bill", 135,
-            "Mark", 160
+            "Bill",
+            135,
+            "Mark",
+            160
         ).typed<Unit>()
 
         val res = typed.union(other)
@@ -902,7 +871,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `rename`() {
-
         fun AnyFrame.check() {
             this["name2"].toList() shouldBe typed.name.toList()
             this["age2"].toList() shouldBe typed.age.toList()
@@ -916,7 +884,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `select with rename`() {
-
         val expected = typed.select { name and age }.rename { all() }.into { it.name + 2 }
         typed.select { name into "name2" and age.into("age2") } shouldBe expected
         df.select { name("name2") and age("age2") } shouldBe expected
@@ -953,7 +920,7 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `pivot matches equality`() {
-        val res1 = typed.pivot { city }.groupBy {name}.matches()
+        val res1 = typed.pivot { city }.groupBy { name }.matches()
         val res2 = typed.groupBy { name }.pivot { city }.matches()
         val res3 = typed.groupBy { name }.aggregate {
             pivot { city }.matches()
@@ -966,10 +933,10 @@ class DataFrameTests : BaseTest() {
     fun `pivot to bool with conversion`() {
         val filtered = typed.dropNulls { city }
         val res = filtered.pivot { city.lowercase() }.groupBy { name and age }.matches()
-        val cities = filtered.city.toList().map {it!!.lowercase()}
+        val cities = filtered.city.toList().map { it!!.lowercase() }
         val gathered =
             res.gather { colsOf<Boolean> { cities.contains(it.name()) } }.where { it }.into("city")
-        val expected = filtered.select { name and age and city.map { it!!.lowercase()} }.moveToRight { city }
+        val expected = filtered.select { name and age and city.map { it!!.lowercase() } }.moveToRight { city }
         gathered shouldBe expected
     }
 
@@ -1005,7 +972,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `pivot to matrix`() {
-
         val others by column<Many<String>>("other")
         val other by column<String>()
         val sum by column<Int>()
@@ -1017,21 +983,20 @@ class DataFrameTests : BaseTest() {
             .split { others }.intoRows()
             .add(sum) { name.length + other().length }
 
-        val matrix = src.pivot { other }.groupBy {name }.with { sum }
+        val matrix = src.pivot { other }.groupBy { name }.with { sum }
         matrix.ncol() shouldBe 1 + names.size
     }
 
     @Test
     fun `gather bool`() {
-        val pivoted = typed.pivot { city }.groupBy {name}.matches()
+        val pivoted = typed.pivot { city }.groupBy { name }.matches()
         val res = pivoted.gather { colsOf<Boolean>() }.where { it }.into("city")
         val sorted = res.sortBy { name and city }
-        sorted shouldBe typed.select { name and city.map {it.toString()} }.distinct().sortBy { name and city }
+        sorted shouldBe typed.select { name and city.map { it.toString() } }.distinct().sortBy { name and city }
     }
 
     @Test
     fun `merge rows keep nulls`() {
-
         val merged = typed.select { name and city }.mergeRows(dropNulls = false) { city }
 
         val cityList by column<Many<String?>>().named("city")
@@ -1049,14 +1014,13 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `merge rows drop nulls`() {
-
         val merged = typed.select { name and city }.mergeRows(dropNulls = true) { city }
 
         val cityList by column<Many<String>>().named("city")
         merged[cityList].sumOf { it.size } shouldBe typed.city.dropNulls().size
         merged[cityList].type() shouldBe getType<Many<String>>()
 
-        val expected = typed.dropNulls {city}.groupBy { name }.aggregate { it.city.toSet() as Set<String> into "city" }
+        val expected = typed.dropNulls { city }.groupBy { name }.aggregate { it.city.toSet() as Set<String> into "city" }
         val actual = merged.update { cityList }.with { it.toSet() }
 
         actual shouldBe expected
@@ -1140,7 +1104,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun splitAgeIntoDigits() {
-
         fun digits(num: Int) = sequence {
             var k = num
             while (k > 0) {
@@ -1193,7 +1156,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `column group by`() {
-
         fun DataFrame<Person>.check() {
             ncol() shouldBe 3
             nrow() shouldBe typed.nrow()
@@ -1215,7 +1177,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `column group`() {
-
         val grouped = typed.move { age and name and city }.under("info")
         grouped.ncol() shouldBe 2
         grouped.columnNames() shouldBe listOf("info", "weight")
@@ -1230,12 +1191,10 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `column ungroup`() {
-
         val info by columnGroup()
         val res = typed.move { age and city }.under("info").ungroup { info }
         res shouldBe typed
     }
-
 
     @Test
     fun `empty group by`() {
@@ -1269,7 +1228,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `move to position`() {
-
         typed.column(1) shouldBe typed.age
         val moved = typed.move { age }.to(2)
         moved.column(2) shouldBe typed.age
@@ -1278,7 +1236,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `forEachIn`() {
-
         val cities by columnGroup()
         val pivoted = typed.pivot { city }.groupBy { name and weight }.withGrouping(cities).with { age }
         pivoted.print()
@@ -1289,7 +1246,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `parse`() {
-
         val toStr = typed.update { weight }.notNull { it.toString() }
         val weightStr = "weight".toColumnOf<String?>()
         val parsed = toStr.convert { weightStr }.toInt()
@@ -1298,7 +1254,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun digitize() {
-
         val a = 20
         val b = 40
         val expected = typed.age.toList().map {
@@ -1333,7 +1288,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `aggregate into grouped column`() {
-
         val d = typed.groupBy { name }.aggregate {
             val row = meanFor { age and weight }
             row into "mean"
@@ -1350,7 +1304,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `mean for all columns`() {
-
         val d = typed.groupBy { name }.mean()
         d.columnNames() shouldBe listOf("name", "age", "weight")
         d.nrow() shouldBe typed.name.ndistinct()
@@ -1360,7 +1313,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `aggregate into table column`() {
-
         val d = typed.groupBy { name }.aggregate {
             val row = select { age and weight }
             row into "info"
@@ -1379,7 +1331,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `union table columns`() {
-
         val grouped = typed.addRowNumber("id").groupBy { name }.plain()
         val dfs = (0 until grouped.nrow()).map {
             grouped[it..it]
@@ -1390,7 +1341,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `set column`() {
-
         val copy = typed.select { all() }
         copy["new"] = copy.age
         copy.ncol() shouldBe typed.ncol() + 1
@@ -1399,7 +1349,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `columns sum`() {
-
         val name by columnOf("Alice", "Bob", "Mark")
         val age by columnOf(15, 20, 24)
         val df = name + age
@@ -1410,7 +1359,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun convert1() {
-
         val res = typed.convert { age }.to<Double>()
         res.age.typeClass shouldBe Double::class
         res["age"].all { it is Double } shouldBe true
@@ -1418,7 +1366,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun convert2() {
-
         val res = typed.convert { weight }.to<BigDecimal>()
         res.weight.typeClass shouldBe BigDecimal::class
         res["weight"].all { it == null || it is BigDecimal } shouldBe true
@@ -1426,7 +1373,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun convert3() {
-
         val res = typed.convert { all() }.to<String>()
         res.columns().forEach { it.typeClass shouldBe String::class }
         res.columns().map { it.hasNulls() } shouldBe typed.columns().map { it.hasNulls() }
@@ -1434,7 +1380,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun convertToDate() {
-
         val time by columnOf("2020-01-06", "2020-01-07")
         val df = dataFrameOf(time)
         val casted = df.convert(time).toDate()
@@ -1443,7 +1388,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun replace() {
-
         val res = typed.replace { age }.with(2021 - typed.age)
         val expected = typed.update { age }.with { 2021 - age }
         res shouldBe expected
@@ -1451,7 +1395,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `replace with rename`() {
-
         val res = typed.replace { age }.with { it.rename("age2") }
         res shouldBe typed.rename { age }.into("age2")
     }
@@ -1470,7 +1413,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `replace with expression`() {
-
         val res = typed.replace { age }.with { 2021 - age named "year" }
         val expected = typed.update { age }.with { 2021 - age }.rename { age }.into("year")
         res shouldBe expected
@@ -1563,8 +1505,14 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `append many`() {
         val res = typed.append(
-            "John", 22, "New York", 46,
-            "Philip", 25, "Chelyabinsk", 36
+            "John",
+            22,
+            "New York",
+            46,
+            "Philip",
+            25,
+            "Chelyabinsk",
+            36
         )
         res.nrow shouldBe typed.nrow + 2
     }
@@ -1614,7 +1562,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun between() {
-
         typed.filter { age.between(20, 40, false) }.nrow() shouldBe 2
 
         typed.filter { age in 20..40 }.nrow() shouldBe 5
@@ -1624,7 +1571,6 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun iterators() {
-
         var counter = 0
         for (a in df) counter++
         counter shouldBe df.nrow()
@@ -1738,8 +1684,8 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun `drop where any na`(){
-        val updated = typed.update { weight }.with { if(name=="Alice") Double.NaN else it?.toDouble() }
+    fun `drop where any na`() {
+        val updated = typed.update { weight }.with { if (name == "Alice") Double.NaN else it?.toDouble() }
         val expected = updated.count { city != null && !(ndouble("weight")?.isNaN() ?: true) }
 
         fun AnyFrame.check() = nrow() shouldBe expected
@@ -1751,8 +1697,8 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun `drop where all na`(){
-        val updated = typed.update { weight }.with { if(name=="Alice") Double.NaN else it?.toDouble() }
+    fun `drop where all na`() {
+        val updated = typed.update { weight }.with { if (name == "Alice") Double.NaN else it?.toDouble() }
         val expected = updated.count { city != null || !(ndouble("weight")?.isNaN() ?: true) }
 
         fun AnyFrame.check() = nrow() shouldBe expected
@@ -1765,13 +1711,15 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun sortWith() {
-        typed.sortWith { r1, r2 -> when{
-            r1.name < r2.name -> -1
-            r1.name > r2.name -> 1
-            else -> -r1.age.compareTo(r2.age)
-        } } shouldBe typed.sortBy { name and age.desc }
+        typed.sortWith { r1, r2 ->
+            when {
+                r1.name < r2.name -> -1
+                r1.name > r2.name -> 1
+                else -> -r1.age.compareTo(r2.age)
+            }
+        } shouldBe typed.sortBy { name and age.desc }
 
-        val comparator = Comparator<DataRow<Person>> { r1, r2 -> -r1.name.compareTo(r2.name)}
+        val comparator = Comparator<DataRow<Person>> { r1, r2 -> -r1.name.compareTo(r2.name) }
         typed.sortWith(comparator) shouldBe typed.sortByDesc { name }
     }
 
@@ -1782,14 +1730,14 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `get column by columnRef with data`() {
-        val col by columnOf(1,2,3)
+        val col by columnOf(1, 2, 3)
         val df = col.toDataFrame()
-        df[1..2][col].values() shouldBe listOf(2,3)
+        df[1..2][col].values() shouldBe listOf(2, 3)
     }
 
     @Test
     fun `get by column`() {
-        typed[1..2][{ typed.age }].size() shouldBe typed.age.size()
+        typed[1..2][ { typed.age }].size() shouldBe typed.age.size()
     }
 
     @Test
@@ -1848,7 +1796,7 @@ class DataFrameTests : BaseTest() {
     }
 
     @Test
-    fun `aggregate dataframe with pivot`(){
+    fun `aggregate dataframe with pivot`() {
         val summary = typed.aggregate {
             count() into "count"
             pivot { name }.max { age }
@@ -1860,8 +1808,7 @@ class DataFrameTests : BaseTest() {
 
     @Test
     fun `pivot grouped max`() {
-
-        val pivoted = typed.pivot{ name }.groupBy{ city }.max()
+        val pivoted = typed.pivot { name }.groupBy { city }.max()
         pivoted.columns().drop(1).forEach {
             it.kind() shouldBe ColumnKind.Group
             val group = it.asGroup()

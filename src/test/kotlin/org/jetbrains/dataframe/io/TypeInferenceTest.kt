@@ -12,7 +12,7 @@ class TypeInferenceTest {
     private class B : A()
 
     @Test
-    fun `private subtypes`(){
+    fun `private subtypes`() {
         val df = dataFrameOf("col")(B(), B())
         df["col"].type() shouldBe getType<A>()
     }

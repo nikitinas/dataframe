@@ -61,7 +61,6 @@ class ReadTests {
         empty.ncol() shouldBe 1
     }
 
-
     @Test
     fun `read big decimal`() {
         val data = """

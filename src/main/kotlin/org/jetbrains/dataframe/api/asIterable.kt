@@ -2,6 +2,6 @@ package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.DataColumn
 
-fun <T> DataColumn<T>.asIterable() = values()
+public fun <T> DataColumn<T>.asIterable(): Iterable<T> = values()
 
-fun <T> DataFrame<T>.asIterable() = rows()
+public fun <T> DataFrame<T>.asIterable(): Iterable<DataRow<T>> = rows()

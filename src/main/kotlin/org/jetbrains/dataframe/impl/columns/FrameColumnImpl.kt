@@ -1,25 +1,32 @@
 package org.jetbrains.dataframe.impl.columns
 
 import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.columns.ColumnWithPath
-import org.jetbrains.dataframe.columns.FrameColumn
+import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.hasNulls
-import org.jetbrains.dataframe.createTypeWithArgument
 import org.jetbrains.dataframe.internal.schema.DataFrameSchema
 import org.jetbrains.dataframe.internal.schema.extractSchema
 import org.jetbrains.dataframe.internal.schema.intersectSchemas
-import java.lang.UnsupportedOperationException
 import kotlin.reflect.KType
 import kotlin.reflect.full.withNullability
 
-internal open class FrameColumnImpl<T> constructor(name: String, values: List<DataFrame<T>?>, hasNulls: Boolean?, columnSchema: Lazy<DataFrameSchema>? = null, distinct: Lazy<Set<DataFrame<T>?>>? = null)
-    : DataColumnImpl<DataFrame<T>?>(values, name, createTypeWithArgument<AnyFrame>()
-    .withNullability(hasNulls ?: values.any { it == null }), distinct),
+internal open class FrameColumnImpl<T> constructor(
+    name: String,
+    values: List<DataFrame<T>?>,
+    hasNulls: Boolean?,
+    columnSchema: Lazy<DataFrameSchema>? = null,
+    distinct: Lazy<Set<DataFrame<T>?>>? = null
+) :
+    DataColumnImpl<DataFrame<T>?>(
+        values,
+        name,
+        createTypeWithArgument<AnyFrame>()
+            .withNullability(hasNulls ?: values.any { it == null }),
+        distinct
+    ),
     FrameColumnInternal<T> {
 
-    constructor(name: String, df: DataFrame<T>, startIndices: Sequence<Int>, emptyToNull: Boolean) : this(name, df.splitByIndices(startIndices, emptyToNull).toList(), hasNulls = if(emptyToNull) null else false)
+    constructor(name: String, df: DataFrame<T>, startIndices: Sequence<Int>, emptyToNull: Boolean) : this(name, df.splitByIndices(startIndices, emptyToNull).toList(), hasNulls = if (emptyToNull) null else false)
 
     override fun rename(newName: String) = FrameColumnImpl(newName, values, hasNulls, schema, distinct)
 
@@ -39,10 +46,16 @@ internal open class FrameColumnImpl<T> constructor(name: String, values: List<Da
         values.mapNotNull { it?.takeIf { it.nrow > 0 }?.extractSchema() }.intersectSchemas()
     }
 
-    override fun forceResolve() = ResolvingFrameColumn(name, values, hasNulls,schema, distinct)
+    override fun forceResolve() = ResolvingFrameColumn(name, values, hasNulls, schema, distinct)
 }
 
-internal class ResolvingFrameColumn<T>(name: String, values: List<DataFrame<T>?>, hasNulls: Boolean, columnSchema: Lazy<DataFrameSchema>, distinct: Lazy<Set<DataFrame<T>?>>):
+internal class ResolvingFrameColumn<T>(
+    name: String,
+    values: List<DataFrame<T>?>,
+    hasNulls: Boolean,
+    columnSchema: Lazy<DataFrameSchema>,
+    distinct: Lazy<Set<DataFrame<T>?>>
+) :
     FrameColumnImpl<T>(name, values, hasNulls, columnSchema, distinct) {
 
     override fun resolveSingle(context: ColumnResolutionContext) = context.df.getColumn<DataFrame<T>>(name, context.unresolvedColumnsPolicy)?.addPath(context.df)

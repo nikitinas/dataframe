@@ -3,12 +3,14 @@ package org.jetbrains.dataframe.io
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.RowColFormatter
 import org.jetbrains.dataframe.images.Image
-import org.jetbrains.dataframe.impl.truncate
 import org.jetbrains.dataframe.size
 
 internal val tooltipLimit = 1000
 
-fun <T> DataFrame<T>.toHTML(configuration: DisplayConfiguration = DisplayConfiguration.DEFAULT, getFooter: (DataFrame<T>)->String = {"DataFrame [${it.size}]" }) = buildString {
+public fun <T> DataFrame<T>.toHTML(
+    configuration: DisplayConfiguration = DisplayConfiguration.DEFAULT,
+    getFooter: (DataFrame<T>) -> String = { "DataFrame [${it.size}]" }
+): String = buildString {
     append("<html><body>")
     append("<table><tr>")
     columns().forEach {
@@ -22,7 +24,7 @@ fun <T> DataFrame<T>.toHTML(configuration: DisplayConfiguration = DisplayConfigu
             val cellVal = row[col]
             val tooltip: String
             val content: String
-            when(cellVal) {
+            when (cellVal) {
                 is Image -> {
                     tooltip = cellVal.url
                     content = "<img src=\"${cellVal.url}\"/>"
@@ -39,19 +41,19 @@ fun <T> DataFrame<T>.toHTML(configuration: DisplayConfiguration = DisplayConfigu
     }
     append("</table>")
     val footer = getFooter(this@toHTML)
-    if (limit < nrow())
+    if (limit < nrow()) {
         append("<p>... $footer</p>")
-    else append("<p>$footer</p>")
+    } else append("<p>$footer</p>")
     append("</body></html>")
 }
 
-data class DisplayConfiguration(
+public data class DisplayConfiguration(
     var rowsLimit: Int = 20,
     var cellContentLimit: Int = 40,
     var cellFormatter: RowColFormatter<*>? = null,
 ) {
-    companion object {
-        val DEFAULT = DisplayConfiguration()
+    public companion object {
+        public val DEFAULT: DisplayConfiguration = DisplayConfiguration()
     }
 }
 

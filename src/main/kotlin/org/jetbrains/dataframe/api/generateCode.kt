@@ -1,17 +1,20 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
 import org.jetbrains.dataframe.internal.schema.extractSchema
 
-inline fun <reified T> DataFrame<T>.generateCode(fields: Boolean = true, extensionProperties: Boolean = true): String {
-    val name = if(T::class.isAbstract)
+public inline fun <reified T> DataFrame<T>.generateCode(fields: Boolean = true, extensionProperties: Boolean = true): String {
+    val name = if (T::class.isAbstract) {
         T::class.simpleName!!
-    else "DataEntry"
+    } else "DataEntry"
     return generateCode(name, fields, extensionProperties)
 }
 
-fun <T> DataFrame<T>.generateCode(markerName: String, fields: Boolean = true, extensionProperties: Boolean = true): String {
+public fun <T> DataFrame<T>.generateCode(
+    markerName: String,
+    fields: Boolean = true,
+    extensionProperties: Boolean = true
+): String {
     val codeGen = CodeGenerator.create()
     return codeGen.generate(
         extractSchema(),
@@ -22,6 +25,13 @@ fun <T> DataFrame<T>.generateCode(markerName: String, fields: Boolean = true, ex
     ).code.declarations
 }
 
-inline fun <reified T> DataFrame<T>.generateInterfaces() = generateCode(true, false)
+public inline fun <reified T> DataFrame<T>.generateInterfaces(): String = generateCode(
+    fields = true,
+    extensionProperties = false
+)
 
-fun <T> DataFrame<T>.generateInterfaces(markerName: String) = generateCode(markerName, true, false)
+public fun <T> DataFrame<T>.generateInterfaces(markerName: String): String = generateCode(
+    markerName,
+    fields = true,
+    extensionProperties = false
+)

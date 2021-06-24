@@ -1,27 +1,18 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.columns.AnyColumn
-import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.columns.ValueColumn
-import org.jetbrains.dataframe.columns.name
-import org.jetbrains.dataframe.columns.size
-import org.jetbrains.dataframe.columns.type
-import org.jetbrains.dataframe.columns.values
+import org.jetbrains.dataframe.columns.*
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.createDataCollector
 
-fun <T> DataFrame<T>.explode() = explode { all() }
+public fun <T> DataFrame<T>.explode(): DataFrame<T> = explode { all() }
 
-fun <T> DataFrame<T>.explode(vararg columns: Column) = explode { columns.toColumns() }
-fun <T> DataFrame<T>.explode(vararg columns: String) = explode { columns.toColumns() }
+public fun <T> DataFrame<T>.explode(vararg columns: Column): DataFrame<T> = explode { columns.toColumns() }
+public fun <T> DataFrame<T>.explode(vararg columns: String): DataFrame<T> = explode { columns.toColumns() }
 
-fun <T> DataFrame<T>.explode(dropEmpty: Boolean = true, selector: ColumnsSelector<T, *>): DataFrame<T> {
-
+public fun <T> DataFrame<T>.explode(dropEmpty: Boolean = true, selector: ColumnsSelector<T, *>): DataFrame<T> {
     val columns = getColumnsWithPaths(selector)
 
     val rowExpandSizes = indices.map { row ->
@@ -31,7 +22,7 @@ fun <T> DataFrame<T>.explode(dropEmpty: Boolean = true, selector: ColumnsSelecto
                 is Many<*> -> value.size
                 else -> 1
             }
-            if(!dropEmpty && n == 0) 1
+            if (!dropEmpty && n == 0) 1
             else n
         }
     }
@@ -39,7 +30,6 @@ fun <T> DataFrame<T>.explode(dropEmpty: Boolean = true, selector: ColumnsSelecto
     val outputRowsCount = rowExpandSizes.sum()
 
     fun splitIntoRows(df: AnyFrame, data: Set<ColumnPath>): AnyFrame {
-
         val newColumns: List<AnyColumn> = df.columns().map { col ->
 
             val isTargetColumn = data.contains(listOf(col.name))
@@ -73,7 +63,7 @@ fun <T> DataFrame<T>.explode(dropEmpty: Boolean = true, selector: ColumnsSelecto
                             val list = valueToList(value, splitStrings = false)
                             val expectedSize = rowExpandSizes[rowIndex]
                             list.forEach { collector.add(it) }
-                            repeat (expectedSize - list.size) {
+                            repeat(expectedSize - list.size) {
                                 collector.add(null)
                             }
                         }

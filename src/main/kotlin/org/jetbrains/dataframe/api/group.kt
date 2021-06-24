@@ -5,14 +5,14 @@ import org.jetbrains.dataframe.impl.columns.toColumnSet
 import org.jetbrains.dataframe.impl.columns.toColumns
 import kotlin.reflect.KProperty
 
-data class GroupClause<T, C>(val df: DataFrame<T>, val selector: ColumnsSelector<T, C>)
+public data class GroupClause<T, C>(val df: DataFrame<T>, val selector: ColumnsSelector<T, C>)
 
-fun <T> DataFrame<T>.group(cols: Iterable<Column>) = group { cols.toColumnSet() }
-fun <T> DataFrame<T>.group(vararg cols: KProperty<*>) = group { cols.toColumns() }
-fun <T> DataFrame<T>.group(vararg cols: String) = group { cols.toColumns() }
-fun <T> DataFrame<T>.group(vararg cols: Column) = group { cols.toColumns() }
-fun <T, C> DataFrame<T>.group(cols: ColumnsSelector<T, C>) = GroupClause(this, cols)
+public fun <T> DataFrame<T>.group(cols: Iterable<Column>): GroupClause<T, Any?> = group { cols.toColumnSet() }
+public fun <T> DataFrame<T>.group(vararg cols: KProperty<*>): GroupClause<T, Any?> = group { cols.toColumns() }
+public fun <T> DataFrame<T>.group(vararg cols: String): GroupClause<T, Any?> = group { cols.toColumns() }
+public fun <T> DataFrame<T>.group(vararg cols: Column): GroupClause<T, Any?> = group { cols.toColumns() }
+public fun <T, C> DataFrame<T>.group(cols: ColumnsSelector<T, C>): GroupClause<T, C> = GroupClause(this, cols)
 
-fun <T, C> GroupClause<T, C>.into(groupName: String) = into { groupName }
-fun <T, C> GroupClause<T, C>.into(groupRef: MapColumnReference) = df.move(selector).under(groupRef)
-fun <T, C> GroupClause<T, C>.into(groupName: ColumnWithPath<C>.(ColumnWithPath<C>) -> String) = df.move(selector).under { path(groupName(it, it))}
+public fun <T, C> GroupClause<T, C>.into(groupName: String): DataFrame<T> = into { groupName }
+public fun <T, C> GroupClause<T, C>.into(groupRef: MapColumnReference): DataFrame<T> = df.move(selector).under(groupRef)
+public fun <T, C> GroupClause<T, C>.into(groupName: ColumnWithPath<C>.(ColumnWithPath<C>) -> String): DataFrame<T> = df.move(selector).under { path(groupName(it, it)) }

@@ -3,19 +3,18 @@ package org.jetbrains.dataframe.columns
 import org.jetbrains.dataframe.impl.columns.ColumnAccessorImpl
 import kotlin.reflect.KProperty
 
-interface ColumnAccessor<out T> : ColumnReference<T> {
+public interface ColumnAccessor<out T> : ColumnReference<T> {
 
-    operator fun getValue(thisRef: Any?, property: KProperty<*>) = this
+    public operator fun getValue(thisRef: Any?, property: KProperty<*>): ColumnAccessor<T> = this
 
-    operator fun <C> get(column: ColumnReference<C>): ColumnAccessor<C>
+    public operator fun <C> get(column: ColumnReference<C>): ColumnAccessor<C>
 
     override fun rename(newName: String): ColumnAccessor<T>
 
-    fun <C> changeType() = this as ColumnAccessor<C>
+    public fun <C> changeType(): ColumnAccessor<C> = this as ColumnAccessor<C>
 }
 
-fun <T> ColumnReference<T>.toAccessor(): ColumnAccessor<T> = when(this){
+public fun <T> ColumnReference<T>.toAccessor(): ColumnAccessor<T> = when (this) {
     is ColumnAccessor<T> -> this
     else -> ColumnAccessorImpl(path())
 }
-

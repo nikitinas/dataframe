@@ -14,7 +14,7 @@ class BuildTests {
     val persons = listOf(Person("Alice", 15), Person("Bob", 20))
 
     @Test
-    fun test1(){
+    fun test1() {
         val df = persons.toDataFrameByProperties()
         df.ncol() shouldBe 2
         df.nrow() shouldBe 2
@@ -23,7 +23,7 @@ class BuildTests {
     }
 
     @Test
-    fun test2(){
+    fun test2() {
         val df = persons.toDataFrame {
             "name" { name }
             "year of birth" { 2020 - age }
@@ -35,14 +35,14 @@ class BuildTests {
     }
 
     @Test
-    fun test3(){
+    fun test3() {
         val list = persons + listOf(null)
         val df = list.toDataFrameByProperties()
         df.nrow() shouldBe 3
     }
 
     @Test(expected = IllegalArgumentException::class)
-    fun `unequal column sizes`(){
-        persons.toDataFrameByProperties() + column("id", listOf(1,2,3))
+    fun `unequal column sizes`() {
+        persons.toDataFrameByProperties() + column("id", listOf(1, 2, 3))
     }
 }

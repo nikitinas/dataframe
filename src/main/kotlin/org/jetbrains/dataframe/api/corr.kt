@@ -3,9 +3,9 @@ package org.jetbrains.dataframe
 import org.jetbrains.dataframe.columns.name
 import org.jetbrains.dataframe.columns.values
 
-fun <T> DataFrame<T>.corr() = corr { numberCols().withoutNulls() }
+public fun <T> DataFrame<T>.corr(): AnyFrame = corr { numberCols().withoutNulls() }
 
-fun <T, C: Number> DataFrame<T>.corr(selector: ColumnsSelector<T, C>): AnyFrame {
+public fun <T, C : Number> DataFrame<T>.corr(selector: ColumnsSelector<T, C>): AnyFrame {
     val cols = this[selector]
     val len = nrow()
 

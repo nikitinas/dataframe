@@ -2,6 +2,6 @@ package org.jetbrains.dataframe.jupyter
 
 import org.jetbrains.dataframe.io.DisplayConfiguration
 
-class JupyterConfiguration {
-    val display: DisplayConfiguration = DisplayConfiguration()
+public class JupyterConfiguration {
+    public val display: DisplayConfiguration = DisplayConfiguration()
 }

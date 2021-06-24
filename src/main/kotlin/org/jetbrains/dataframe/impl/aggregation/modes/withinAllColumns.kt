@@ -1,12 +1,8 @@
 package org.jetbrains.dataframe.impl.aggregation.modes
 
-import org.jetbrains.dataframe.DataFrameAggregations
-import org.jetbrains.dataframe.GroupByAggregations
-import org.jetbrains.dataframe.GroupedPivotAggregations
-import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregator
-import org.jetbrains.dataframe.ColumnsSelector
-import org.jetbrains.dataframe.DataFrame
+import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.impl.aggregation.aggregateInternal
+import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregator
 import org.jetbrains.dataframe.impl.emptyPath
 import org.jetbrains.dataframe.impl.pathOf
 
@@ -38,19 +34,21 @@ internal fun <T, C, R> GroupByAggregations<T>.aggregateAll(
     name: String?
 ): DataFrame<T> = aggregateInternal {
     val cols = df[columns]
-    if (cols.size == 1)
+    if (cols.size == 1) {
         yield(pathOf(name ?: cols[0].name()), aggregator.aggregate(cols[0]))
-    else
+    } else {
         yield(pathOf(name ?: aggregator.name), aggregator.aggregate(cols))
+    }
 }
 
 internal fun <T, C, R> GroupedPivotAggregations<T>.aggregateAll(
     aggregator: Aggregator<C, R>,
     columns: ColumnsSelector<T, C>
 ): DataFrame<T> = aggregateInternal {
-        val cols = df[columns]
-        if (cols.size == 1)
-            yield(emptyPath(), aggregator.aggregate(cols[0]))
-        else
-            yield(emptyPath(), aggregator.aggregate(cols))
+    val cols = df[columns]
+    if (cols.size == 1) {
+        yield(emptyPath(), aggregator.aggregate(cols[0]))
+    } else {
+        yield(emptyPath(), aggregator.aggregate(cols))
     }
+}

@@ -28,7 +28,7 @@ abstract class AbstractReplTest {
     }
 
     @JvmName("execTyped")
-    inline fun <reified T: Any> exec(code: Code): T {
+    inline fun <reified T : Any> exec(code: Code): T {
         val res = exec(code)
         res.shouldBeInstanceOf<T>()
         return res
@@ -66,8 +66,8 @@ abstract class AbstractReplTest {
             )
             classpathFromClassloader(DependsOn::class.java.classLoader).orEmpty().filter { file ->
                 val name = file.name
-                (name == "main" && file.parentFile.name == "kotlin")
-                        || (file.extension == "jar" && scriptArtifacts.any { name.startsWith(it) })
+                (name == "main" && file.parentFile.name == "kotlin") ||
+                    (file.extension == "jar" && scriptArtifacts.any { name.startsWith(it) })
             }
         }
     }

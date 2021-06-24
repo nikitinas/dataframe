@@ -71,20 +71,18 @@ class MatchSchemeTests {
     val typed = df.typed<DataRecord>()
 
     @Test
-    fun `marker is reused`(){
-
+    fun `marker is reused`() {
         val codeGen = ReplCodeGenerator.create()
         codeGen.process(DataRecord::class)
-        codeGen.process(typed, :: typed).hasConverter shouldBe false
-        val generated = codeGen.process(df, :: df)
+        codeGen.process(typed, ::typed).hasConverter shouldBe false
+        val generated = codeGen.process(df, ::df)
         generated.declarations.split("\n").size shouldBe 1
     }
 
-    val modified = df.add("new"){4}
+    val modified = df.add("new") { 4 }
 
     @Test
-    fun `marker is implemented`(){
-
+    fun `marker is implemented`() {
         val codeGen = ReplCodeGenerator.create()
         codeGen.process(DataRecord::class)
         val generated = codeGen.process(modified, ::modified)
@@ -92,7 +90,7 @@ class MatchSchemeTests {
     }
 
     @Test
-    fun printSchema(){
+    fun printSchema() {
         val res = df.generateCode(false, true)
         println(res)
     }

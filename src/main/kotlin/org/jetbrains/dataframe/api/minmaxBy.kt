@@ -1,17 +1,12 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.values
-
-
-fun <C: Comparable<C>> Sequence<C?>.indexOfMin(): Int {
-
+public fun <C : Comparable<C>> Sequence<C?>.indexOfMin(): Int {
     val iterator = iterator()
     if (!iterator.hasNext()) return -1
     var value = iterator.next()
     var index = 0
-    while(value == null) {
-        if(!iterator.hasNext()) return -1
+    while (value == null) {
+        if (!iterator.hasNext()) return -1
         value = iterator.next()
         index++
     }
@@ -29,14 +24,13 @@ fun <C: Comparable<C>> Sequence<C?>.indexOfMin(): Int {
     return minIndex
 }
 
-fun <C: Comparable<C>> Sequence<C?>.indexOfMax(): Int {
-
+public fun <C : Comparable<C>> Sequence<C?>.indexOfMax(): Int {
     val iterator = iterator()
     if (!iterator.hasNext()) return -1
     var value = iterator.next()
     var index = 0
-    while(value == null) {
-        if(!iterator.hasNext()) return -1
+    while (value == null) {
+        if (!iterator.hasNext()) return -1
         value = iterator.next()
         index++
     }

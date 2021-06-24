@@ -10,6 +10,10 @@ import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.columns.type
 import org.jetbrains.dataframe.getType
+import java.net.URL
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.isSubtypeOf
@@ -51,6 +55,10 @@ internal fun renderType(type: KType): String{
             val argument = type.arguments[0].type?.let { renderType(it) } ?: "*"
             "Many<${argument}>"
         }
+        URL::class -> "URL"
+        LocalDateTime::class -> "DateTime"
+        LocalDate::class -> "Date"
+        LocalTime::class -> "Time"
         else -> {
             val result = type.toString()
             if (result.startsWith("kotlin.")) result.substring(7)

@@ -41,8 +41,17 @@ fun DataColumn<String?>.tryParse(): DataColumn<*> {
     return DataColumn.create(name(), parsedValues, Parsers[parserId].type.withNullability(hasNulls))
 }
 
-fun <T> DataFrame<T>.parse() = parse { this@parse.dfsOf() }
+fun <T> DataFrame<T>.parse(): DataFrame<T> = parse { this@parse.dfs() }
 
-fun <T> DataFrame<T>.parse(columns: ColumnsSelector<T, String?>) = convert(columns).to { it.tryParse() }
+fun <T> DataFrame<T>.parse(columns: ColumnsSelector<T, Any?>): DataFrame<T> = convert(columns).to {
+    when {
+        it.isFrameColumn() -> it.castTo<AnyFrame?>().parse()
+        it.typeClass == String::class -> it.castTo<String?>().tryParse()
+        else -> it
+    }
+}
 
 fun DataColumn<String?>.parse() = tryParse().also { if(it.typeClass == String::class) error("Can't guess column type")}
+
+@JvmName("tryParseAnyFrame?")
+fun DataColumn<AnyFrame?>.parse(): DataColumn<AnyFrame?> = map { it?.parse() }

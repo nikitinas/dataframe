@@ -137,6 +137,8 @@ fun AnyColumn.asFrame(): AnyFrame = when (this) {
 
 fun AnyColumn.isGroup(): Boolean = kind() == ColumnKind.Group
 
+fun AnyColumn.isFrameColumn(): Boolean = kind() == ColumnKind.Frame
+
 fun <T> column() = ColumnDelegate<T>()
 
 fun columnGroup() = column<AnyRow>()

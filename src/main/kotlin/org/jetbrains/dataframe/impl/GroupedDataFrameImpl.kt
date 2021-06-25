@@ -37,4 +37,6 @@ internal class GroupedDataFrameImpl<T, G>(val df: DataFrame<T>, override val gro
     override fun <R> aggregateInternal(body: AggregateBodyInternal<G, R>) = aggregate(body as GroupByAggregateBody<G>)
 
     override fun pivot(columns: ColumnsSelector<G, *>): GroupedPivotAggregations<G> = GroupedPivotImpl(this, columns)
+
+    override fun into(name: String): DataFrame<G> = if(name == groups.name()) df.typed() else df.rename(groups).into(name).typed()
 }

@@ -3,7 +3,7 @@ package org.jetbrains.dataframe
 import org.jetbrains.dataframe.aggregation.Aggregatable
 import org.jetbrains.dataframe.aggregation.AggregateColumnsSelector
 import org.jetbrains.dataframe.aggregation.GroupByAggregateBody
-import org.jetbrains.dataframe.impl.aggregation.GroupedPivotImpl
+import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.impl.aggregation.aggregateInternal
 import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregators
 import org.jetbrains.dataframe.impl.aggregation.columnValues
@@ -35,6 +35,9 @@ interface GroupByAggregations<out T> : Aggregatable<T> {
     fun values(columns: AggregateColumnsSelector<T, *>): DataFrame<T> = aggregateInternal { columnValues(columns) { it.toList()}  }
 
     fun values(): DataFrame<T> = values(remainingColumnsSelector())
+
+    fun into(columnName: String = GroupedDataFrame.columnForGroupedData.name()): DataFrame<T>
+    fun into(columnRef: ColumnReference<AnyFrame?>): DataFrame<T> = into(columnRef.name())
 
     // region min
 

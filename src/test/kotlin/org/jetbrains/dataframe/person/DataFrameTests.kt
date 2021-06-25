@@ -1893,4 +1893,11 @@ class DataFrameTests : BaseTest() {
         val sorted = typed.groupBy { name }.sortByKey()
         sorted.plain().name.values() shouldBe typed.name.distinct().values().sorted()
     }
+
+    @Test
+    fun `infer ColumnGroup type in convert with`() {
+        val g by frameColumn()
+        val grouped = typed.groupBy { name }.into(g).convert(g).with { it.first() }
+        grouped[g.name()].kind() shouldBe ColumnKind.Group
+    }
 }

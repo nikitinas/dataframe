@@ -25,6 +25,8 @@ interface GroupedDataFrame<out T, out G>: GroupByAggregations<G> {
     fun <R> mapGroups(transform: Selector<DataFrame<G>?, DataFrame<R>?>): GroupedDataFrame<T, R>
 
     data class Entry<T, G>(val key: DataRow<T>, val group: DataFrame<G>?)
+
+    companion object {}
 }
 
 internal fun <T, G> DataFrame<T>.toGrouped(groupedColumnName: String): GroupedDataFrame<T, G> =

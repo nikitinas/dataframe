@@ -18,7 +18,7 @@ fun <T> DataFrame<T>.groupBy(vararg cols: String) = groupBy { cols.toColumns() }
 fun <T> DataFrame<T>.groupBy(vararg cols: Column) = groupBy { cols.toColumns() }
 fun <T> DataFrame<T>.groupBy(cols: ColumnsSelector<T, *>): GroupedDataFrame<T, T> {
 
-    val nameGenerator = nameGenerator(columnForGroupedData.name())
+    val nameGenerator = nameGenerator(GroupedDataFrame.columnForGroupedData.name())
     val keyColumns = get(cols).map {
         val currentName = it.name()
         val uniqueName = nameGenerator.addUnique(currentName)
@@ -49,7 +49,7 @@ fun <T> DataFrame<T>.groupBy(cols: ColumnsSelector<T, *>): GroupedDataFrame<T, T
         start
     }
 
-    val groupedColumn = DataColumn.create(columnForGroupedData.name(), sorted, startIndices, false)
+    val groupedColumn = DataColumn.create(GroupedDataFrame.columnForGroupedData.name(), sorted, startIndices, false)
 
     val df = keyColumnsDf + groupedColumn
     return GroupedDataFrameImpl(df, groupedColumn, cols)
@@ -58,4 +58,4 @@ fun <T> DataFrame<T>.groupBy(cols: ColumnsSelector<T, *>): GroupedDataFrame<T, T
 inline fun <T, reified R> DataFrame<T>.groupByNew(name: String = "key", noinline expression: RowSelector<T, R?>) =
     add(name, expression).groupBy(name)
 
-internal val columnForGroupedData by column<AnyFrame>("group")
+val GroupedDataFrame.Companion.columnForGroupedData by column<AnyFrame>("group")

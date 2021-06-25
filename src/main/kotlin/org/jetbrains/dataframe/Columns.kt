@@ -113,8 +113,11 @@ fun <T, R> computeValues(df: DataFrame<T>, expression: AddExpression<T, R>): Pai
 
 inline fun <T, reified R> DataFrameBase<T>.newColumn(name: String = "", noinline expression: AddExpression<T, R>): DataColumn<R> {
     val (nullable, values) = computeValues(this as DataFrame<T>, expression)
-    if (R::class == DataFrame::class) return DataColumn.frames(name, values as List<AnyFrame?>) as DataColumn<R>
-    return column(name, values, nullable)
+    return when(R::class){
+        DataFrame::class -> DataColumn.frames(name, values as List<AnyFrame?>) as DataColumn<R>
+        DataRow::class -> DataColumn.create(name, (values as List<AnyRow>).union()) as DataColumn<R>
+        else -> column(name, values, nullable)
+    }
 }
 
 fun <T, R> DataFrameBase<T>.newGuessColumn(name: String, expression: AddExpression<T, R>): DataColumn<R> {

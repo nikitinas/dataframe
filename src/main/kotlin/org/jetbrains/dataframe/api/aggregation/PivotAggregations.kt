@@ -83,7 +83,7 @@ interface PivotAggregations<T> : Aggregatable<T> {
 }
 
 @PublishedApi
-internal fun <T> PivotAggregations<T>.asGrouped() = (this as DataFramePivotImpl<T>).groupBy { none() }
+internal fun <T> PivotAggregations<T>.asGrouped() = groupBy { none() }
 
 // region inlines
 

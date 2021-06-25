@@ -9,6 +9,19 @@ import org.jetbrains.dataframe.impl.columns.typed
 
 typealias GroupKey = List<Any?>
 
+interface GroupedDataRow<out T, out G>: DataRow<T> {
+
+    fun group(): DataFrame<G>
+
+    fun groupOrNull(): DataFrame<G>?
+}
+
+val <T, G> GroupedDataRow<T, G>.group get() = group()
+
+typealias GroupedRowSelector<T, G, R> = GroupedDataRow<T, G>.(GroupedDataRow<T, G>) -> R
+
+typealias GroupedRowFilter<T, G> = GroupedRowSelector<T, G, Boolean>
+
 interface GroupedDataFrame<out T, out G>: GroupByAggregations<G> {
 
     val groups: FrameColumn<G>
@@ -24,9 +37,11 @@ interface GroupedDataFrame<out T, out G>: GroupByAggregations<G> {
 
     fun <R> mapGroups(transform: Selector<DataFrame<G>?, DataFrame<R>?>): GroupedDataFrame<T, R>
 
+    fun filter(predicate: GroupedRowFilter<T, G>): GroupedDataFrame<T, G>
+
     data class Entry<T, G>(val key: DataRow<T>, val group: DataFrame<G>?)
 
-    companion object {}
+    companion object
 }
 
 internal fun <T, G> DataFrame<T>.toGrouped(groupedColumnName: String): GroupedDataFrame<T, G> =

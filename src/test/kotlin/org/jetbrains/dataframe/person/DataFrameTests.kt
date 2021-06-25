@@ -19,6 +19,7 @@ import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.typed
 import org.jetbrains.dataframe.impl.trackColumnAccess
+import org.jetbrains.dataframe.io.print
 import org.jetbrains.dataframe.io.renderValueForStdout
 import org.junit.Test
 import java.math.BigDecimal
@@ -1899,5 +1900,12 @@ class DataFrameTests : BaseTest() {
         val g by frameColumn()
         val grouped = typed.groupBy { name }.into(g).convert(g).with { it.first() }
         grouped[g.name()].kind() shouldBe ColumnKind.Group
+    }
+
+    @Test
+    fun `filter GroupedDataFrame by groups`() {
+        val grouped = typed.groupBy { name }
+        val filtered = grouped.filter { group.nrow() > 2 }.ungroup()
+        filtered shouldBe typed.filter { name == "Mark" }
     }
 }

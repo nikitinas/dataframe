@@ -8,6 +8,7 @@ import org.jetbrains.dataframe.impl.aggregation.AggregatableInternal
 import org.jetbrains.dataframe.impl.aggregation.GroupedPivotImpl
 import org.jetbrains.dataframe.impl.aggregation.receivers.AggregateBodyInternal
 import org.jetbrains.dataframe.impl.columns.toColumns
+import org.jetbrains.dataframe.impl.groupBy.GroupedDataRowImpl
 
 internal class GroupedDataFrameImpl<T, G>(val df: DataFrame<T>, override val groups: FrameColumn<G>, private val keyColumnsInGroups: ColumnsSelector<G, *>): GroupedDataFrame<T, G>,
     AggregatableInternal<G> {
@@ -39,4 +40,12 @@ internal class GroupedDataFrameImpl<T, G>(val df: DataFrame<T>, override val gro
     override fun pivot(columns: ColumnsSelector<G, *>): GroupedPivotAggregations<G> = GroupedPivotImpl(this, columns)
 
     override fun into(name: String): DataFrame<G> = if(name == groups.name()) df.typed() else df.rename(groups).into(name).typed()
+
+    override fun filter(predicate: GroupedRowFilter<T, G>): GroupedDataFrame<T, G> {
+        val indices = (0 until df.nrow()).filter {
+            val row = GroupedDataRowImpl(df.get(it), groups)
+            predicate(row, row)
+        }
+        return df[indices].toGrouped(groups)
+    }
 }

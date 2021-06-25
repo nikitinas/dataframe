@@ -23,18 +23,18 @@ table.dataframe .formatColumnNames {
     color: #737373;
     font-weight: bold;
 }
-table.dataframe td:hover .formatCurlyBrackets {
+table.dataframe td:hover > .formatted .formatCurlyBrackets {
     color: black;
 }
-table.dataframe td:hover .formatSquareBrackets {
+table.dataframe td:hover > .formatted .formatSquareBrackets {
     color: black;
 }
-table.dataframe td:hover .formatColumnNames {
+table.dataframe td:hover > .formatted .formatColumnNames {
     color: black;
 }
-table.dataframe td:hover .formatNull {
+table.dataframe td:hover > .formatted .formatNull {
     color: black;
 }
-table.dataframe td:hover .formatComma {
+table.dataframe td:hover > .formatted .formatComma {
     color: black;
 }

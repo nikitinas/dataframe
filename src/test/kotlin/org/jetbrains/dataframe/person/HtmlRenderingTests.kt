@@ -32,7 +32,7 @@ class HtmlRenderingTests: BaseTest() {
     @Test
    // @Ignore
     fun test() {
-        typed.group{ name and age }.into("group").browse()
+        typed.groupBy{ name }.plain().browse()
     }
 
     @Test

@@ -1875,4 +1875,16 @@ class DataFrameTests : BaseTest() {
         val updated = typed.update { city }.where { it == "Dubai" }.with(longestCityName)
         updated.valuesNotNull { stringCols() }.maxByOrNull { it.length } shouldBe longestCityName
     }
+
+    @Test
+    fun `sort by expression`() {
+        val sorted = typed.sortBy { expr { name.length }.desc }
+        sorted.name.values() shouldBe typed.name.values().sortedByDescending { it.length }
+    }
+
+    @Test
+    fun `grouped sort by count`() {
+        val sorted = typed.groupBy { name }.sortByCountDesc()
+        sorted.plain().name.values() shouldBe typed.rows().groupBy{ it.name }.toList().sortedByDescending { it.second.size }.map{ it.first }
+    }
 }

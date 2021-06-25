@@ -159,6 +159,10 @@ interface SelectReceiver<out T> : DataFrameBase<T> {
 
 }
 
+inline fun <T, reified R> SelectReceiver<T>.expr(name: String = "", noinline expression: AddExpression<T, R>) = newColumn(name, expression)
+
+fun <T, R> SelectReceiver<T>.exprGuess(name: String = "", expression: AddExpression<T, R>) = newGuessColumn(name, expression)
+
 internal fun <T,C> ColumnsSelector<T, C>.filter(predicate: (ColumnWithPath<C>) -> Boolean): ColumnsSelector<T, C> = { this@filter(it, it).filter(predicate) }
 //internal fun Columns<*>.filter(predicate: (AnyCol) -> Boolean) = transform { it.filter { predicate(it.data) } }
 internal fun Columns<*>.colsInternal(predicate: (AnyCol) -> Boolean) = transform { it.flatMap { it.children().filter { predicate(it.data) } } }

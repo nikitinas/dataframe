@@ -48,7 +48,7 @@ internal fun tableJs(columns: List<ColumnDataForJs>, id: Int): String {
                 when(it) {
                     is String -> "\"" + it.escapeForHtmlInJs() + "\""
                     is DataFrameReference -> {
-                        val text = "<b>DataFrame [${it.size}]</b>"
+                        val text = "<b>DataFrame ${it.size}</b>"
                         "{ frameId: ${it.dfId}, value: \"$text\" }"
                     }
                     else -> error("Unsupported value type: ${it.javaClass}")
@@ -135,7 +135,7 @@ fun <T> DataFrame<T>.toHTML(
 
     val footer = getFooter(this)
     val bodyFooter = if (limit < nrow())
-        "<p>... $footer</p>"
+        "<p>... showing only top $limit of ${nrow()} rows</p><p>$footer</p>"
     else "<p>$footer</p>"
 
     val tableHtml = toHtmlData(configuration, limit)

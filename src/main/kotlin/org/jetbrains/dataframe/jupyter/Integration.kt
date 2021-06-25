@@ -5,7 +5,10 @@ import org.jetbrains.dataframe.annotations.DataSchema
 import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
+import org.jetbrains.dataframe.impl.renderShort
+import org.jetbrains.dataframe.impl.renderType
 import org.jetbrains.dataframe.internal.codeGen.CodeWithConverter
+import org.jetbrains.dataframe.io.HtmlData
 import org.jetbrains.dataframe.io.initHtml
 import org.jetbrains.dataframe.io.toHTML
 import org.jetbrains.dataframe.stubs.DataFrameToListNamedStub
@@ -31,12 +34,15 @@ internal class Integration : JupyterIntegration(){
             display(initHtml().toJupyter())
         }
 
-        render<AnyFrame> { it.toHTML(config.display).toJupyter() }
-        render<FormattedFrame<*>> { it.toHTML(config.display).toJupyter() }
-        render<AnyRow> { it.toDataFrame().toHTML(config.display) { "DataRow [${it.ncol}]" }.toJupyter() }
-        render<ColumnGroup<*>> { it.df }
-        render<AnyCol> { dataFrameOf(listOf(it)).toHTML(config.display) { "DataColumn [${it.nrow()}]" }.toJupyter() }
-        render<GroupedDataFrame<*, *>> { it.plain() }
+        render<HtmlData> { it.toJupyter() }
+        render<AnyFrame> { it.toHTML(config.display) { "DataFrame: ${it.size}"} }
+        render<FormattedFrame<*>> { it.toHTML(config.display) }
+        render<AnyRow> { it.toDataFrame().toHTML(config.display) { "DataRow: ${it.ncol} values" } }
+        render<ColumnGroup<*>> { col -> col.df.toHTML(config.display) { (col as AnyCol).renderShort() } }
+        render<AnyCol> { dataFrameOf(listOf(it)).toHTML(config.display) { it.column(0).renderShort() } }
+        render<GroupedDataFrame<*, *>> { it.plain().toHTML(config.display){ "GroupedDataFrame: ${it.size}" } }
+        render<PivotAggregations<*>> { it.frames().toDataFrame().toHTML(config.display) { "Pivot: ${it.ncol} columns" } }
+        render<GroupedPivotAggregations<*>> { it.frames().toHTML(config.display) { "GroupedPivot: ${it.size}" } }
 
         import("org.jetbrains.dataframe.*")
         import("org.jetbrains.dataframe.annotations.*")

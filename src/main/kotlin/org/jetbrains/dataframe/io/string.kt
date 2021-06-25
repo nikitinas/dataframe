@@ -43,10 +43,19 @@ internal fun AnyFrame.renderToString(limit: Int = 20, truncate: Int = 40): Strin
 internal val valueToStringLimitDefault = 1000
 internal val valueToStringLimitForRowAsTable = 50
 
+internal fun AnyRow.getVisibleValues(): List<Pair<String, Any?>> {
+    fun Any?.skip(): Boolean = when(this){
+        null -> true
+        is Many<*> -> this.isEmpty()
+        is AnyRow -> values().all { it.skip() }
+        else -> false
+    }
+    return owner.columns().map { it.name() to it[index] }.filter { !it.second.skip() }
+}
+
 internal fun AnyRow.renderToString(): String{
-    fun Any?.skip() = this == null || (this is Many<*> && this.isEmpty())
-    val values = owner.columns().map {it.name() to it[index]}.filter{ !it.second.skip() }
-    if(values.isEmpty()) return ""
+    val values = getVisibleValues()
+    if(values.isEmpty()) return "{ }"
     return values
         .map { "${it.first}:${renderValueForStdout(it.second)}" }.joinToString(prefix = "{ ", postfix = " }")
 }

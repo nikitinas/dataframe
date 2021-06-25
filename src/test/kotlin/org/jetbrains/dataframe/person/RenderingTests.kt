@@ -9,6 +9,9 @@ import org.jetbrains.dataframe.FormattingDSL.gray
 import org.jetbrains.dataframe.FormattingDSL.green
 import org.jetbrains.dataframe.FormattingDSL.red
 import org.jetbrains.dataframe.io.DisplayConfiguration
+import org.jetbrains.dataframe.io.formatter
+import org.jetbrains.dataframe.io.renderToString
+import org.jsoup.Jsoup
 import org.junit.Ignore
 import org.junit.Test
 
@@ -65,5 +68,16 @@ class RenderingTests: BaseTest() {
 
         for(row in 1 until typed.nrow() step 2)
             formatter(typed[row], typed.age)!!.attributes() shouldBe listOf("background-color" to linearGradient(typed[row].age.toDouble(), 20.0, green, 80.0, red).encode())
+    }
+
+    @Test
+    fun `empty row with nested empty row`() {
+        val df = dataFrameOf("a", "b", "c")(null, null, null)
+        val grouped = df.group("a","b").into("d").group("c", "d").into("e")[0]
+
+        val formatted = formatter.format(grouped, Int.MAX_VALUE)
+        Jsoup.parse(formatted).text() shouldBe "{ }"
+
+        grouped.renderToString() shouldBe "{ }"
     }
 }

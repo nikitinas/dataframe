@@ -222,8 +222,7 @@ internal class DataFrameFormatter(val formattedClass: String, val nullClass: Str
         when (value) {
             null -> appendCss("null", nullClass)
             is AnyRow -> {
-                fun Any?.skip() = this == null || (this is Many<*> && this.isEmpty())
-                val values = value.owner.columns().map { it.name() to it[value.index] }.filter { !it.second.skip() }
+                val values = value.getVisibleValues()
                 if (values.isEmpty()) appendCss("{ }", nullClass)
                 else {
                     appendCss("{ ", curlyBracketsClass)

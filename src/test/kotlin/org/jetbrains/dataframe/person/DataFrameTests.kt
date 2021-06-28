@@ -19,7 +19,6 @@ import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.isTable
 import org.jetbrains.dataframe.impl.columns.typed
 import org.jetbrains.dataframe.impl.trackColumnAccess
-import org.jetbrains.dataframe.io.print
 import org.jetbrains.dataframe.io.renderValueForStdout
 import org.junit.Test
 import java.math.BigDecimal
@@ -1067,7 +1066,7 @@ class DataFrameTests : BaseTest() {
     fun splitRows() {
         val selected = typed.select { name and city }
         val nested = selected.mergeRows(dropNulls = false) { city }
-        val mergedCity by columnList<String?>("city")
+        val mergedCity by columnMany<String?>("city")
         val res = nested.split { mergedCity }.intoRows()
         res.sortBy { name } shouldBe selected.sortBy { name }
     }
@@ -1100,7 +1099,7 @@ class DataFrameTests : BaseTest() {
     @Test
     fun splitCol() {
         val merged = typed.merge { age and city and weight }.into("info")
-        val info by columnList<Any>()
+        val info by columnMany<Any>()
         val res = merged.split(info).into("age", "city", "weight")
         res shouldBe typed
     }
@@ -1109,7 +1108,7 @@ class DataFrameTests : BaseTest() {
     fun splitStringCol() {
         val merged = typed.merge { age and city and weight }.by(" - ").into("info")
         val info by column<String>()
-        val res = merged.split { info }.by("-", trim = true).into("age", "city", "weight")
+        val res = merged.split { info }.by("-").into("age", "city", "weight")
         val expected = typed.update { age and city and weight }.with { it.toString() }
         res shouldBe expected
     }
@@ -1150,14 +1149,14 @@ class DataFrameTests : BaseTest() {
             }
         }.toList()
 
-        val res = typed.split { age }.by { digits(it) }.into { "digit$it" }
+        val res = typed.split { age }.with { digits(it) }.into { "digit$it" }
     }
 
     @Test
     fun splitStringCol3() {
         val merged = typed.merge { age and city and weight }.by(", ").into("info")
         val info by column<String?>()
-        val res = merged.split { info }.by(",").into("age", "city", "weight")
+        val res = merged.split(info).by(",").into("age", "city", "weight")
         val expected = typed.update { age and city and weight }.with { it.toString() }
         res shouldBe expected
     }
@@ -1167,13 +1166,8 @@ class DataFrameTests : BaseTest() {
         val merged = typed.merge { name and city }.by(", ").into("nameAndCity")
             .merge { age and weight }.into("info")
         val nameAndCity by column<String>()
-        val info by columnList<Number?>()
-        val res = merged.split { nameAndCity and info }.intoMany { src, _ ->
-            when (src.name) {
-                "nameAndCity" -> listOf("name", "city")
-                else -> listOf("age", "weight")
-            }
-        }
+        val info by columnMany<Number?>()
+        val res = merged.split { nameAndCity }.into("name", "city").split(info).into("age", "weight")
         val expected = typed.update { city }.with { it.toString() }.move { city }.to(1)
         res shouldBe expected
     }
@@ -1907,5 +1901,11 @@ class DataFrameTests : BaseTest() {
         val grouped = typed.groupBy { name }
         val filtered = grouped.filter { group.nrow() > 2 }.ungroup()
         filtered shouldBe typed.filter { name == "Mark" }
+    }
+
+    @Test
+    fun `split inplace`() {
+        val splitted = typed.split { name }.with { it.toCharArray().asIterable() }.inplace()
+        splitted["name"] shouldBe typed.name.map { it.toCharArray().asIterable().toMany() }
     }
 }

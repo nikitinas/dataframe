@@ -42,8 +42,12 @@ data class ConvertClause<T, C>(val df: DataFrame<T>, val selector: ColumnsSelect
 
 fun <T> ConvertClause<T, *>.to(type: KType): DataFrame<T> = to { it.convertTo(type) }
 
-inline fun <T, C, reified R> ConvertClause<T, C>.with(crossinline rowConverter: DataRow<T>.(C) -> R) =
-    to { col -> df.newColumn(col.name()) { rowConverter(it, it[col]) } }
+inline fun <T, C, reified R> ConvertClause<T, C>.with(noinline rowConverter: DataRow<T>.(C) -> R) =
+    with(getType<R>(), rowConverter)
+
+@PublishedApi
+internal fun <T, C, R> ConvertClause<T, C>.with(type: KType, rowConverter: DataRow<T>.(C) -> R) =
+    to { col -> df.newColumn(type, col.name()) { rowConverter(it, it[col]) } }
 
 fun <T, C> ConvertClause<T, C>.to(columnConverter: (DataColumn<C>) -> AnyCol): DataFrame<T> =
     df.replace(selector).with { columnConverter(it) }

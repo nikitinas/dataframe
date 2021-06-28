@@ -11,6 +11,8 @@ import org.jetbrains.dataframe.DataFrameBase
 import org.jetbrains.dataframe.DataRow
 import org.jetbrains.dataframe.DataRowBase
 import org.jetbrains.dataframe.Many
+import org.jetbrains.dataframe.Split
+import org.jetbrains.dataframe.SplitClause
 import org.jetbrains.dataframe.add
 import org.jetbrains.dataframe.after
 import org.jetbrains.dataframe.annotations.DataSchema
@@ -18,11 +20,10 @@ import org.jetbrains.dataframe.max
 import org.jetbrains.dataframe.sumOf
 import org.jetbrains.dataframe.append
 import org.jetbrains.dataframe.at
-import org.jetbrains.dataframe.by
 import org.jetbrains.dataframe.dfsOf
 import org.jetbrains.dataframe.column
 import org.jetbrains.dataframe.columnGroup
-import org.jetbrains.dataframe.columnList
+import org.jetbrains.dataframe.columnMany
 import org.jetbrains.dataframe.columnOf
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
@@ -52,7 +53,6 @@ import org.jetbrains.dataframe.index
 import org.jetbrains.dataframe.insert
 import org.jetbrains.dataframe.into
 import org.jetbrains.dataframe.intoRows
-import org.jetbrains.dataframe.inward
 import org.jetbrains.dataframe.isEmpty
 import org.jetbrains.dataframe.isGroup
 import org.jetbrains.dataframe.join
@@ -275,7 +275,7 @@ class DataFrameTreeTests : BaseTest() {
     fun splitRows() {
         val selected = typed2.select { nameAndCity }
         val nested = selected.mergeRows(dropNulls = false) { nameAndCity.city }
-        val mergedCity by columnList<String?>("city")
+        val mergedCity by columnMany<String?>("city")
         val res = nested.split { nameAndCity[mergedCity] }.intoRows()
         val expected = selected.sortBy { nameAndCity.name }
         val actual = res.sortBy { nameAndCity.name }
@@ -365,7 +365,7 @@ class DataFrameTreeTests : BaseTest() {
     @Test
     fun splitCols() {
 
-        val split = typed2.split { nameAndCity.name }.by { it.toCharArray().toList() }.inward().into { "char$it" }
+        val split = typed2.split { nameAndCity.name }.with { it.toCharArray().toList() }.inward { "char$it" }
         split.columnNames() shouldBe typed2.columnNames()
         split.nrow() shouldBe typed2.nrow()
         split.nameAndCity.columnNames() shouldBe typed2.nameAndCity.columnNames()
@@ -379,7 +379,7 @@ class DataFrameTreeTests : BaseTest() {
     @Test
     fun `split into rows`() {
 
-        val split = typed2.split { nameAndCity.name }.by { it.toCharArray().toList() }.intoRows()
+        val split = typed2.split { nameAndCity.name }.with { it.toCharArray().toList() }.intoRows()
         val merged = split.mergeRows { nameAndCity.name }
         val joined = merged.update { nameAndCity.name }.cast<List<Char>>().with { it.joinToString("") }
         joined shouldBe typed2
@@ -497,7 +497,17 @@ class DataFrameTreeTests : BaseTest() {
         val groupCol = grouped.groups.name()
         val plain = grouped.plain()
         val res =
-            plain.split(groupCol).intoRows().remove { it[groupCol]["city"] }.ungroup(groupCol).sortBy { name and age }
+            plain.split(grouped.groups).intoRows().remove { it[groupCol]["city"] }.ungroup(groupCol).sortBy { name and age }
+        res shouldBe typed.sortBy { name and age }.moveToLeft { city }
+    }
+
+    @Test
+    fun splitFrameColumnIntoColumns() {
+        val grouped = typed.groupBy { city }
+        val groupCol = grouped.groups.name()
+        val plain = grouped.plain()
+        val res =
+            plain.split(grouped.groups).intoRows().remove { it[groupCol]["city"] }.ungroup(groupCol).sortBy { name and age }
         res shouldBe typed.sortBy { name and age }.moveToLeft { city }
     }
 

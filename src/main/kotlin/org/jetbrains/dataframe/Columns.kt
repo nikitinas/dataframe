@@ -112,11 +112,16 @@ fun <T, R> computeValues(df: DataFrame<T>, expression: AddExpression<T, R>): Pai
 }
 
 inline fun <T, reified R> DataFrameBase<T>.newColumn(name: String = "", noinline expression: AddExpression<T, R>): DataColumn<R> {
+    return newColumn(getType<R>(), name, expression)
+}
+
+@PublishedApi
+internal fun <T, R> DataFrameBase<T>.newColumn(type: KType, name: String = "", expression: AddExpression<T, R>): DataColumn<R> {
     val (nullable, values) = computeValues(this as DataFrame<T>, expression)
-    return when(R::class){
+    return when(type.classifier){
         DataFrame::class -> DataColumn.frames(name, values as List<AnyFrame?>) as DataColumn<R>
         DataRow::class -> DataColumn.create(name, (values as List<AnyRow>).union()) as DataColumn<R>
-        else -> column(name, values, nullable)
+        else -> DataColumn.create(name, values, type.withNullability(nullable))
     }
 }
 
@@ -150,13 +155,13 @@ fun columnGroup(parent: MapColumnReference) = column<AnyRow>(parent)
 
 fun frameColumn() = column<AnyFrame>()
 
-fun <T> columnList() = column<List<T>>()
+fun <T> columnMany() = column<Many<T>>()
 
 fun <T> columnGroup(name: String) = column<DataRow<T>>(name)
 
 fun <T> frameColumn(name: String) = column<DataFrame<T>>(name)
 
-fun <T> columnList(name: String) = column<List<T>>(name)
+fun <T> columnMany(name: String) = column<Many<T>>(name)
 
 fun <T> column(name: String): ColumnAccessor<T> = ColumnAccessorImpl(name)
 

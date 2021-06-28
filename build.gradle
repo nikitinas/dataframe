@@ -13,7 +13,7 @@ plugins {
     id "org.jetbrains.kotlin.jvm" version "$kotlin_version"
     id "org.jetbrains.dataframe.generator"
     id "ru.ileasile.kotlin.publisher" version "$libsPublisherVersion"
-    id("org.jmailen.kotlinter") version "3.4.5"
+    id("org.jmailen.kotlinter") version "$ktlint_version"
 }
 
 apply plugin: "org.jetbrains.kotlin.jupyter.api"
@@ -129,8 +129,7 @@ compileKotlin {
 }
 
 lintKotlinMain {
-    exclude '**/*keywords*/**', ''
-//    exclude '**/*Keywords.kt'
+    exclude '**/*keywords*/**'
 }
 
 lintKotlinTest.enabled = false

@@ -1,9 +1,11 @@
 package org.jetbrains.dataframe
 
+import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.impl.GroupedDataFrameImpl
 import org.jetbrains.dataframe.impl.columns.asTable
 import org.jetbrains.dataframe.impl.columns.isTable
+import org.jetbrains.dataframe.impl.columns.typed
 
 public typealias GroupKey = List<Any?>
 
@@ -27,6 +29,9 @@ public interface GroupedDataFrame<out T, out G> : GroupByAggregations<G> {
 
 internal fun <T, G> DataFrame<T>.toGrouped(groupedColumnName: String): GroupedDataFrame<T, G> =
     GroupedDataFrameImpl(this, this[groupedColumnName] as FrameColumn<G>) { none() }
+
+internal fun <T, G> DataFrame<T>.toGrouped(groupedColumn: ColumnReference<DataFrame<G>?>): GroupedDataFrame<T, G> =
+    GroupedDataFrameImpl(this, frameColumn(groupedColumn.name()).typed()) { none() }
 
 internal fun <T> DataFrame<T>.toGrouped(): GroupedDataFrame<T, T> {
     val groupCol = columns().single { it.isTable() }.asTable() as FrameColumn<T>

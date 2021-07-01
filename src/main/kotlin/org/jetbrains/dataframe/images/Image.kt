@@ -1,3 +1,3 @@
 package org.jetbrains.dataframe.images
 
-data class Image(val url: String)
+public data class Image(val url: String)

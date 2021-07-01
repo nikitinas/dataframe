@@ -6,14 +6,16 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.dataframe.columns.ValueColumn
 import org.junit.Test
 
-class JupyterCodegenTests: AbstractReplTest() {
+class JupyterCodegenTests : AbstractReplTest() {
     @Test
     fun `codegen for enumerated frames`() {
         @Language("kts")
-        val res1 = exec("""
+        val res1 = exec(
+            """
             val names = (0..2).map { it.toString() }
             val df = dataFrameOf(names)(1, 2, 3)
-        """.trimIndent())
+            """.trimIndent()
+        )
         res1 shouldBe Unit
 
         val res2 = execWrapped("$WRAP(df.`1`)")

@@ -1,18 +1,15 @@
 package org.jetbrains.dataframe.impl
 
-import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.AnyFrame
 import org.jetbrains.dataframe.ColumnKind
 import org.jetbrains.dataframe.Many
-import org.jetbrains.dataframe.internal.schema.ColumnSchema
-import org.jetbrains.dataframe.internal.schema.DataFrameSchema
+import org.jetbrains.dataframe.columns.AnyCol
+import org.jetbrains.dataframe.columns.type
 import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.asTable
-import org.jetbrains.dataframe.columns.type
-import org.jetbrains.dataframe.getType
-import kotlin.reflect.KClass
+import org.jetbrains.dataframe.internal.schema.ColumnSchema
+import org.jetbrains.dataframe.internal.schema.DataFrameSchema
 import kotlin.reflect.KType
-import kotlin.reflect.full.isSubtypeOf
 
 internal fun String.truncate(limit: Int) = if (limit in 1 until length) {
     if (limit < 4) substring(0, limit)
@@ -22,13 +19,13 @@ internal fun String.truncate(limit: Int) = if (limit in 1 until length) {
 }
 
 internal fun renderSchema(df: AnyFrame): String =
-        df.columns().map { "${it.name()}:${renderType(it)}"}.joinToString()
+    df.columns().map { "${it.name()}:${renderType(it)}" }.joinToString()
 
 internal fun renderSchema(schema: DataFrameSchema): String =
-    schema.columns.map { "${it.key}:${renderType(it.value)}"}.joinToString()
+    schema.columns.map { "${it.key}:${renderType(it.value)}" }.joinToString()
 
 internal fun renderType(column: ColumnSchema) =
-    when(column) {
+    when (column) {
         is ColumnSchema.Value -> {
             renderType(column.type)
         }
@@ -41,15 +38,15 @@ internal fun renderType(column: ColumnSchema) =
         else -> throw NotImplementedError()
     }
 
-internal fun renderType(type: KType): String{
-    return when(type.classifier){
+internal fun renderType(type: KType): String {
+    return when (type.classifier) {
         List::class -> {
             val argument = type.arguments[0].type?.let { renderType(it) } ?: "*"
-            "List<${argument}>"
+            "List<$argument>"
         }
         Many::class -> {
             val argument = type.arguments[0].type?.let { renderType(it) } ?: "*"
-            "Many<${argument}>"
+            "Many<$argument>"
         }
         else -> {
             val result = type.toString()
@@ -60,7 +57,7 @@ internal fun renderType(type: KType): String{
 }
 
 internal fun renderType(column: AnyCol) =
-    when(column.kind()) {
+    when (column.kind()) {
         ColumnKind.Value -> renderType(column.type)
         ColumnKind.Frame -> {
             val table = column.asTable()
@@ -71,5 +68,3 @@ internal fun renderType(column: AnyCol) =
             "{${renderSchema(group.df)}}"
         }
     }
-
-

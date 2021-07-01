@@ -1,23 +1,17 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.hasNulls
-import org.jetbrains.dataframe.columns.size
-import org.jetbrains.dataframe.columns.typeClass
-import org.jetbrains.dataframe.columns.values
+import org.jetbrains.dataframe.columns.*
 import kotlin.reflect.full.withNullability
 
-val DataFrame.Companion.parser: DataFrameParserOptions get() = Parsers
+public val DataFrame.Companion.parser: DataFrameParserOptions get() = Parsers
 
-interface DataFrameParserOptions {
+public interface DataFrameParserOptions {
 
-    fun addDateTimeFormat(format: String)
-
+    public fun addDateTimeFormat(format: String)
 }
 
-fun DataColumn<String?>.tryParse(): DataColumn<*> {
-
-    if(allNulls()) return this
+public fun DataColumn<String?>.tryParse(): DataColumn<*> {
+    if (allNulls()) return this
 
     var parserId = 0
     val parsedValues = mutableListOf<Any?>()
@@ -41,8 +35,8 @@ fun DataColumn<String?>.tryParse(): DataColumn<*> {
     return DataColumn.create(name(), parsedValues, Parsers[parserId].type.withNullability(hasNulls))
 }
 
-fun <T> DataFrame<T>.parse() = parse { this@parse.dfsOf() }
+public fun <T> DataFrame<T>.parse(): DataFrame<T> = parse { this@parse.dfsOf() }
 
-fun <T> DataFrame<T>.parse(columns: ColumnsSelector<T, String?>) = convert(columns).to { it.tryParse() }
+public fun <T> DataFrame<T>.parse(columns: ColumnsSelector<T, String?>): DataFrame<T> = convert(columns).to { it.tryParse() }
 
-fun DataColumn<String?>.parse() = tryParse().also { if(it.typeClass == String::class) error("Can't guess column type")}
+public fun DataColumn<String?>.parse(): DataColumn<*> = tryParse().also { if (it.typeClass == String::class) error("Can't guess column type") }

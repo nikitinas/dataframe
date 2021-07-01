@@ -1,3 +1,3 @@
 package org.jetbrains.dataframe
 
-fun <T> DataFrame<T>.copy() = columns().asDataFrame<T>()
+public fun <T> DataFrame<T>.copy(): DataFrame<T> = columns().asDataFrame<T>()

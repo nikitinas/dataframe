@@ -1,28 +1,15 @@
 package org.jetbrains.dataframe.internal.codeGen
 
 import io.kotest.matchers.shouldBe
-import org.jetbrains.dataframe.AnyRow
-import org.jetbrains.dataframe.DataFrameBase
-import org.jetbrains.dataframe.DataRow
-import org.jetbrains.dataframe.DataRowBase
-import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.dataFrameOf
-import org.jetbrains.dataframe.dropNulls
-import org.jetbrains.dataframe.impl.codeGen.CodeGenerator
-import org.jetbrains.dataframe.impl.codeGen.InterfaceGenerationMode
-import org.jetbrains.dataframe.impl.codeGen.ReplCodeGenerator
-import org.jetbrains.dataframe.impl.codeGen.ReplCodeGeneratorImpl
-import org.jetbrains.dataframe.impl.codeGen.generate
+import org.jetbrains.dataframe.columns.DataColumn
+import org.jetbrains.dataframe.impl.codeGen.*
 import org.jetbrains.dataframe.internal.schema.extractSchema
-import org.jetbrains.dataframe.move
 import org.jetbrains.dataframe.person.BaseTest
-import org.jetbrains.dataframe.person.DataFrameTests
-import org.jetbrains.dataframe.under
 import org.junit.Test
-import kotlin.reflect.full.memberProperties
 
-class CodeGenerationTests : BaseTest(){
+class CodeGenerationTests : BaseTest() {
 
     val personClassName = Person::class.qualifiedName!!
 
@@ -47,14 +34,13 @@ class CodeGenerationTests : BaseTest(){
 
     @Test
     fun `generate marker interface`() {
-
         val codeGen = ReplCodeGenerator.create()
         val generated = codeGen.process(df, ::df)
         val typeName = ReplCodeGeneratorImpl.markerInterfacePrefix
         val expectedDeclaration = """
             @DataSchema(isOpen = false)
             interface $typeName
-            """.trimIndent() + "\n" + expectedProperties(typeName, typeName)
+        """.trimIndent() + "\n" + expectedProperties(typeName, typeName)
 
         val expectedConverter = "it.typed<$typeName>()"
 
@@ -78,7 +64,7 @@ class CodeGenerationTests : BaseTest(){
         val expectedDeclaration = """
             @DataSchema(isOpen = false)
             interface $typeName
-            """.trimIndent() + "\n" + expectedProperties(typeName, typeName)
+        """.trimIndent() + "\n" + expectedProperties(typeName, typeName)
 
         val expectedConverter = "it.typed<$typeName>()"
 
@@ -100,7 +86,7 @@ class CodeGenerationTests : BaseTest(){
             val $dfRowName<$type1>.city: kotlin.String? @JvmName("${type1}_city") get() = this["city"] as kotlin.String?
             val $dfName<$type1>.name: $dataCol<kotlin.String> @JvmName("${type1}_name") get() = this["name"] as $dataCol<kotlin.String>
             val $dfRowName<$type1>.name: kotlin.String @JvmName("${type1}_name") get() = this["name"] as kotlin.String
-            """.trimIndent()
+        """.trimIndent()
 
         val declaration2 = """
             @DataSchema(isOpen = false)
@@ -111,7 +97,7 @@ class CodeGenerationTests : BaseTest(){
             val $dfRowName<$type2>.nameAndCity: $dataRow<$type1> @JvmName("${type2}_nameAndCity") get() = this["nameAndCity"] as $dataRow<$type1>
             val $dfName<$type2>.weight: $dataCol<kotlin.Int?> @JvmName("${type2}_weight") get() = this["weight"] as $dataCol<kotlin.Int?>
             val $dfRowName<$type2>.weight: kotlin.Int? @JvmName("${type2}_weight") get() = this["weight"] as kotlin.Int?
-            """.trimIndent()
+        """.trimIndent()
 
         val expectedConverter = "it.typed<$type2>()"
 
@@ -121,7 +107,6 @@ class CodeGenerationTests : BaseTest(){
 
     @Test
     fun `generate extension properties`() {
-
         val personClass = (Person::class).qualifiedName!!
         val expected = """
             @DataSchema
@@ -133,7 +118,7 @@ class CodeGenerationTests : BaseTest(){
     }
 
     @Test
-    fun `frame to markers`(){
+    fun `frame to markers`() {
         val f = SchemaProcessor.create("Temp")
         val marker = f.process(df.extractSchema(), true)
         marker.isOpen shouldBe true
@@ -160,18 +145,18 @@ class CodeGenerationTests : BaseTest(){
     }
 
     @Test
-    fun `empty interface with properties`(){
+    fun `empty interface with properties`() {
         val codeGen = CodeGenerator.create()
         val code = codeGen.generate(df.extractSchema(), "Person", false, true, true).code.declarations
         val expected = """
             @DataSchema
             interface Person
-            """.trimIndent() + "\n" + expectedProperties("Person", "Person")
+        """.trimIndent() + "\n" + expectedProperties("Person", "Person")
         code shouldBe expected
     }
 
     @Test
-    fun `interface with fields`(){
+    fun `interface with fields`() {
         val repl = CodeGenerator.create()
         val code = repl.generate(typed.extractSchema(), "DataType", true, false, false).code.declarations
         code shouldBe """
@@ -186,12 +171,12 @@ class CodeGenerationTests : BaseTest(){
     }
 
     @Test
-    fun `column starts with number`(){
-        val df = dataFrameOf("1a", "-b", "?c")(1,2,3)
+    fun `column starts with number`() {
+        val df = dataFrameOf("1a", "-b", "?c")(1, 2, 3)
         val repl = CodeGenerator.create()
         val declarations = repl.generate(df.extractSchema(), "DataType", false, true, false).code.declarations
         df.columnNames().forEach {
-            val matches = "`${it}`".toRegex().findAll(declarations).toList()
+            val matches = "`$it`".toRegex().findAll(declarations).toList()
             matches.size shouldBe 2
         }
     }

@@ -1,14 +1,9 @@
 package org.jetbrains.dataframe.impl.aggregation.modes
 
-import org.jetbrains.dataframe.DataFrameAggregations
-import org.jetbrains.dataframe.GroupByAggregations
-import org.jetbrains.dataframe.GroupedPivotAggregations
-import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregator
-import org.jetbrains.dataframe.DataFrame
-import org.jetbrains.dataframe.RowSelector
+import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.getType
 import org.jetbrains.dataframe.impl.aggregation.aggregateInternal
+import org.jetbrains.dataframe.impl.aggregation.aggregators.Aggregator
 import org.jetbrains.dataframe.impl.emptyPath
 import org.jetbrains.dataframe.impl.pathOf
 
@@ -16,13 +11,13 @@ import org.jetbrains.dataframe.impl.pathOf
 internal inline fun <C, reified V, R> Aggregator<V, R>.aggregateOf(
     values: Iterable<C>,
     noinline transform: (C) -> V
-) = aggregate(values.asSequence().map(transform).asIterable(), V::class)
+): R? = aggregate(values.asSequence().map(transform).asIterable(), V::class)
 
 @PublishedApi
 internal inline fun <T, reified C, R> Aggregator<*, R>.aggregateOf(
     frame: DataFrame<T>,
     crossinline expression: RowSelector<T, C>
-) = (this as Aggregator<C, R>).aggregateOf(frame.rows()) { expression(it, it) } // TODO: inline
+): R? = (this as Aggregator<C, R>).aggregateOf(frame.rows()) { expression(it, it) } // TODO: inline
 
 @PublishedApi
 internal inline fun <T, reified C, R> Aggregator<*, R>.of(

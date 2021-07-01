@@ -1,14 +1,8 @@
 package org.jetbrains.dataframe.benchmarks
 
-import org.jetbrains.dataframe.DataFrame
-import org.jetbrains.dataframe.DataFrameBase
-import org.jetbrains.dataframe.DataRowBase
+import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.filter
-import org.jetbrains.dataframe.filterFast
 import org.jetbrains.dataframe.io.read
-import org.jetbrains.dataframe.neq
-import org.jetbrains.dataframe.typed
 import org.junit.Ignore
 import org.junit.Test
 import kotlin.system.measureTimeMillis

@@ -12,17 +12,15 @@ import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.emptyPath
 import kotlin.reflect.KType
 
-fun <T> DataFrame<T>.pivot(columns: ColumnsSelector<T, *>): PivotAggregations<T> = DataFramePivotImpl(this, columns)
-fun <T> DataFrame<T>.pivot(vararg columns: String) = pivot { columns.toColumns() }
-fun <T> DataFrame<T>.pivot(vararg columns: Column) = pivot { columns.toColumns() }
+public fun <T> DataFrame<T>.pivot(columns: ColumnsSelector<T, *>): PivotAggregations<T> = DataFramePivotImpl(this, columns)
+public fun <T> DataFrame<T>.pivot(vararg columns: String): PivotAggregations<T> = pivot { columns.toColumns() }
+public fun <T> DataFrame<T>.pivot(vararg columns: Column): PivotAggregations<T> = pivot { columns.toColumns() }
 
-fun <T, P: GroupedPivotAggregations<T>> P.withGrouping(group: MapColumnReference) = withGrouping(group.path()) as P
-fun <T, P: GroupedPivotAggregations<T>> P.withGrouping(groupName: String) = withGrouping(listOf(groupName)) as P
-
+public fun <T, P : GroupedPivotAggregations<T>> P.withGrouping(group: MapColumnReference): P = withGrouping(group.path()) as P
+public fun <T, P : GroupedPivotAggregations<T>> P.withGrouping(groupName: String): P = withGrouping(listOf(groupName)) as P
 
 internal class AggregatedPivot<T>(private val df: DataFrame<T>, internal var aggregator: GroupByReceiverImpl<T>) :
     DataFrame<T> by df
-
 
 internal fun <T, R> aggregatePivot(
     aggregator: AggregateReceiverInternal<T>,
@@ -32,7 +30,6 @@ internal fun <T, R> aggregatePivot(
     default: Any? = null,
     body: PivotAggregateBody<T, R>
 ) {
-
     aggregator.df.groupBy(columns).forEach { key, group ->
 
         val keyValue = key.values()
@@ -55,23 +52,28 @@ internal fun <T, R> aggregatePivot(
     }
 }
 
-typealias AggregateBody<T, R> = AggregateReceiver<T>.(AggregateReceiver<T>) -> R
+public typealias AggregateBody<T, R> = AggregateReceiver<T>.(AggregateReceiver<T>) -> R
 
-typealias PivotAggregateBody<T, R> = PivotReceiver<T>.(PivotReceiver<T>) -> R
+public typealias PivotAggregateBody<T, R> = PivotReceiver<T>.(PivotReceiver<T>) -> R
 
-data class ValueWithName(val value: Any?, val name: String)
+public data class ValueWithName(val value: Any?, val name: String)
 
 @Suppress("DataClassPrivateConstructor")
-data class NamedValue private constructor(val path: ColumnPath, val value: Any?, val type: KType?, var default: Any?, val guessType: Boolean = false) {
-    companion object {
-        fun create(path: ColumnPath, value: Any?, type: KType?, defaultValue: Any?, guessType: Boolean = false): NamedValue = when(value){
+public data class NamedValue private constructor(
+    val path: ColumnPath,
+    val value: Any?,
+    val type: KType?,
+    var default: Any?,
+    val guessType: Boolean = false
+) {
+    public companion object {
+        public fun create(path: ColumnPath, value: Any?, type: KType?, defaultValue: Any?, guessType: Boolean = false): NamedValue = when (value) {
             is ValueWithDefault<*> -> create(path, value.value, type, value.default, guessType)
             is ValueWithName -> create(path.replaceLast(value.name), value.value, type, defaultValue, guessType)
             else -> NamedValue(path, value, type, defaultValue, guessType)
         }
-        fun aggregator(builder: GroupByReceiver<*>) = NamedValue(emptyPath(), builder, null, null, false)
+        public fun aggregator(builder: GroupByReceiver<*>): NamedValue = NamedValue(emptyPath(), builder, null, null, false)
     }
 
     val name: String get() = path.last()
 }
-

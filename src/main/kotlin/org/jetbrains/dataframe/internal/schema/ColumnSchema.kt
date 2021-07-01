@@ -1,12 +1,7 @@
 package org.jetbrains.dataframe.internal.schema
 
-import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.ColumnKind
-import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.columns.ValueColumn
-import org.jetbrains.dataframe.columns.hasNulls
-import org.jetbrains.dataframe.columns.type
+import org.jetbrains.dataframe.columns.*
 import org.jetbrains.dataframe.impl.columns.internal
 import kotlin.reflect.KType
 import kotlin.reflect.full.isSubtypeOf
@@ -46,9 +41,9 @@ internal abstract class ColumnSchema {
 
     override fun equals(other: Any?): Boolean {
         val otherType = other as? ColumnSchema ?: return false
-        if(otherType.kind != kind) return false
-        if(otherType.nullable != nullable) return false
-        when(this){
+        if (otherType.kind != kind) return false
+        if (otherType.nullable != nullable) return false
+        when (this) {
             is Value -> return type == (otherType as Value).type
             is Map -> return schema == (otherType as Map).schema
             is Frame -> return schema == (otherType as Frame).schema
@@ -58,7 +53,7 @@ internal abstract class ColumnSchema {
 
     fun compare(other: ColumnSchema): CompareResult {
         if (kind != other.kind) return CompareResult.None
-        if(this === other) return CompareResult.Equals
+        if (this === other) return CompareResult.Equals
         return when (this) {
             is Value -> compare(other as Value)
             is Map -> compare(other as Map)

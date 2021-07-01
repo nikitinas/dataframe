@@ -15,9 +15,8 @@ internal interface ColumnWithParent<out C> : ColumnReference<C> {
     override fun path() = parent?.path()?.plus(name()) ?: listOf(name())
 
     override fun resolveSingle(context: ColumnResolutionContext): ColumnWithPath<C>? {
-
         val parentDef = parent
-        val (targetDf, pathPrefix) = when(parentDef) {
+        val (targetDf, pathPrefix) = when (parentDef) {
             null -> context.df to emptyList()
             else -> {
                 val parentCol = parentDef.resolveSingle(context) ?: return null

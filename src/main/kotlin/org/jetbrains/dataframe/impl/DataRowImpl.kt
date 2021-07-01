@@ -57,4 +57,3 @@ internal open class DataRowImpl<T>(private val index: Int, val owner: DataFrame<
         return if (index < owner.nrow() - 1) owner[index + 1] else null
     }
 }
-

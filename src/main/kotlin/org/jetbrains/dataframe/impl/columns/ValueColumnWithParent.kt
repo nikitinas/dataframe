@@ -1,7 +1,6 @@
 package org.jetbrains.dataframe.impl.columns
 
 import org.jetbrains.dataframe.ColumnResolutionContext
-import org.jetbrains.dataframe.columns.ColumnWithPath
 import org.jetbrains.dataframe.columns.ColumnGroup
 import org.jetbrains.dataframe.columns.ValueColumn
 

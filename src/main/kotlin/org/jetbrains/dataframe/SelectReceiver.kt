@@ -1,178 +1,161 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.columns.AnyCol
-import org.jetbrains.dataframe.columns.BooleanCol
-import org.jetbrains.dataframe.columns.ColumnAccessor
-import org.jetbrains.dataframe.impl.columns.ColumnAccessorImpl
-import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.Columns
-import org.jetbrains.dataframe.columns.ColumnWithPath
-import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.DoubleCol
-import org.jetbrains.dataframe.columns.IntCol
-import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.columns.NumberCol
-import org.jetbrains.dataframe.columns.StringCol
-import org.jetbrains.dataframe.columns.name
-import org.jetbrains.dataframe.columns.renamedReference
-import org.jetbrains.dataframe.impl.columns.ColumnsList
-import org.jetbrains.dataframe.impl.columns.asGroup
-import org.jetbrains.dataframe.impl.columns.toColumnSet
+import org.jetbrains.dataframe.columns.*
+import org.jetbrains.dataframe.impl.columns.*
 import org.jetbrains.dataframe.impl.columns.toColumns
-import org.jetbrains.dataframe.impl.columns.transform
-import org.jetbrains.dataframe.impl.columns.typed
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 
-interface SelectReceiver<out T> : DataFrameBase<T> {
+public interface SelectReceiver<out T> : DataFrameBase<T> {
 
-    fun DataFrameBase<*>.first(numCols: Int) = cols().take(numCols)
+    public fun DataFrameBase<*>.first(numCols: Int): Columns<Any?> = cols().take(numCols)
 
-    fun DataFrameBase<*>.last(numCols: Int) = cols().takeLast(numCols)
+    public fun DataFrameBase<*>.last(numCols: Int): Columns<Any?> = cols().takeLast(numCols)
 
-    fun DataFrameBase<*>.group(name: String) = this.get(name) as ColumnGroup<*>
+    public fun DataFrameBase<*>.group(name: String): ColumnGroup<*> = this.get(name) as ColumnGroup<*>
 
-    fun <C> Columns<*>.cols(firstCol: ColumnReference<C>, vararg otherCols: ColumnReference<C>) = (listOf(firstCol) + otherCols).let { refs ->
+    public fun <C> Columns<*>.cols(firstCol: ColumnReference<C>, vararg otherCols: ColumnReference<C>): Columns<C> = (listOf(firstCol) + otherCols).let { refs ->
         transform { it.flatMap { col -> refs.mapNotNull { col.getChild(it) } } }
     }
 
-    fun Columns<*>.cols(firstCol: String, vararg otherCols: String) = (listOf(firstCol) + otherCols).let { names ->
+    public fun Columns<*>.cols(firstCol: String, vararg otherCols: String): Columns<Any?> = (listOf(firstCol) + otherCols).let { names ->
         transform { it.flatMap { col -> names.mapNotNull { col.getChild(it) } } }
     }
 
-    fun Columns<*>.cols(vararg indices: Int) = transform { it.flatMap { it.children().let { children -> indices.map { children[it]}} } }
-    fun Columns<*>.cols(range: IntRange) = transform { it.flatMap { it.children().subList(range.start, range.endInclusive+1) } }
-    fun Columns<*>.cols(predicate: (AnyCol) -> Boolean = {true}) = colsInternal(predicate)
+    public fun Columns<*>.cols(vararg indices: Int): Columns<Any?> = transform { it.flatMap { it.children().let { children -> indices.map { children[it] } } } }
+    public fun Columns<*>.cols(range: IntRange): Columns<Any?> = transform { it.flatMap { it.children().subList(range.start, range.endInclusive + 1) } }
+    public fun Columns<*>.cols(predicate: (AnyCol) -> Boolean = { true }): Columns<Any?> = colsInternal(predicate)
 
-    fun <C> Columns<C>.dfs(predicate: (ColumnWithPath<*>) -> Boolean) = dfsInternal(predicate)
+    public fun <C> Columns<C>.dfs(predicate: (ColumnWithPath<*>) -> Boolean): Columns<Any?> = dfsInternal(predicate)
 
-    fun DataFrameBase<*>.all(): Columns<*> = ColumnsList(children())
+    public fun DataFrameBase<*>.all(): Columns<*> = ColumnsList(children())
 
-    fun none(): Columns<*> = ColumnsList<Any?>(emptyList())
+    public fun none(): Columns<*> = ColumnsList<Any?>(emptyList())
 
-    fun Columns<*>.dfs() = dfs { !it.isGroup() }
-
-    // excluding current
-    fun DataFrameBase<*>.allAfter(colPath: ColumnPath) = children().let { var take = false; it.filter { if(take) true else { take = colPath == it.path; false} } }
-    fun DataFrameBase<*>.allAfter(colName: String) = allAfter(listOf(colName))
-    fun DataFrameBase<*>.allAfter(column: Column) = allAfter(column.path())
-
-    // including current
-    fun DataFrameBase<*>.allSince(colPath: ColumnPath) = children().let { var take = false; it.filter { if(take) true else { take = colPath == it.path; take} } }
-    fun DataFrameBase<*>.allSince(colName: String) = allSince(listOf(colName))
-    fun DataFrameBase<*>.allSince(column: Column) = allSince(column.path())
+    public fun Columns<*>.dfs(): Columns<Any?> = dfs { !it.isGroup() }
 
     // excluding current
-    fun DataFrameBase<*>.allBefore(colPath: ColumnPath) = children().let { var take = true; it.filter { if(!take) false else { take = colPath != it.path; take} } }
-    fun DataFrameBase<*>.allBefore(colName: String) = allBefore(listOf(colName))
-    fun DataFrameBase<*>.allBefore(column: Column) = allBefore(column.path())
+    public fun DataFrameBase<*>.allAfter(colPath: ColumnPath): Columns<Any?> = children().let { var take = false; it.filter { if (take) true else { take = colPath == it.path; false } } }
+    public fun DataFrameBase<*>.allAfter(colName: String): Columns<Any?> = allAfter(listOf(colName))
+    public fun DataFrameBase<*>.allAfter(column: Column): Columns<Any?> = allAfter(column.path())
 
     // including current
-    fun DataFrameBase<*>.allUntil(colPath: ColumnPath) = children().let { var take = true; it.filter { if(!take) false else { take = colPath != it.path; true} } }
-    fun DataFrameBase<*>.allUntil(colName: String) = allUntil(listOf(colName))
-    fun DataFrameBase<*>.allUntil(column: Column) = allUntil(column.path())
+    public fun DataFrameBase<*>.allSince(colPath: ColumnPath): Columns<Any?> = children().let { var take = false; it.filter { if (take) true else { take = colPath == it.path; take } } }
+    public fun DataFrameBase<*>.allSince(colName: String): Columns<Any?> = allSince(listOf(colName))
+    public fun DataFrameBase<*>.allSince(column: Column): Columns<Any?> = allSince(column.path())
 
+    // excluding current
+    public fun DataFrameBase<*>.allBefore(colPath: ColumnPath): Columns<Any?> = children().let { var take = true; it.filter { if (!take) false else { take = colPath != it.path; take } } }
+    public fun DataFrameBase<*>.allBefore(colName: String): Columns<Any?> = allBefore(listOf(colName))
+    public fun DataFrameBase<*>.allBefore(column: Column): Columns<Any?> = allBefore(column.path())
 
-    fun DataFrameBase<*>.colGroups(filter: (ColumnGroup<*>) -> Boolean = { true }): Columns<AnyRow> = this.columns().filter { it.isGroup() && filter(it.asGroup()) }.map { it.asGroup() }.toColumnSet()
+    // including current
+    public fun DataFrameBase<*>.allUntil(colPath: ColumnPath): Columns<Any?> = children().let { var take = true; it.filter { if (!take) false else { take = colPath != it.path; true } } }
+    public fun DataFrameBase<*>.allUntil(colName: String): Columns<Any?> = allUntil(listOf(colName))
+    public fun DataFrameBase<*>.allUntil(column: Column): Columns<Any?> = allUntil(column.path())
 
-    fun <C> Columns<C>.children(predicate: (AnyCol) -> Boolean = {true} ) = transform { it.flatMap { it.children().filter { predicate(it.data) } } }
+    public fun DataFrameBase<*>.colGroups(filter: (ColumnGroup<*>) -> Boolean = { true }): Columns<AnyRow> = this.columns().filter { it.isGroup() && filter(it.asGroup()) }.map { it.asGroup() }.toColumnSet()
 
-    fun MapColumnReference.children() = transform { it.single().children() }
+    public fun <C> Columns<C>.children(predicate: (AnyCol) -> Boolean = { true }): Columns<Any?> = transform { it.flatMap { it.children().filter { predicate(it.data) } } }
 
-    operator fun <C> List<DataColumn<C>>.get(range: IntRange):Columns<C> = ColumnsList(subList(range.first, range.last + 1))
+    public fun MapColumnReference.children(): Columns<Any?> = transform { it.single().children() }
 
-    operator fun String.invoke() = toColumnDef()
+    public operator fun <C> List<DataColumn<C>>.get(range: IntRange): Columns<C> = ColumnsList(subList(range.first, range.last + 1))
 
-    fun <C> String.cast(): ColumnAccessor<C> = ColumnAccessorImpl(this)
+    public operator fun String.invoke(): ColumnAccessor<Any?> = toColumnDef()
 
-    fun <C> col(property: KProperty<C>) = property.toColumnDef()
+    public fun <C> String.cast(): ColumnAccessor<C> = ColumnAccessorImpl(this)
 
-    fun DataFrameBase<*>.col(index: Int) = column(index)
-    fun Columns<*>.col(index: Int) = transform { it.mapNotNull { it.getChild(index) } }
+    public fun <C> col(property: KProperty<C>): ColumnAccessor<C> = property.toColumnDef()
 
-    fun DataFrameBase<*>.col(colName: String) = get(colName)
-    fun Columns<*>.col(colName: String) = transform { it.mapNotNull { it.getChild(colName) } }
+    public fun DataFrameBase<*>.col(index: Int): DataColumn<*> = column(index)
+    public fun Columns<*>.col(index: Int): Columns<Any?> = transform { it.mapNotNull { it.getChild(index) } }
 
-    operator fun Columns<*>.get(colName: String) = col(colName)
-    operator fun <C> Columns<*>.get(column: ColumnReference<C>) = cols(column)
+    public fun DataFrameBase<*>.col(colName: String): DataColumn<*> = get(colName)
+    public fun Columns<*>.col(colName: String): Columns<Any?> = transform { it.mapNotNull { it.getChild(colName) } }
 
-    fun <C> Columns<C>.drop(n: Int) = transform { it.drop(n) }
-    fun <C> Columns<C>.take(n: Int) = transform { it.take(n) }
-    fun <C> Columns<C>.dropLast(n: Int) = transform { it.dropLast(n) }
-    fun <C> Columns<C>.takeLast(n: Int) = transform { it.takeLast(n) }
-    fun <C> Columns<C>.top() = transform { it.top() }
-    fun <C> Columns<C>.takeWhile(predicate: Predicate<ColumnWithPath<C>>) = transform { it.takeWhile(predicate) }
-    fun <C> Columns<C>.takeLastWhile(predicate: Predicate<ColumnWithPath<C>>) = transform { it.takeLastWhile(predicate) }
-    fun <C> Columns<C>.filter(predicate: Predicate<ColumnWithPath<C>>) = transform { it.filter(predicate) }
+    public operator fun Columns<*>.get(colName: String): Columns<Any?> = col(colName)
+    public operator fun <C> Columns<*>.get(column: ColumnReference<C>): Columns<C> = cols(column)
 
-    fun Columns<*>.numberCols(filter: (NumberCol) -> Boolean = { true }): Columns<Number?> = colsOf(filter)
-    fun Columns<*>.stringCols(filter: (StringCol) -> Boolean = { true }): Columns<String?> = colsOf(filter)
-    fun Columns<*>.intCols(filter: (IntCol) -> Boolean = { true }): Columns<Int?> = colsOf(filter)
-    fun Columns<*>.doubleCols(filter: (DoubleCol) -> Boolean = { true }): Columns<Double?> = colsOf(filter)
-    fun Columns<*>.booleanCols(filter: (BooleanCol) -> Boolean = { true }): Columns<Boolean?> = colsOf(filter)
+    public fun <C> Columns<C>.drop(n: Int): Columns<C> = transform { it.drop(n) }
+    public fun <C> Columns<C>.take(n: Int): Columns<C> = transform { it.take(n) }
+    public fun <C> Columns<C>.dropLast(n: Int): Columns<C> = transform { it.dropLast(n) }
+    public fun <C> Columns<C>.takeLast(n: Int): Columns<C> = transform { it.takeLast(n) }
+    public fun <C> Columns<C>.top(): Columns<C> = transform { it.top() }
+    public fun <C> Columns<C>.takeWhile(predicate: Predicate<ColumnWithPath<C>>): Columns<C> = transform { it.takeWhile(predicate) }
+    public fun <C> Columns<C>.takeLastWhile(predicate: Predicate<ColumnWithPath<C>>): Columns<C> = transform { it.takeLastWhile(predicate) }
+    public fun <C> Columns<C>.filter(predicate: Predicate<ColumnWithPath<C>>): Columns<C> = transform { it.filter(predicate) }
 
-    fun Columns<*>.nameContains(text: CharSequence) = cols { it.name.contains(text) }
-    fun Columns<*>.nameContains(regex: Regex) = cols { it.name.contains(regex) }
-    fun Columns<*>.startsWith(prefix: CharSequence) = cols { it.name.startsWith(prefix)}
-    fun Columns<*>.endsWith(suffix: CharSequence) = cols { it.name.endsWith(suffix)}
+    public fun Columns<*>.numberCols(filter: (NumberCol) -> Boolean = { true }): Columns<Number?> = colsOf(filter)
+    public fun Columns<*>.stringCols(filter: (StringCol) -> Boolean = { true }): Columns<String?> = colsOf(filter)
+    public fun Columns<*>.intCols(filter: (IntCol) -> Boolean = { true }): Columns<Int?> = colsOf(filter)
+    public fun Columns<*>.doubleCols(filter: (DoubleCol) -> Boolean = { true }): Columns<Double?> = colsOf(filter)
+    public fun Columns<*>.booleanCols(filter: (BooleanCol) -> Boolean = { true }): Columns<Boolean?> = colsOf(filter)
 
-    infix fun <C> Columns<C>.and(other: Columns<C>): Columns<C> = ColumnsList(this, other)
+    public fun Columns<*>.nameContains(text: CharSequence): Columns<Any?> = cols { it.name.contains(text) }
+    public fun Columns<*>.nameContains(regex: Regex): Columns<Any?> = cols { it.name.contains(regex) }
+    public fun Columns<*>.startsWith(prefix: CharSequence): Columns<Any?> = cols { it.name.startsWith(prefix) }
+    public fun Columns<*>.endsWith(suffix: CharSequence): Columns<Any?> = cols { it.name.endsWith(suffix) }
 
-    fun <C> Columns<C>.except(vararg other: Columns<*>) = except(other.toColumns())
-    fun <C> Columns<C>.except(vararg other: String) = except(other.toColumns())
+    public infix fun <C> Columns<C>.and(other: Columns<C>): Columns<C> = ColumnsList(this, other)
 
-    fun <C> Columns<C?>.withoutNulls(): Columns<C> = transform { it.filter { !it.hasNulls } } as Columns<C>
+    public fun <C> Columns<C>.except(vararg other: Columns<*>): Columns<*> = except(other.toColumns())
+    public fun <C> Columns<C>.except(vararg other: String): Columns<*> = except(other.toColumns())
 
-    infix fun <C> Columns<C>.except(other: Columns<*>): Columns<*> =
+    public fun <C> Columns<C?>.withoutNulls(): Columns<C> = transform { it.filter { !it.hasNulls } } as Columns<C>
+
+    public infix fun <C> Columns<C>.except(other: Columns<*>): Columns<*> =
         createColumnSet { resolve(it).allColumnsExcept(other.resolve(it)) }
 
-    infix fun <C> Columns<C>.except(selector: ColumnsSelector<T, *>): Columns<C> = except(selector.toColumns()) as Columns<C>
+    public infix fun <C> Columns<C>.except(selector: ColumnsSelector<T, *>): Columns<C> = except(selector.toColumns()) as Columns<C>
 
-    operator fun <C> ColumnSelector<T, C>.invoke() = this(this@SelectReceiver, this@SelectReceiver)
-    operator fun <C> ColumnsSelector<T, C>.invoke() = this(this@SelectReceiver, this@SelectReceiver)
+    public operator fun <C> ColumnSelector<T, C>.invoke(): ColumnReference<C> = this(this@SelectReceiver, this@SelectReceiver)
+    public operator fun <C> ColumnsSelector<T, C>.invoke(): Columns<C> = this(this@SelectReceiver, this@SelectReceiver)
 
-    operator fun <C> ColumnReference<C>.invoke(newName: String) = renamedReference(newName)
-    infix fun <C> ColumnReference<C>.into(newName: String) = named(newName)
-    infix fun <C> ColumnReference<C>.named(newName: String) = renamedReference(newName)
+    public operator fun <C> ColumnReference<C>.invoke(newName: String): ColumnReference<C> = renamedReference(newName)
+    public infix fun <C> ColumnReference<C>.into(newName: String): ColumnReference<C> = named(newName)
+    public infix fun <C> ColumnReference<C>.named(newName: String): ColumnReference<C> = renamedReference(newName)
 
-    infix fun String.and(other: String) = toColumnDef() and other.toColumnDef()
-    infix fun <C> String.and(other: Columns<C>) = toColumnDef() and other
-    infix fun <C> KProperty<C>.and(other: Columns<C>) = toColumnDef() and other
-    infix fun <C> Columns<C>.and(other: KProperty<C>) = this and other.toColumnDef()
-    infix fun <C> KProperty<C>.and(other: KProperty<C>) = toColumnDef() and other.toColumnDef()
-    infix fun <C> Columns<C>.and(other: String) = this and other.toColumnDef()
+    public infix fun String.and(other: String): Columns<Any?> = toColumnDef() and other.toColumnDef()
+    public infix fun <C> String.and(other: Columns<C>): Columns<Any?> = toColumnDef() and other
+    public infix fun <C> KProperty<C>.and(other: Columns<C>): Columns<C> = toColumnDef() and other
+    public infix fun <C> Columns<C>.and(other: KProperty<C>): Columns<C> = this and other.toColumnDef()
+    public infix fun <C> KProperty<C>.and(other: KProperty<C>): Columns<C> = toColumnDef() and other.toColumnDef()
+    public infix fun <C> Columns<C>.and(other: String): Columns<Any?> = this and other.toColumnDef()
 
-    operator fun <C> String.invoke(newColumnExpression: RowSelector<T, C>) = newGuessColumn(this, newColumnExpression)
+    public operator fun <C> String.invoke(newColumnExpression: RowSelector<T, C>): DataColumn<C> = newGuessColumn(this, newColumnExpression)
 
-    infix fun <C> String.by(newColumnExpression: RowSelector<T, C>) = newGuessColumn(this, newColumnExpression)
+    public infix fun <C> String.by(newColumnExpression: RowSelector<T, C>): DataColumn<C> = newGuessColumn(this, newColumnExpression)
 
-    fun DataFrameBase<*>.string(columnName: String) = getColumn<String>(columnName)
-    fun DataFrameBase<*>.int(columnName: String) = getColumn<Int>(columnName)
-    fun DataFrameBase<*>.bool(columnName: String) = getColumn<Boolean>(columnName)
-    fun DataFrameBase<*>.double(columnName: String) = getColumn<Double>(columnName)
-    fun DataFrameBase<*>.long(columnName: String) = getColumn<Long>(columnName)
-    fun DataFrameBase<*>.nint(columnName: String) = getColumn<Int?>(columnName)
-    fun DataFrameBase<*>.nstring(columnName: String) = getColumn<String?>(columnName)
-    fun DataFrameBase<*>.ndouble(columnName: String) = getColumn<Double?>(columnName)
-    fun DataFrameBase<*>.nbool(columnName: String) = getColumn<Boolean?>(columnName)
-    fun DataFrameBase<*>.nlong(columnName: String) = getColumn<Long?>(columnName)
-
+    public fun DataFrameBase<*>.string(columnName: String): DataColumn<String> = getColumn(columnName)
+    public fun DataFrameBase<*>.int(columnName: String): DataColumn<Int> = getColumn(columnName)
+    public fun DataFrameBase<*>.bool(columnName: String): DataColumn<Boolean> = getColumn(columnName)
+    public fun DataFrameBase<*>.double(columnName: String): DataColumn<Double> = getColumn(columnName)
+    public fun DataFrameBase<*>.long(columnName: String): DataColumn<Long> = getColumn(columnName)
+    public fun DataFrameBase<*>.nint(columnName: String): DataColumn<Int?> = getColumn(columnName)
+    public fun DataFrameBase<*>.nstring(columnName: String): DataColumn<String?> = getColumn(columnName)
+    public fun DataFrameBase<*>.ndouble(columnName: String): DataColumn<Double?> = getColumn(columnName)
+    public fun DataFrameBase<*>.nbool(columnName: String): DataColumn<Boolean?> = getColumn(columnName)
+    public fun DataFrameBase<*>.nlong(columnName: String): DataColumn<Long?> = getColumn(columnName)
 }
 
 inline fun <T, reified R> SelectReceiver<T>.expr(name: String = "", noinline expression: AddExpression<T, R>) = newColumn(name, expression)
 
-fun <T, R> SelectReceiver<T>.exprGuess(name: String = "", expression: AddExpression<T, R>) = newGuessColumn(name, expression)
+public fun <T, R> SelectReceiver<T>.exprGuess(name: String = "", expression: AddExpression<T, R>) = newGuessColumn(name, expression)
 
 internal fun <T,C> ColumnsSelector<T, C>.filter(predicate: (ColumnWithPath<C>) -> Boolean): ColumnsSelector<T, C> = { this@filter(it, it).filter(predicate) }
 //internal fun Columns<*>.filter(predicate: (AnyCol) -> Boolean) = transform { it.filter { predicate(it.data) } }
+
 internal fun Columns<*>.colsInternal(predicate: (AnyCol) -> Boolean) = transform { it.flatMap { it.children().filter { predicate(it.data) } } }
 internal fun Columns<*>.dfsInternal(predicate: (ColumnWithPath<*>) -> Boolean) = transform { it.filter { it.isGroup() }.flatMap { it.children().dfs().filter(predicate) } }
 
-fun <C> Columns<*>.dfsOf(type: KType, predicate: (ColumnWithPath<C>) -> Boolean = { true }): Columns<*> = dfsInternal { it.data.hasElementsOfType(type) && predicate(it.typed()) }
-inline fun <reified C> Columns<*>.dfsOf(noinline filter: (ColumnWithPath<C>) -> Boolean = { true }): Columns<C> = dfsOf(
-    getType<C>(), filter) as Columns<C>
+public fun <C> Columns<*>.dfsOf(type: KType, predicate: (ColumnWithPath<C>) -> Boolean = { true }): Columns<*> = dfsInternal { it.data.hasElementsOfType(type) && predicate(it.typed()) }
+public inline fun <reified C> Columns<*>.dfsOf(noinline filter: (ColumnWithPath<C>) -> Boolean = { true }): Columns<C> = dfsOf(
+    getType<C>(),
+    filter
+) as Columns<C>
 
-fun  Columns<*>.colsOf(type: KType): Columns<Any?> = colsOf(type) { true }
+public fun Columns<*>.colsOf(type: KType): Columns<Any?> = colsOf(type) { true }
 
-fun <C> Columns<*>.colsOf(type: KType, filter: (DataColumn<C>) -> Boolean): Columns<C> = colsInternal { it.hasElementsOfType(type) && filter(it.typed()) } as Columns<C>
-inline fun <reified C> Columns<*>.colsOf(noinline filter: (DataColumn<C>) -> Boolean = { true }): Columns<C> = colsOf(getType<C>(), filter)
+public fun <C> Columns<*>.colsOf(type: KType, filter: (DataColumn<C>) -> Boolean): Columns<C> = colsInternal { it.hasElementsOfType(type) && filter(it.typed()) } as Columns<C>
+public inline fun <reified C> Columns<*>.colsOf(noinline filter: (DataColumn<C>) -> Boolean = { true }): Columns<C> = colsOf(getType<C>(), filter)

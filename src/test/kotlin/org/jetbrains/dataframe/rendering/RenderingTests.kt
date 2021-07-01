@@ -9,8 +9,7 @@ import org.junit.Test
 class RenderingTests {
 
     @Test
-    fun `render row with unicode values as table`(){
-
+    fun `render row with unicode values as table`() {
         val value = "Шёл Шива по шоссе, сокрушая сущее.\nА на встречу Саша шла, круглое сосущая"
         val col by columnOf(value)
         val df = col.toDataFrame()

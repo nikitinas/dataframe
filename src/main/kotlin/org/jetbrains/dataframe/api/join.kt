@@ -1,8 +1,8 @@
 package org.jetbrains.dataframe
 
 import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.Columns
 import org.jetbrains.dataframe.columns.ColumnWithPath
+import org.jetbrains.dataframe.columns.Columns
 import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.impl.DataFrameReceiver
 import org.jetbrains.dataframe.impl.columns.ColumnsList
@@ -10,14 +10,14 @@ import org.jetbrains.dataframe.impl.columns.toColumnSet
 import org.jetbrains.dataframe.impl.prepareForReceiver
 import kotlin.reflect.full.withNullability
 
-interface JoinReceiver<out A, out B> : SelectReceiver<A> {
+public interface JoinReceiver<out A, out B> : SelectReceiver<A> {
 
-    val right: DataFrame<B>
+    public val right: DataFrame<B>
 
-    infix fun <C> ColumnReference<C>.match(other: ColumnReference<C>) = ColumnMatch(this, other)
+    public infix fun <C> ColumnReference<C>.match(other: ColumnReference<C>): ColumnMatch<C> = ColumnMatch(this, other)
 }
 
-class ColumnMatch<C>(val left: ColumnReference<C>, val right: ColumnReference<C>) : Columns<C> {
+public class ColumnMatch<C>(public val left: ColumnReference<C>, public val right: ColumnReference<C>) : Columns<C> {
 
     override fun resolve(context: ColumnResolutionContext): List<ColumnWithPath<C>> {
         throw UnsupportedOperationException()
@@ -30,7 +30,7 @@ internal class JoinReceiverImpl<A, B>(left: DataFrame<A>, val other: DataFrame<B
     override val right: DataFrame<B> = prepareForReceiver(other)
 }
 
-typealias JoinColumnSelector<A, B> = JoinReceiver<A, B>.(JoinReceiver<A, B>) -> Columns<*>
+public typealias JoinColumnSelector<A, B> = JoinReceiver<A, B>.(JoinReceiver<A, B>) -> Columns<*>
 
 internal fun <C> Columns<C>.extractJoinColumns(other: AnyFrame): List<ColumnMatch<C>> = when (this) {
     is ColumnsList -> columns.flatMap { it.extractJoinColumns(other) }
@@ -42,7 +42,7 @@ internal fun <C> Columns<C>.extractJoinColumns(other: AnyFrame): List<ColumnMatc
 internal fun <A, B> DataFrame<A>.getColumns(other: DataFrame<B>, selector: JoinColumnSelector<A, B>) =
     JoinReceiverImpl(this, other).let { selector(it, it).extractJoinColumns(other) }
 
-enum class JoinType {
+public enum class JoinType {
     LEFT, // all data from left data frame, nulls for mismatches in right data frame
     RIGHT, // all data from right data frame, nulls for mismatches in left data frame
     INNER, // only matched data from right and left data frame
@@ -50,8 +50,8 @@ enum class JoinType {
     EXCLUDE // mismatched rows from left data frame
 }
 
-val JoinType.allowLeftNulls get() = this == JoinType.RIGHT || this == JoinType.OUTER
-val JoinType.allowRightNulls get() = this == JoinType.LEFT || this == JoinType.OUTER || this == JoinType.EXCLUDE
+public val JoinType.allowLeftNulls: Boolean get() = this == JoinType.RIGHT || this == JoinType.OUTER
+public val JoinType.allowRightNulls: Boolean get() = this == JoinType.LEFT || this == JoinType.OUTER || this == JoinType.EXCLUDE
 
 internal fun <A, B> defaultJoinColumns(left: DataFrame<A>, right: DataFrame<B>): JoinColumnSelector<A, B> =
     { left.columnNames().intersect(right.columnNames()).map { it.toColumnDef() }.let { ColumnsList(it) } }
@@ -63,49 +63,48 @@ internal fun <T> defaultJoinColumns(dataFrames: Iterable<DataFrame<T>>): JoinCol
         }.orEmpty().map { it.toColumnDef() }.let { ColumnsList(it) }
     }
 
-fun <A, B> DataFrame<A>.innerJoin(
+public fun <A, B> DataFrame<A>.innerJoin(
     other: DataFrame<B>,
     selector: JoinColumnSelector<A, B> = defaultJoinColumns(this, other)
-) = join(other, JoinType.INNER, selector = selector)
+): DataFrame<A> = join(other, JoinType.INNER, selector = selector)
 
-fun <A, B> DataFrame<A>.leftJoin(
+public fun <A, B> DataFrame<A>.leftJoin(
     other: DataFrame<B>,
     selector: JoinColumnSelector<A, B> = defaultJoinColumns(this, other)
-) = join(other, JoinType.LEFT, selector = selector)
+): DataFrame<A> = join(other, JoinType.LEFT, selector = selector)
 
-fun <A, B> DataFrame<A>.rightJoin(
+public fun <A, B> DataFrame<A>.rightJoin(
     other: DataFrame<B>,
     selector: JoinColumnSelector<A, B> = defaultJoinColumns(this, other)
-) = join(other, JoinType.RIGHT, selector = selector)
+): DataFrame<A> = join(other, JoinType.RIGHT, selector = selector)
 
-fun <A, B> DataFrame<A>.outerJoin(
+public fun <A, B> DataFrame<A>.outerJoin(
     other: DataFrame<B>,
     selector: JoinColumnSelector<A, B> = defaultJoinColumns(this, other)
-) = join(other, JoinType.OUTER, selector = selector)
+): DataFrame<A> = join(other, JoinType.OUTER, selector = selector)
 
-fun <A, B> DataFrame<A>.filterJoin(
+public fun <A, B> DataFrame<A>.filterJoin(
     other: DataFrame<B>,
     selector: JoinColumnSelector<A, B> = defaultJoinColumns(this, other)
-) = join(other, JoinType.INNER, addNewColumns = false, selector = selector)
+): DataFrame<A> = join(other, JoinType.INNER, addNewColumns = false, selector = selector)
 
-fun <A, B> DataFrame<A>.excludeJoin(
+public fun <A, B> DataFrame<A>.excludeJoin(
     other: DataFrame<B>,
     selector: JoinColumnSelector<A, B> = defaultJoinColumns(this, other)
-) = join(other, JoinType.EXCLUDE, addNewColumns = false, selector = selector)
+): DataFrame<A> = join(other, JoinType.EXCLUDE, addNewColumns = false, selector = selector)
 
-fun <T> Iterable<DataFrame<T>>.joinOrNull(
+public fun <T> Iterable<DataFrame<T>>.joinOrNull(
     joinType: JoinType = JoinType.INNER,
     selector: JoinColumnSelector<T, T> = defaultJoinColumns(this)
-) =
+): DataFrame<T>? =
     fold<DataFrame<T>, DataFrame<T>?>(null) { joined, new -> joined?.join(new, joinType, selector = selector) ?: new }
 
-fun <A, B> DataFrame<A>.join(
+public fun <A, B> DataFrame<A>.join(
     other: DataFrame<B>,
     joinType: JoinType = JoinType.INNER,
     addNewColumns: Boolean = true,
     selector: JoinColumnSelector<A, B> = defaultJoinColumns(this, other)
 ): DataFrame<A> {
-
     val joinColumns = getColumns(other, selector)
 
     val leftJoinColumns = getColumnsWithPaths { joinColumns.map { it.left }.toColumnSet() }
@@ -229,7 +228,6 @@ fun <A, B> DataFrame<A>.join(
     }
 
     if (joinType.allowLeftNulls) {
-
         for (rightRow in rightMatched.indices) {
             if (!rightMatched[rightRow]) {
                 for (col in 0 until leftColumnsCount) {
@@ -251,15 +249,8 @@ fun <A, B> DataFrame<A>.join(
             if (columnIndex < leftColumnsCount) leftColumns[columnIndex] else newRightColumns[columnIndex - leftColumnsCount]
         val hasNulls = hasNulls[columnIndex]
         val newColumn = when (srcColumn.kind) {
-            ColumnKind.Value -> DataColumn.create(
-                srcColumn.name,
-                columnValues.asList(),
-                srcColumn.type.withNullability(hasNulls)
-            )
-            ColumnKind.Frame -> DataColumn.create(
-                srcColumn.name,
-                columnValues.asList() as List<AnyFrame?>
-            )
+            ColumnKind.Value -> DataColumn.create(srcColumn.name, columnValues.asList(), srcColumn.type.withNullability(hasNulls))
+            ColumnKind.Frame -> DataColumn.create(srcColumn.name, columnValues.asList() as List<AnyFrame?>)
             ColumnKind.Group -> error("Unexpected MapColumn at path ${srcColumn.path}")
         }
         srcColumn.path to newColumn

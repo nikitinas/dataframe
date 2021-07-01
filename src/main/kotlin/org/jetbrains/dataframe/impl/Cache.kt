@@ -6,4 +6,4 @@ import kotlin.reflect.KType
 
 private val listTypes = mutableMapOf<KType, KType>()
 
-fun getListType(valueType: KType) = listTypes.getOrPut(valueType){ Many::class.createTypeWithArgument(valueType) }
+public fun getListType(valueType: KType): KType = listTypes.getOrPut(valueType) { Many::class.createTypeWithArgument(valueType) }

@@ -1,26 +1,23 @@
 package org.jetbrains.dataframe.impl
 
-import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.columns.AnyCol
+import org.jetbrains.dataframe.DataFrame
+import org.jetbrains.dataframe.DataRow
+import org.jetbrains.dataframe.columns.*
+import org.jetbrains.dataframe.impl.columns.ColumnGroupWithParent
+import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.missing.MissingColumnGroup
 import org.jetbrains.dataframe.impl.columns.missing.MissingFrameColumn
 import org.jetbrains.dataframe.impl.columns.missing.MissingValueColumn
-import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.impl.columns.ColumnGroupWithParent
-import org.jetbrains.dataframe.impl.columns.asGroup
-import java.lang.Exception
+import org.jetbrains.dataframe.isGroup
 
-internal fun <T> prepareForReceiver(df: DataFrame<T>) = DataFrameImpl<T>(df.columns().map { if(it.isGroup()) ColumnGroupWithParent(null, it.asGroup()) else it })
+internal fun <T> prepareForReceiver(df: DataFrame<T>) = DataFrameImpl<T>(df.columns().map { if (it.isGroup()) ColumnGroupWithParent(null, it.asGroup()) else it })
 
-internal abstract class DataFrameReceiverBase<T>(protected val source: DataFrame<T>): DataFrame<T> by source
+internal abstract class DataFrameReceiverBase<T>(protected val source: DataFrame<T>) : DataFrame<T> by source
 
-internal abstract class DataFrameReceiver<T>(source: DataFrame<T>, private val allowMissingColumns: Boolean): DataFrameReceiverBase<T>(prepareForReceiver(source)) {
+internal abstract class DataFrameReceiver<T>(source: DataFrame<T>, private val allowMissingColumns: Boolean) : DataFrameReceiverBase<T>(prepareForReceiver(source)) {
 
     override fun column(columnIndex: Int): AnyCol {
-        if(allowMissingColumns && columnIndex < 0 || columnIndex >= ncol()) return MissingValueColumn<Any?>()
+        if (allowMissingColumns && columnIndex < 0 || columnIndex >= ncol()) return MissingValueColumn<Any?>()
         return super.column(columnIndex)
     }
 
@@ -28,8 +25,8 @@ internal abstract class DataFrameReceiver<T>(source: DataFrame<T>, private val a
 
     fun <R> getColumnChecked(columnName: String): DataColumn<R>? {
         val col = source.tryGetColumn(columnName)
-        if(col == null) {
-            if(allowMissingColumns) return null
+        if (col == null) {
+            if (allowMissingColumns) return null
             throw Exception("Column not found: '$columnName'")
         }
         return col as DataColumn<R>

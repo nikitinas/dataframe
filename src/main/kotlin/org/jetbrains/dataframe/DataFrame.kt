@@ -1,44 +1,30 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.columns.AnyCol
-import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.impl.DataFrameReceiver
-import org.jetbrains.dataframe.impl.DataRowImpl
-import org.jetbrains.dataframe.impl.EmptyDataFrame
-import org.jetbrains.dataframe.impl.getOrPut
-import org.jetbrains.dataframe.impl.topDfs
-import org.jetbrains.dataframe.columns.Columns
-import org.jetbrains.dataframe.columns.ColumnWithPath
-import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.impl.TreeNode
+import org.jetbrains.dataframe.columns.*
+import org.jetbrains.dataframe.impl.*
 import org.jetbrains.dataframe.impl.columns.addPath
-import org.jetbrains.dataframe.impl.columns.asGroup
 import org.jetbrains.dataframe.impl.columns.toColumns
-import org.jetbrains.dataframe.impl.put
-import org.jetbrains.dataframe.impl.toIndices
 
 internal open class SelectReceiverImpl<T>(source: DataFrame<T>, allowMissingColumns: Boolean) :
     DataFrameReceiver<T>(source, allowMissingColumns), SelectReceiver<T>
 
-data class DataFrameSize(val ncol: Int, val nrow: Int) {
-    override fun toString() = "$nrow x $ncol"
+public data class DataFrameSize(val ncol: Int, val nrow: Int) {
+    override fun toString(): String = "$nrow x $ncol"
 }
 
-typealias Predicate<T> = (T) -> Boolean
+public typealias Predicate<T> = (T) -> Boolean
 
-typealias ColumnPath = List<String>
+public typealias ColumnPath = List<String>
 
-internal fun ColumnPath.replaceLast(name: String) = if(size < 2) listOf(name) else dropLast(1) + name
+internal fun ColumnPath.replaceLast(name: String) = if (size < 2) listOf(name) else dropLast(1) + name
 
-typealias DataFrameSelector<T, R> = DataFrame<T>.(DataFrame<T>) -> R
+public typealias DataFrameSelector<T, R> = DataFrame<T>.(DataFrame<T>) -> R
 
-typealias ColumnsSelector<T, C> = SelectReceiver<T>.(SelectReceiver<T>) -> Columns<C>
+public typealias ColumnsSelector<T, C> = SelectReceiver<T>.(SelectReceiver<T>) -> Columns<C>
 
-typealias ColumnSelector<T, C> = SelectReceiver<T>.(SelectReceiver<T>) -> ColumnReference<C>
+public typealias ColumnSelector<T, C> = SelectReceiver<T>.(SelectReceiver<T>) -> ColumnReference<C>
 
-fun <T, C> DataFrame<T>.createSelector(selector: ColumnsSelector<T, C>) = selector
+public fun <T, C> DataFrame<T>.createSelector(selector: ColumnsSelector<T, C>): SelectReceiver<T>.(SelectReceiver<T>) -> Columns<C> = selector
 
 internal fun <T> List<ColumnWithPath<T>>.top(): List<ColumnWithPath<T>> {
     val root = TreeNode.createRoot<ColumnWithPath<T>?>(null)
@@ -47,7 +33,7 @@ internal fun <T> List<ColumnWithPath<T>>.top(): List<ColumnWithPath<T>> {
 }
 
 internal fun List<ColumnWithPath<*>>.allColumnsExcept(columns: Iterable<ColumnWithPath<*>>): List<ColumnWithPath<*>> {
-    if(isEmpty()) return emptyList()
+    if (isEmpty()) return emptyList()
     val df = this[0].df
     require(all { it.df === df })
     val fullTree = collectTree()
@@ -76,56 +62,56 @@ internal fun <T, C> DataFrame<T>.getColumnsWithPaths(
     selector: ColumnsSelector<T, C>
 ): List<ColumnWithPath<C>> = selector.toColumns().resolve(this, unresolvedColumnsPolicy)
 
-fun <T, C> DataFrame<T>.getColumnsWithPaths(selector: ColumnsSelector<T, C>): List<ColumnWithPath<C>> =
+public fun <T, C> DataFrame<T>.getColumnsWithPaths(selector: ColumnsSelector<T, C>): List<ColumnWithPath<C>> =
     getColumnsWithPaths(UnresolvedColumnsPolicy.Fail, selector)
 
-fun <T, C> DataFrame<T>.getColumnPath(selector: ColumnSelector<T, C>): ColumnPath = getColumnPaths(selector).single()
+public fun <T, C> DataFrame<T>.getColumnPath(selector: ColumnSelector<T, C>): ColumnPath = getColumnPaths(selector).single()
 
-fun <T, C> DataFrame<T>.getColumnPaths(selector: ColumnsSelector<T, C>): List<ColumnPath> =
+public fun <T, C> DataFrame<T>.getColumnPaths(selector: ColumnsSelector<T, C>): List<ColumnPath> =
     selector.toColumns().resolve(this, UnresolvedColumnsPolicy.Fail).map { it.path }
 
-fun <T, C> DataFrame<T>.column(selector: ColumnSelector<T, C>): DataColumn<C> = get(selector)
+public fun <T, C> DataFrame<T>.column(selector: ColumnSelector<T, C>): DataColumn<C> = get(selector)
 
-fun <T, C> DataFrame<T>.getColumnWithPath(selector: ColumnSelector<T, C>) = getColumnsWithPaths(selector).single()
+public fun <T, C> DataFrame<T>.getColumnWithPath(selector: ColumnSelector<T, C>): ColumnWithPath<C> = getColumnsWithPaths(selector).single()
 
 internal fun <T> DataFrame<T>.getColumns(columnNames: List<String>): List<AnyCol> = columnNames.map { this[it] }
 
 internal fun <T> DataFrame<T>.new(columns: Iterable<AnyCol>) = dataFrameOf(columns).typed<T>()
 
-interface DataFrame<out T> : DataFrameAggregations<T> {
+public interface DataFrame<out T> : DataFrameAggregations<T> {
 
-    companion object {
-        fun empty(nrow: Int = 0): AnyFrame = EmptyDataFrame<Any?>(nrow)
+    public companion object {
+        public fun empty(nrow: Int = 0): AnyFrame = EmptyDataFrame<Any?>(nrow)
     }
 
-    fun indices(): IntRange = 0 until nrow
+    public fun indices(): IntRange = 0 until nrow
 
     override fun ncol(): Int = columns().size
 
     override fun rows(): Iterable<DataRow<T>> = forwardIterable()
 
-    fun <C> values(byRow: Boolean = false, columns: ColumnsSelector<T, C>): Sequence<C>
-    fun values(byRow: Boolean = false): Sequence<Any?> = values(byRow) { all() }
+    public fun <C> values(byRow: Boolean = false, columns: ColumnsSelector<T, C>): Sequence<C>
+    public fun values(byRow: Boolean = false): Sequence<Any?> = values(byRow) { all() }
 
-    fun <C> valuesNotNull(byRow: Boolean = false, columns: ColumnsSelector<T, C?>): Sequence<C> = values(byRow, columns).filterNotNull()
-    fun valuesNotNull(byRow: Boolean = false): Sequence<Any> = valuesNotNull(byRow) { all() }
+    public fun <C> valuesNotNull(byRow: Boolean = false, columns: ColumnsSelector<T, C?>): Sequence<C> = values(byRow, columns).filterNotNull()
+    public fun valuesNotNull(byRow: Boolean = false): Sequence<Any> = valuesNotNull(byRow) { all() }
 
-    fun columnNames() = columns().map { it.name() }
+    public fun columnNames(): List<String> = columns().map { it.name() }
 
     override fun columns(): List<AnyCol>
-    fun <C> columns(selector: ColumnsSelector<T, C>) = get(selector)
+    public fun <C> columns(selector: ColumnsSelector<T, C>): List<DataColumn<C>> = get(selector)
 
-    override fun column(columnIndex: Int) = columns()[columnIndex]
+    override fun column(columnIndex: Int): DataColumn<*> = columns()[columnIndex]
 
-    operator fun set(columnName: String, value: AnyCol)
+    public operator fun set(columnName: String, value: AnyCol)
 
     override operator fun get(index: Int): DataRow<T> = DataRowImpl(index, this)
 
-    override operator fun get(columnName: String) =
+    override operator fun get(columnName: String): DataColumn<*> =
         tryGetColumn(columnName) ?: throw Exception("Column not found: '$columnName'")
 
-    override operator fun <R> get(column: ColumnReference<R>): DataColumn<R> = tryGetColumn(column) ?:
-        error("Column not found: ${column.path().joinToString("/")}")
+    override operator fun <R> get(column: ColumnReference<R>): DataColumn<R> = tryGetColumn(column)
+        ?: error("Column not found: ${column.path().joinToString("/")}")
 
     override operator fun <R> get(column: ColumnReference<DataRow<R>>): ColumnGroup<R> =
         get<DataRow<R>>(column) as ColumnGroup<R>
@@ -135,101 +121,100 @@ interface DataFrame<out T> : DataFrameAggregations<T> {
 
     override operator fun <C> get(selector: ColumnsSelector<T, C>): List<DataColumn<C>> = getColumns(false, selector)
 
-    operator fun get(indices: Iterable<Int>) = getRows(indices)
-    operator fun get(mask: BooleanArray) = getRows(mask)
-    operator fun get(range: IntRange) = getRows(range)
-    operator fun get(firstIndex: Int, vararg otherIndices: Int) = get(headPlusIterable(firstIndex, otherIndices.asIterable()))
+    public operator fun get(indices: Iterable<Int>): DataFrame<T> = getRows(indices)
+    public operator fun get(mask: BooleanArray): DataFrame<T> = getRows(mask)
+    public operator fun get(range: IntRange): DataFrame<T> = getRows(range)
+    public operator fun get(firstIndex: Int, vararg otherIndices: Int): DataFrame<T> = get(headPlusIterable(firstIndex, otherIndices.asIterable()))
 
-    operator fun plus(col: AnyCol) = dataFrameOf(columns() + col).typed<T>()
-    operator fun plus(col: Iterable<AnyCol>) = new(columns() + col)
-    operator fun plus(stub: AddRowNumberStub) = addRowNumber(stub.columnName)
+    public operator fun plus(col: AnyCol): DataFrame<T> = dataFrameOf(columns() + col).typed<T>()
+    public operator fun plus(col: Iterable<AnyCol>): DataFrame<T> = new(columns() + col)
+    public operator fun plus(stub: AddRowNumberStub): DataFrame<T> = addRowNumber(stub.columnName)
 
-    fun getRows(indices: Iterable<Int>) = columns().map { col -> col.slice(indices) }.asDataFrame<T>()
-    fun getRows(mask: BooleanArray) = getRows(mask.toIndices())
-    fun getRows(range: IntRange) = if(range == indices()) this else columns().map { col -> col.slice(range) }.asDataFrame<T>()
+    public fun getRows(indices: Iterable<Int>): DataFrame<T> = columns().map { col -> col.slice(indices) }.asDataFrame<T>()
+    public fun getRows(mask: BooleanArray): DataFrame<T> = getRows(mask.toIndices())
+    public fun getRows(range: IntRange): DataFrame<T> = if (range == indices()) this else columns().map { col -> col.slice(range) }.asDataFrame<T>()
 
-    fun getColumnIndex(name: String): Int
-    fun getColumnIndex(col: AnyCol) = getColumnIndex(col.name())
+    public fun getColumnIndex(name: String): Int
+    public fun getColumnIndex(col: AnyCol): Int = getColumnIndex(col.name())
 
-    fun <R> tryGetColumn(column: ColumnReference<R>): DataColumn<R>? = column.resolveSingle(this, UnresolvedColumnsPolicy.Skip)?.data
+    public fun <R> tryGetColumn(column: ColumnReference<R>): DataColumn<R>? = column.resolveSingle(this, UnresolvedColumnsPolicy.Skip)?.data
 
     override fun tryGetColumn(columnName: String): AnyCol? =
         getColumnIndex(columnName).let { if (it != -1) column(it) else null }
 
-    fun tryGetColumn(path: ColumnPath): AnyCol? =
+    public fun tryGetColumn(path: ColumnPath): AnyCol? =
         if (path.size == 1) tryGetColumn(path[0])
         else path.dropLast(1).fold(this as AnyFrame?) { df, name -> df?.tryGetColumn(name) as? AnyFrame? }
             ?.tryGetColumn(path.last())
 
-    fun tryGetColumnGroup(name: String) = tryGetColumn(name) as? ColumnGroup<*>
+    public fun tryGetColumnGroup(name: String): ColumnGroup<*>? = tryGetColumn(name) as? ColumnGroup<*>
 
-    operator fun get(first: Column, vararg other: Column) = select(listOf(first) + other)
-    operator fun get(first: String, vararg other: String) = select(listOf(first) + other)
+    public operator fun get(first: Column, vararg other: Column): DataFrame<T> = select(listOf(first) + other)
+    public operator fun get(first: String, vararg other: String): DataFrame<T> = select(listOf(first) + other)
 
-    fun all(predicate: RowFilter<T>): Boolean = rows().all { predicate(it, it) }
-    fun any(predicate: RowFilter<T>): Boolean = rows().any { predicate(it, it) }
+    public fun all(predicate: RowFilter<T>): Boolean = rows().all { predicate(it, it) }
+    public fun any(predicate: RowFilter<T>): Boolean = rows().any { predicate(it, it) }
 
-    fun first() = get(0)
-    fun firstOrNull() = if(nrow > 0) first() else null
-    fun first(predicate: RowFilter<T>) = rows().first { predicate(it, it) }
-    fun firstOrNull(predicate: RowFilter<T>) = rows().firstOrNull { predicate(it, it) }
-    fun last() = get(nrow-1)
-    fun lastOrNull() = if(nrow > 0) last() else null
-    fun last(predicate: RowFilter<T>) = backwardIterable().first { predicate(it, it) }
-    fun lastOrNull(predicate: RowFilter<T>) = backwardIterable().firstOrNull { predicate(it, it) }
-    fun take(numRows: Int) = getRows(0 until numRows)
-    fun drop(numRows: Int) = getRows(numRows until nrow())
-    fun takeLast(numRows: Int) = getRows(nrow() - numRows until nrow())
-    fun skipLast(numRows: Int) = getRows(0 until nrow() - numRows)
-    fun head(numRows: Int = 5) = take(numRows)
-    fun tail(numRows: Int = 5) = takeLast(numRows)
-    fun shuffled() = getRows((0 until nrow()).shuffled())
-    fun <K, V> associate(transform: RowSelector<T, Pair<K, V>>) = rows().associate { transform(it, it) }
-    fun <V> associateBy(transform: RowSelector<T, V>) = rows().associateBy { transform(it, it) }
+    public fun first(): DataRow<T> = get(0)
+    public fun firstOrNull(): DataRow<T>? = if (nrow > 0) first() else null
+    public fun first(predicate: RowFilter<T>): DataRow<T> = rows().first { predicate(it, it) }
+    public fun firstOrNull(predicate: RowFilter<T>): DataRow<T>? = rows().firstOrNull { predicate(it, it) }
+    public fun last(): DataRow<T> = get(nrow - 1)
+    public fun lastOrNull(): DataRow<T>? = if (nrow > 0) last() else null
+    public fun last(predicate: RowFilter<T>): DataRow<T> = backwardIterable().first { predicate(it, it) }
+    public fun lastOrNull(predicate: RowFilter<T>): DataRow<T>? = backwardIterable().firstOrNull { predicate(it, it) }
+    public fun take(numRows: Int): DataFrame<T> = getRows(0 until numRows)
+    public fun drop(numRows: Int): DataFrame<T> = getRows(numRows until nrow())
+    public fun takeLast(numRows: Int): DataFrame<T> = getRows(nrow() - numRows until nrow())
+    public fun skipLast(numRows: Int): DataFrame<T> = getRows(0 until nrow() - numRows)
+    public fun head(numRows: Int = 5): DataFrame<T> = take(numRows)
+    public fun tail(numRows: Int = 5): DataFrame<T> = takeLast(numRows)
+    public fun shuffled(): DataFrame<T> = getRows((0 until nrow()).shuffled())
+    public fun <K, V> associate(transform: RowSelector<T, Pair<K, V>>): Map<K, V> = rows().associate { transform(it, it) }
+    public fun <V> associateBy(transform: RowSelector<T, V>): Map<V, DataRow<T>> = rows().associateBy { transform(it, it) }
 
-    fun single() = rows().single()
-    fun single(predicate: RowSelector<T, Boolean>) = rows().single { predicate(it, it) }
+    public fun single(): DataRow<T> = rows().single()
+    public fun single(predicate: RowSelector<T, Boolean>): DataRow<T> = rows().single { predicate(it, it) }
 
-    fun <R> mapIndexed(action: (Int, DataRow<T>) -> R) = rows().mapIndexed(action)
+    public fun <R> mapIndexed(action: (Int, DataRow<T>) -> R): List<R> = rows().mapIndexed(action)
 
-    fun <R> mapIndexedNotNull(action: (Int, DataRow<T>) -> R?) = rows().mapIndexedNotNull(action)
+    public fun <R> mapIndexedNotNull(action: (Int, DataRow<T>) -> R?): List<R> = rows().mapIndexedNotNull(action)
 
-    operator fun iterator() = rows().iterator()
+    public operator fun iterator(): Iterator<DataRow<T>> = rows().iterator()
 }
 
-inline fun <T, R> DataFrame<T>.map(selector: RowSelector<T, R>) = rows().map { selector(it, it) }
+public inline fun <T, R> DataFrame<T>.map(selector: RowSelector<T, R>): List<R> = rows().map { selector(it, it) }
 
-fun AnyFrame.size() = DataFrameSize(ncol(), nrow())
+public fun AnyFrame.size(): DataFrameSize = DataFrameSize(ncol(), nrow())
 
-fun AnyFrame.getFrame(path: ColumnPath): AnyFrame = if(path.isNotEmpty()) this[path].asFrame() else this
+public fun AnyFrame.getFrame(path: ColumnPath): AnyFrame = if (path.isNotEmpty()) this[path].asFrame() else this
 
-fun <T> AnyFrame.typed(): DataFrame<T> = this as DataFrame<T>
+public fun <T> AnyFrame.typed(): DataFrame<T> = this as DataFrame<T>
 
-fun <T> AnyRow.typed(): DataRow<T> = this as DataRow<T>
+public fun <T> AnyRow.typed(): DataRow<T> = this as DataRow<T>
 
-fun <T> DataFrameBase<*>.typed(): DataFrameBase<T> = this as DataFrameBase<T>
+public fun <T> DataFrameBase<*>.typed(): DataFrameBase<T> = this as DataFrameBase<T>
 
-fun <T> DataRow<T>.toDataFrame(): DataFrame<T> = owner[index..index]
+public fun <T> DataRow<T>.toDataFrame(): DataFrame<T> = owner[index..index]
 
-fun <T> Iterable<DataRow<T>>.toDataFrame(): DataFrame<T> {
+public fun <T> Iterable<DataRow<T>>.toDataFrame(): DataFrame<T> {
     var uniqueDf: DataFrame<T>? = null
-    for(row in this) {
-        if(uniqueDf == null) uniqueDf = row.df()
+    for (row in this) {
+        if (uniqueDf == null) uniqueDf = row.df()
         else {
-            if(uniqueDf !== row.df())
-            {
+            if (uniqueDf !== row.df()) {
                 uniqueDf = null
                 break
             }
         }
     }
-    return if(uniqueDf != null) {
+    return if (uniqueDf != null) {
         val permutation = map { it.index }
         uniqueDf[permutation]
     } else map { it.toDataFrame() }.union()
 }
 
-fun <T> DataFrame<T>.forwardIterable() = object : Iterable<DataRow<T>> {
+public fun <T> DataFrame<T>.forwardIterable(): Iterable<DataRow<T>> = object : Iterable<DataRow<T>> {
     override fun iterator() =
 
         object : Iterator<DataRow<T>> {
@@ -244,7 +229,7 @@ fun <T> DataFrame<T>.forwardIterable() = object : Iterable<DataRow<T>> {
         }
 }
 
-fun <T> DataFrame<T>.backwardIterable() = object : Iterable<DataRow<T>> {
+public fun <T> DataFrame<T>.backwardIterable(): Iterable<DataRow<T>> = object : Iterable<DataRow<T>> {
     override fun iterator() =
 
         object : Iterator<DataRow<T>> {
@@ -259,7 +244,7 @@ fun <T> DataFrame<T>.backwardIterable() = object : Iterable<DataRow<T>> {
         }
 }
 
-fun <T, C> DataFrame<T>.forEachIn(selector: ColumnsSelector<T, C>, action: (DataRow<T>, DataColumn<C>) -> Unit) =
+public fun <T, C> DataFrame<T>.forEachIn(selector: ColumnsSelector<T, C>, action: (DataRow<T>, DataColumn<C>) -> Unit): Unit =
     getColumnsWithPaths(selector).let { cols ->
         rows().forEach { row ->
             cols.forEach { col ->
@@ -268,7 +253,7 @@ fun <T, C> DataFrame<T>.forEachIn(selector: ColumnsSelector<T, C>, action: (Data
         }
     }
 
-typealias AnyFrame = DataFrame<*>
+public typealias AnyFrame = DataFrame<*>
 
 internal val AnyFrame.ncol get() = ncol()
 internal val AnyFrame.nrow get() = nrow()

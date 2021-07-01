@@ -1,15 +1,9 @@
 package org.jetbrains.dataframe.impl.aggregation
 
-import org.jetbrains.dataframe.ColumnPath
-import org.jetbrains.dataframe.ColumnsSelector
-import org.jetbrains.dataframe.DataFrame
-import org.jetbrains.dataframe.GroupedDataFrame
-import org.jetbrains.dataframe.GroupedPivotAggregations
-import org.jetbrains.dataframe.aggregatePivot
+import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.aggregation.PivotAggregateBody
 import org.jetbrains.dataframe.impl.aggregation.receivers.AggregateBodyInternal
 import org.jetbrains.dataframe.impl.columns.toColumns
-import org.jetbrains.dataframe.typed
 
 internal data class GroupedPivotImpl<T>(
     internal val df: GroupedDataFrame<*, T>,
@@ -24,7 +18,7 @@ internal data class GroupedPivotImpl<T>(
         }.typed()
     }
 
-    override fun groupByValue(flag: Boolean) = if(flag == groupValues) this else copy(groupValues = flag)
+    override fun groupByValue(flag: Boolean) = if (flag == groupValues) this else copy(groupValues = flag)
 
     override fun withGrouping(groupPath: ColumnPath) = copy(groupPath = groupPath)
 

@@ -6,11 +6,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeParameter
 import kotlin.reflect.KTypeProjection
-import kotlin.reflect.full.createType
-import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.full.isSubtypeOf
-import kotlin.reflect.full.isSuperclassOf
-import kotlin.reflect.full.withNullability
+import kotlin.reflect.full.*
 
 internal inline fun <reified T> KClass<*>.createTypeUsing() = getType<T>().projectTo(this)
 
@@ -81,8 +77,9 @@ internal fun resolve(actualType: KType, declaredType: KType): Map<KTypeParameter
             if (declared?.classifier is KTypeParameter) {
                 val parameter = declared.classifier as KTypeParameter
                 val currentResolution = map[parameter]
-                if (currentResolution == null || (actual != null && actual.isSubtypeOf(currentResolution)))
+                if (currentResolution == null || (actual != null && actual.isSubtypeOf(currentResolution))) {
                     map[parameter] = actual
+                }
             } else if (declared != null && actual != null) {
                 val declaredClass = declared.classifier as? KClass<*>
                 val actualClass = actual.classifier as? KClass<*>
@@ -104,8 +101,8 @@ internal val numberTypeExtensions: Map<Pair<KClass<*>, KClass<*>>, KClass<*>> by
         map[to to from] = to
     }
     val intTypes = listOf(Byte::class, Short::class, Int::class, Long::class)
-    for(i in intTypes.indices){
-        for(j in i+1 until intTypes.size)
+    for (i in intTypes.indices) {
+        for (j in i + 1 until intTypes.size)
             add(intTypes[i], intTypes[j])
         add(intTypes[i], Double::class)
     }
@@ -114,7 +111,7 @@ internal val numberTypeExtensions: Map<Pair<KClass<*>, KClass<*>>, KClass<*>> by
 }
 
 internal fun getCommonNumberType(first: KClass<*>?, second: KClass<*>): KClass<*> =
-    when{
+    when {
         first == null -> second
         first == second -> first
         else -> numberTypeExtensions[first to second] ?: error("Can not find common number type for $first and $second")

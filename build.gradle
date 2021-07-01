@@ -13,6 +13,7 @@ plugins {
     id "org.jetbrains.kotlin.jvm" version "$kotlin_version"
     id "org.jetbrains.dataframe.generator"
     id "ru.ileasile.kotlin.publisher" version "$libsPublisherVersion"
+    id("org.jmailen.kotlinter") version "$ktlint_version"
 }
 
 apply plugin: "org.jetbrains.kotlin.jupyter.api"
@@ -55,6 +56,10 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+}
+
+kotlin {
+    explicitApi()
 }
 
 tasks.withType(JavaCompile).all {
@@ -103,7 +108,7 @@ kotlinPublications {
 
     pom {
         use(ru.ileasile.kotlin.PomUtilKt) {
-            githubRepo("JetBrains", "dataframe")
+            githubRepo("Kotlin", "dataframe")
             inceptionYear.set("2021")
             licenses {
                 apache2()
@@ -127,3 +132,24 @@ compileKotlin {
         freeCompilerArgs = ["-Xinline-classes"]
     }
 }
+
+lintKotlinMain {
+    exclude '**/*keywords*/**'
+}
+
+lintKotlinTest.enabled = false
+
+kotlinter {
+    ignoreFailures = true
+    reporters = ['checkstyle', 'plain']
+    experimentalRules = true
+    disabledRules = [
+            'no-wildcard-imports',
+            'experimental:spacing-between-declarations-with-annotations',
+            'experimental:enum-entry-name-case',
+            'experimental:argument-list-wrapping',
+            'experimental:annotation',
+            'max-line-length'
+    ]
+}
+

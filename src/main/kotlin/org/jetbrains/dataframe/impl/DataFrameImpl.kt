@@ -1,22 +1,12 @@
 package org.jetbrains.dataframe.impl
 
 import org.jetbrains.dataframe.*
-import org.jetbrains.dataframe.aggregation.GroupByReceiver
-import org.jetbrains.dataframe.columns.AnyCol
-import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.ColumnWithPath
-import org.jetbrains.dataframe.columns.name
-import org.jetbrains.dataframe.columns.shortPath
-import org.jetbrains.dataframe.columns.size
+import org.jetbrains.dataframe.columns.*
 import org.jetbrains.dataframe.impl.aggregation.AggregatableInternal
 import org.jetbrains.dataframe.impl.aggregation.GroupByReceiverImpl
 import org.jetbrains.dataframe.impl.aggregation.receivers.AggregateBodyInternal
-import org.jetbrains.dataframe.impl.aggregation.receivers.AggregateReceiverInternal
-import org.jetbrains.dataframe.impl.aggregation.toColumnWithPath
 import org.jetbrains.dataframe.impl.columns.addPath
 import org.jetbrains.dataframe.io.renderToString
-import java.lang.IllegalArgumentException
-import kotlin.reflect.KType
 
 internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T>, AggregatableInternal<T> {
 
@@ -24,7 +14,7 @@ internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T>, 
 
     override fun nrow() = nrow
 
-    private val columnsMap : MutableMap<String, Int>
+    private val columnsMap: MutableMap<String, Int>
 
     init {
 
@@ -34,8 +24,8 @@ internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T>, 
         columnsMap = mutableMapOf()
         columns.forEachIndexed { i, col ->
             val name = col.name
-            if(columnsMap.containsKey(name)){
-                if(name != "") {
+            if (columnsMap.containsKey(name)) {
+                if (name != "") {
                     val names = columns.groupBy { it.name }.filter { it.key != "" && it.value.size > 1 }.map { it.key }
                     throw IllegalArgumentException("Duplicate column names: $names. All columns: ${columnNames()}")
                 }
@@ -59,20 +49,18 @@ internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T>, 
     }
 
     override fun set(columnName: String, value: AnyCol) {
-
         require(value.size == nrow()) { "Invalid column size for column '$columnName'. Expected: ${nrow()}, actual: ${value.size}" }
 
         val renamed = value.rename(columnName)
         val index = getColumnIndex(columnName)
-        val newCols = if(index == -1) columns + renamed else columns.mapIndexed { i, col -> if(i == index) renamed else col }
-        columnsMap[columnName] = if(index == -1) ncol() else index
+        val newCols = if (index == -1) columns + renamed else columns.mapIndexed { i, col -> if (i == index) renamed else col }
+        columnsMap[columnName] = if (index == -1) ncol() else index
         columns = newCols
     }
 
     override fun columns() = columns
 
     override fun <R> aggregateInternal(body: AggregateBodyInternal<T, R>): DataFrame<T> {
-
         val receiver = GroupByReceiverImpl(this)
         body(receiver, receiver)
         val result = receiver.compute()?.df() ?: DataFrame.empty(1)
@@ -101,4 +89,4 @@ internal open class DataFrameImpl<T>(var columns: List<AnyCol>) : DataFrame<T>, 
 }
 
 @PublishedApi
-internal fun <T, R> DataFrameBase<T>.mapRows(selector: RowSelector<T, R>):Sequence<R> = rows().asSequence().map { selector(it,it) }
+internal fun <T, R> DataFrameBase<T>.mapRows(selector: RowSelector<T, R>): Sequence<R> = rows().asSequence().map { selector(it, it) }

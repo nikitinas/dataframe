@@ -4,7 +4,12 @@ import org.jetbrains.dataframe.columns.DataColumn
 import org.jetbrains.dataframe.dataFrameOf
 import kotlin.reflect.KType
 
-internal abstract class DataColumnImpl<T>(protected val values: List<T>, val name: String, val type: KType, distinct: Lazy<Set<T>>? = null) : DataColumn<T>, DataColumnInternal<T> {
+internal abstract class DataColumnImpl<T>(
+    protected val values: List<T>,
+    val name: String,
+    val type: KType,
+    distinct: Lazy<Set<T>>? = null
+) : DataColumn<T>, DataColumnInternal<T> {
 
     protected val distinct = distinct ?: lazy { values.toSet() }
 
@@ -38,7 +43,7 @@ internal abstract class DataColumnImpl<T>(protected val values: List<T>, val nam
         var nullable = false
         val newValues = indices.map {
             val value = values[it]
-            if(value == null) nullable = true
+            if (value == null) nullable = true
             value
         }
         return createWithValues(newValues, nullable)
@@ -47,10 +52,10 @@ internal abstract class DataColumnImpl<T>(protected val values: List<T>, val nam
     override fun slice(mask: BooleanArray): DataColumn<T> {
         val res = ArrayList<T?>(values.size)
         var hasNulls = false
-        for(index in 0 until values.size) {
-            if(mask[index]) {
+        for (index in 0 until values.size) {
+            if (mask[index]) {
                 val value = this[index]
-                if(!hasNulls && value == null) hasNulls = true
+                if (!hasNulls && value == null) hasNulls = true
                 res.add(value)
             }
         }

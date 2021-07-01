@@ -4,16 +4,16 @@ import java.math.BigDecimal
 import kotlin.reflect.KClass
 
 @PublishedApi
-internal fun <T, R: Number> Iterable<T>.sumOf(clazz:KClass<*>, selector: (T)->R): R = when (clazz) {
-    Double::class -> sumOf(selector as ((T)->Double)) as R
-    Int::class -> sumOf(selector as ((T)->Int)) as R
-    Long::class -> sumOf(selector as ((T)->Long)) as R
-    BigDecimal::class -> sumOf(selector as ((T)->BigDecimal)) as R
+internal fun <T, R : Number> Iterable<T>.sumOf(clazz: KClass<*>, selector: (T) -> R): R = when (clazz) {
+    Double::class -> sumOf(selector as ((T) -> Double)) as R
+    Int::class -> sumOf(selector as ((T) -> Int)) as R
+    Long::class -> sumOf(selector as ((T) -> Long)) as R
+    BigDecimal::class -> sumOf(selector as ((T) -> BigDecimal)) as R
     else -> TODO()
 }
 
 @PublishedApi
-internal fun <T : Number> Iterable<T>.sum(clazz: KClass<*>) = when (clazz) {
+internal fun <T : Number> Iterable<T>.sum(clazz: KClass<*>): T = when (clazz) {
     Double::class -> (this as Iterable<Double>).sum() as T
     Float::class -> (this as Iterable<Float>).sum() as T
     Int::class, Short::class, Byte::class -> (this as Iterable<Int>).sum() as T

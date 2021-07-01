@@ -7,7 +7,7 @@ import java.io.Serializable
 class UtilTests {
 
     @Test
-    fun commonParentsTests(){
+    fun commonParentsTests() {
         commonParents(Int::class, Int::class) shouldBe listOf(Int::class)
         commonParents(Double::class, Int::class) shouldBe listOf(Number::class, Comparable::class)
         commonParents(Int::class, String::class) shouldBe listOf(Serializable::class, Comparable::class)
@@ -15,7 +15,7 @@ class UtilTests {
     }
 
     @Test
-    fun commonParentTests(){
+    fun commonParentTests() {
         commonParent(Int::class, Int::class) shouldBe Int::class
         commonParent(Double::class, Int::class) shouldBe Number::class
         commonParent(Int::class, String::class) shouldBe Serializable::class

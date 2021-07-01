@@ -9,7 +9,7 @@ internal open class Marker(
     base: List<Marker>
 ) {
 
-    val shortName : String
+    val shortName: String
         get() = name.substringAfterLast(".")
 
     val baseMarkers = base.associateBy { it.name }
@@ -46,7 +46,7 @@ internal open class Marker(
 
     val schema by lazy { DataFrameSchema(allFields.map { it.columnName to it.columnSchema }.toMap()) }
 
-    fun implements(schema: Marker): Boolean = if(schema.name == name) true else baseMarkers[schema.name]?.let { it === schema } ?: false
+    fun implements(schema: Marker): Boolean = if (schema.name == name) true else baseMarkers[schema.name]?.let { it === schema } ?: false
 
     fun implementsAll(schemas: Iterable<Marker>): Boolean = schemas.all { implements(it) }
 }

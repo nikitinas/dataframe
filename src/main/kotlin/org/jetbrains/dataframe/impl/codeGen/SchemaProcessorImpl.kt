@@ -1,8 +1,8 @@
 package org.jetbrains.dataframe.impl.codeGen
 
-import org.jetbrains.dataframe.internal.codeGen.SchemaProcessor
 import org.jetbrains.dataframe.internal.codeGen.GeneratedField
 import org.jetbrains.dataframe.internal.codeGen.Marker
+import org.jetbrains.dataframe.internal.codeGen.SchemaProcessor
 import org.jetbrains.dataframe.internal.schema.ColumnSchema
 import org.jetbrains.dataframe.internal.schema.DataFrameSchema
 
@@ -49,7 +49,7 @@ internal class SchemaProcessorImpl(
     }
 
     private fun generateUniqueMarkerClassName(prefix: String): String {
-        if(!usedMarkerNames.contains(prefix)) return prefix
+        if (!usedMarkerNames.contains(prefix)) return prefix
         var id = 1
         while (usedMarkerNames.contains("$prefix$id"))
             id++
@@ -79,13 +79,7 @@ internal class SchemaProcessorImpl(
 
             val newFields = when {
                 fieldsToOverride.isNotEmpty() -> fieldsToOverride.map {
-                    GeneratedField(
-                        it.fieldName,
-                        it.columnName,
-                        true,
-                        columnSchema,
-                        getMarker(columnSchema)?.name
-                    )
+                    GeneratedField(it.fieldName, it.columnName, true, columnSchema, getMarker(columnSchema)?.name)
                 }
                 superFields.isNotEmpty() -> emptyList()
                 else -> {
@@ -136,7 +130,8 @@ internal class SchemaProcessorImpl(
     private fun DataFrameSchema.getRequiredMarkers() = getRequiredMarkers(this, registeredMarkers)
 
     override fun process(
-        schema: DataFrameSchema, isOpen: Boolean
+        schema: DataFrameSchema,
+        isOpen: Boolean
     ): Marker {
         val markerName: String
         val required = schema.getRequiredMarkers()

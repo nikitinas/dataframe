@@ -16,8 +16,8 @@ internal class ColumnAccessTracker {
         return accessedColumns.toList()
     }
 
-    fun registerAccess(columnName: String){
-        if(isEnabled) accessedColumns.add(columnName)
+    fun registerAccess(columnName: String) {
+        if (isEnabled) accessedColumns.add(columnName)
     }
 
     companion object {
@@ -30,4 +30,4 @@ internal class ColumnAccessTracker {
 
 internal val columnAccessTracker = ThreadLocal<ColumnAccessTracker>()
 
-fun trackColumnAccess(body: () -> Unit): List<String> = ColumnAccessTracker.get().track(body)
+public fun trackColumnAccess(body: () -> Unit): List<String> = ColumnAccessTracker.get().track(body)

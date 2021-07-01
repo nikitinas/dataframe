@@ -1,15 +1,15 @@
 package org.jetbrains.dataframe.aggregation
 
 import io.kotest.matchers.shouldBe
-import org.jetbrains.dataframe.mean
 import org.jetbrains.dataframe.columnOf
 import org.jetbrains.dataframe.getType
+import org.jetbrains.dataframe.mean
 import org.junit.Test
 
 class BasicMathTests {
 
     @Test
-    fun `type for column with mixed numbers`(){
+    fun `type for column with mixed numbers`() {
         val col = columnOf(10, 10.0, null)
         col.type() shouldBe getType<Number?>()
     }

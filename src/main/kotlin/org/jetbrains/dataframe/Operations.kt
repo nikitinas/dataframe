@@ -1,14 +1,6 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.columns.AnyCol
-import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.ColumnWithPath
-import org.jetbrains.dataframe.columns.Columns
-import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.SingleColumn
-import org.jetbrains.dataframe.columns.name
-import org.jetbrains.dataframe.columns.size
-import org.jetbrains.dataframe.columns.values
+import org.jetbrains.dataframe.columns.*
 import org.jetbrains.dataframe.impl.TreeNode
 import org.jetbrains.dataframe.impl.columns.ColumnWithParent
 import org.jetbrains.dataframe.impl.columns.addPath
@@ -20,39 +12,35 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.KVisibility
-import kotlin.reflect.full.allSuperclasses
-import kotlin.reflect.full.createType
-import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.full.superclasses
-import kotlin.reflect.full.withNullability
+import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
 
-fun rowNumber(columnName: String = "id") = AddRowNumberStub(columnName)
+public fun rowNumber(columnName: String = "id"): AddRowNumberStub = AddRowNumberStub(columnName)
 
-data class AddRowNumberStub(val columnName: String)
+public data class AddRowNumberStub(val columnName: String)
 
 // size
 
-val AnyFrame.size: DataFrameSize get() = DataFrameSize(ncol(), nrow())
+public val AnyFrame.size: DataFrameSize get() = DataFrameSize(ncol(), nrow())
 
-fun commonParent(classes: Iterable<KClass<*>>) = commonParents(classes).withMostSuperclasses()
+public fun commonParent(classes: Iterable<KClass<*>>): KClass<*>? = commonParents(classes).withMostSuperclasses()
 
-fun commonParent(vararg classes: KClass<*>) = commonParent(classes.toList())
+public fun commonParent(vararg classes: KClass<*>): KClass<*>? = commonParent(classes.toList())
 
-fun Iterable<KClass<*>>.withMostSuperclasses() = maxByOrNull { it.allSuperclasses.size }
+public fun Iterable<KClass<*>>.withMostSuperclasses(): KClass<*>? = maxByOrNull { it.allSuperclasses.size }
 
-fun Iterable<KClass<*>>.createType(nullable: Boolean, upperBound: KType? = null): KType = if(upperBound == null) (withMostSuperclasses() ?: Any::class).createStarProjectedType(nullable)
+public fun Iterable<KClass<*>>.createType(nullable: Boolean, upperBound: KType? = null): KType =
+    if (upperBound == null) (withMostSuperclasses() ?: Any::class).createStarProjectedType(nullable)
     else {
         val upperClass = upperBound.classifier as KClass<*>
         val baseClass = filter { it.isSubclassOf(upperClass) }.withMostSuperclasses() ?: withMostSuperclasses()
-        if(baseClass == null) Any::class.createStarProjectedType(nullable)
+        if (baseClass == null) Any::class.createStarProjectedType(nullable)
         else upperBound.projectTo(baseClass).withNullability(nullable)
     }
 
+public fun commonParents(vararg classes: KClass<*>): List<KClass<*>> = commonParents(classes.toList())
 
-fun commonParents(vararg classes: KClass<*>) = commonParents(classes.toList())
-
-fun commonParents(classes: Iterable<KClass<*>>) =
+public fun commonParents(classes: Iterable<KClass<*>>): List<KClass<*>> =
     when {
         !classes.any() -> emptyList()
         else -> {
@@ -113,21 +101,20 @@ internal fun baseType(types: Set<KType>): KType {
 
 internal fun indexColumn(columnName: String, size: Int): AnyCol = column(columnName, (0 until size).toList())
 
-fun <T> DataFrame<T>.addRowNumber(column: ColumnReference<Int>) = addRowNumber(column.name())
-fun <T> DataFrame<T>.addRowNumber(columnName: String = "id"): DataFrame<T> = dataFrameOf(
-    columns() + indexColumn(
-        columnName,
-        nrow()
-    )
-).typed<T>()
+public fun <T> DataFrame<T>.addRowNumber(column: ColumnReference<Int>): DataFrame<T> = addRowNumber(column.name())
+public fun <T> DataFrame<T>.addRowNumber(columnName: String = "id"): DataFrame<T> =
+    dataFrameOf(columns() + indexColumn(columnName, nrow())).typed()
 
-fun AnyCol.addRowNumber(columnName: String = "id") = dataFrameOf(listOf(indexColumn(columnName, size), this))
+public fun AnyCol.addRowNumber(columnName: String = "id"): AnyFrame =
+    dataFrameOf(listOf(indexColumn(columnName, size), this))
 
 // Update
 
-inline fun <reified C> headPlusArray(head: C, cols: Array<out C>) = (listOf(head) + cols.toList()).toTypedArray()
+public inline fun <reified C> headPlusArray(head: C, cols: Array<out C>): Array<C> =
+    (listOf(head) + cols.toList()).toTypedArray()
 
-inline fun <reified C> headPlusIterable(head: C, cols: Iterable<C>): Iterable<C> = (listOf(head) + cols.asIterable())
+public inline fun <reified C> headPlusIterable(head: C, cols: Iterable<C>): Iterable<C> =
+    (listOf(head) + cols.asIterable())
 
 // column grouping
 
@@ -136,15 +123,15 @@ internal fun TreeNode<ColumnPosition>.allRemovedColumns() = dfs { it.data.wasRem
 internal fun TreeNode<ColumnPosition>.allWithColumns() = dfs { it.data.column != null }
 
 internal fun Iterable<ColumnWithPath<*>>.dfs(): List<ColumnWithPath<*>> {
-
     val result = mutableListOf<ColumnWithPath<*>>()
     fun dfs(cols: Iterable<ColumnWithPath<*>>) {
         cols.forEach {
             result.add(it)
             val path = it.path
             val df = it.df
-            if (it.data.isGroup())
+            if (it.data.isGroup()) {
                 dfs(it.data.asGroup().columns().map { it.addPath(path + it.name(), df) })
+            }
         }
     }
     dfs(this)
@@ -154,7 +141,6 @@ internal fun Iterable<ColumnWithPath<*>>.dfs(): List<ColumnWithPath<*>> {
 internal fun List<ColumnWithPath<*>>.collectTree() = collectTree(null) { it }
 
 internal fun <D> List<ColumnWithPath<*>>.collectTree(emptyData: D, createData: (AnyCol) -> D): TreeNode<D> {
-
     val root = TreeNode.createRoot(emptyData)
 
     fun collectColumns(col: AnyCol, parentNode: TreeNode<D>) {
@@ -178,9 +164,9 @@ internal fun <D> List<ColumnWithPath<*>>.collectTree(emptyData: D, createData: (
     return root
 }
 
-interface ReferenceData {
-    val originalIndex: Int
-    val wasRemoved: Boolean
+public interface ReferenceData {
+    public val originalIndex: Int
+    public val wasRemoved: Boolean
 }
 
 internal data class ColumnPosition(
@@ -189,12 +175,12 @@ internal data class ColumnPosition(
     var column: AnyCol?
 ) : ReferenceData
 
-fun Column.getParent(): MapColumnReference? = when (this) {
+public fun Column.getParent(): MapColumnReference? = when (this) {
     is ColumnWithParent<*> -> parent
     else -> null
 }
 
-fun Column.getPath(): ColumnPath {
+public fun Column.getPath(): ColumnPath {
     val list = mutableListOf<String>()
     var c = this.asNullable()
     while (c != null) {
@@ -206,13 +192,11 @@ fun Column.getPath(): ColumnPath {
 }
 
 internal fun <T> DataFrame<T>.collectTree(selector: ColumnsSelector<T, *>): TreeNode<AnyCol?> {
-
     val colPaths = getColumnPaths(selector)
 
     val root = TreeNode.createRoot(null as AnyCol?)
 
     colPaths.forEach {
-
         var column: AnyCol? = null
         var node: TreeNode<AnyCol?> = root
         it.forEach {
@@ -250,9 +234,10 @@ internal fun KClass<*>.createTypeWithArgument(argument: KType? = null, nullable:
     else createStarProjectedType(nullable)
 }
 
-internal inline fun <reified T> createTypeWithArgument(typeArgument: KType? = null) = T::class.createTypeWithArgument(typeArgument)
+internal inline fun <reified T> createTypeWithArgument(typeArgument: KType? = null) =
+    T::class.createTypeWithArgument(typeArgument)
 
-fun <T> FrameColumn<T>.union() = if (size > 0) values.union() else emptyDataFrame(0)
+public fun <T> FrameColumn<T>.union(): DataFrame<Any?> = if (size > 0) values.union() else emptyDataFrame(0)
 
 internal fun <T> T.asNullable() = this as T?
 
@@ -262,7 +247,6 @@ internal fun <T> List<T>.last(count: Int) = subList(size - count, size)
  * Shorten column paths as much as possible to keep them unique
  */
 internal fun <C> List<ColumnWithPath<C>>.shortenPaths(): List<ColumnWithPath<C>> {
-
     // try to use just column name as column path
     val map = groupBy { it.path.last(1) }.toMutableMap()
 
@@ -297,7 +281,7 @@ internal fun <C> List<ColumnWithPath<C>>.shortenPaths(): List<ColumnWithPath<C>>
     return map { it.changePath(pathRemapping[it.path]!!) }
 }
 
-fun AnyFrame.toMap(): Map<String, List<Any?>> = columns().associateBy({ it.name }, { it.toList() })
+public fun AnyFrame.toMap(): Map<String, List<Any?>> = columns().associateBy({ it.name }, { it.toList() })
 
 internal fun <C> Columns<C>.resolve(df: DataFrame<*>, unresolvedColumnsPolicy: UnresolvedColumnsPolicy) =
     resolve(ColumnResolutionContext(df, unresolvedColumnsPolicy))

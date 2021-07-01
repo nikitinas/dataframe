@@ -4,7 +4,7 @@ import org.jetbrains.dataframe.columns.AnyCol
 import org.jetbrains.dataframe.io.DisplayConfiguration
 import org.jetbrains.dataframe.io.toHTML
 
-data class RGBColor(val r: Short, val g: Short, val b: Short)
+public data class RGBColor(val r: Short, val g: Short, val b: Short)
 
 private fun encRgb(r: Short, g: Short, b: Short): String = "#${encHex(r)}${encHex(g)}${encHex(b)}"
 
@@ -18,13 +18,12 @@ private fun componentWise(color1: RGBColor, color2: RGBColor, f: (Short, Short) 
     f(color1.b, color2.b)
 )
 
-interface CellAttributes {
+public interface CellAttributes {
 
-    fun attributes(): List<Pair<String, String>>
-
+    public fun attributes(): List<Pair<String, String>>
 }
 
-infix fun CellAttributes?.and(other: CellAttributes?): CellAttributes? = when {
+public infix fun CellAttributes?.and(other: CellAttributes?): CellAttributes? = when {
     other == null -> this
     this == null -> other
     else -> MergedAttributes(listOf(this, other))
@@ -38,36 +37,36 @@ internal class MergedAttributes(private val attributes: List<CellAttributes>) : 
     override fun attributes() = attributes.flatMap { it.attributes() }.toMap().toList()
 }
 
-object FormattingDSL {
+public object FormattingDSL {
 
-    fun rgb(r: Short, g: Short, b: Short) = RGBColor(r, g, b)
+    public fun rgb(r: Short, g: Short, b: Short): RGBColor = RGBColor(r, g, b)
 
-    val black = rgb(0, 0, 0)
-    val white = rgb(255, 255, 255)
-    val green = rgb(0, 255, 0)
-    val red = rgb(255, 0, 0)
-    val blue = rgb(0, 0, 255)
-    val gray = rgb(128, 128, 128)
-    val darkGray = rgb(169, 169, 169)
-    val lightGray = rgb(211, 211, 211)
+    public val black: RGBColor = rgb(0, 0, 0)
+    public val white: RGBColor = rgb(255, 255, 255)
+    public val green: RGBColor = rgb(0, 255, 0)
+    public val red: RGBColor = rgb(255, 0, 0)
+    public val blue: RGBColor = rgb(0, 0, 255)
+    public val gray: RGBColor = rgb(128, 128, 128)
+    public val darkGray: RGBColor = rgb(169, 169, 169)
+    public val lightGray: RGBColor = rgb(211, 211, 211)
 
-    internal fun attribute(name: String, value: String): CellAttributes = SingleAttribute(name, value)
+    private fun attribute(name: String, value: String): CellAttributes = SingleAttribute(name, value)
 
-    fun background(color: RGBColor) = attribute("background-color", color.encode())
-    fun background(r: Short, g: Short, b: Short) = background(RGBColor(r, g, b))
+    public fun background(color: RGBColor): CellAttributes = attribute("background-color", color.encode())
+    public fun background(r: Short, g: Short, b: Short): CellAttributes = background(RGBColor(r, g, b))
 
-    fun textColor(color: RGBColor) = attribute("color", color.encode())
-    fun textColor(r: Short, g: Short, b: Short) = textColor(RGBColor(r, g, b))
+    public fun textColor(color: RGBColor): CellAttributes = attribute("color", color.encode())
+    public fun textColor(r: Short, g: Short, b: Short): CellAttributes = textColor(RGBColor(r, g, b))
 
-    val italic = attribute("font-style", "italic")
+    public val italic: CellAttributes = attribute("font-style", "italic")
 
-    val bold = attribute("font-weight", "bold")
+    public val bold: CellAttributes = attribute("font-weight", "bold")
 
-    val underline = attribute("text-decoration", "underline")
+    public val underline: CellAttributes = attribute("text-decoration", "underline")
 
-    fun linearBg(value: Number, from: Pair<Number, RGBColor>, to: Pair<Number, RGBColor>) = background(linear(value, from, to))
+    public fun linearBg(value: Number, from: Pair<Number, RGBColor>, to: Pair<Number, RGBColor>): CellAttributes = background(linear(value, from, to))
 
-    fun linear(value: Number, from: Pair<Number, RGBColor>, to: Pair<Number, RGBColor>): RGBColor {
+    public fun linear(value: Number, from: Pair<Number, RGBColor>, to: Pair<Number, RGBColor>): RGBColor {
         val a = from.first.toDouble()
         val b = to.first.toDouble()
         if (a < b) return linearGradient(value.toDouble(), a, from.second, b, to.second)
@@ -90,39 +89,39 @@ internal fun linearGradient(
     }
 }
 
-typealias RowColFormatter<T> = (DataRow<T>, AnyCol) -> CellAttributes?
+public typealias RowColFormatter<T> = (DataRow<T>, AnyCol) -> CellAttributes?
 
-class FormattedFrame<T>(
+public class FormattedFrame<T>(
     internal val df: DataFrame<T>,
     internal val formatter: RowColFormatter<T>? = null,
 ) {
-    fun toHTML(configuration: DisplayConfiguration) = df.toHTML(configuration.copy(cellFormatter = formatter as RowColFormatter<*>?))
+    public fun toHTML(configuration: DisplayConfiguration): String = df.toHTML(configuration.copy(cellFormatter = formatter as RowColFormatter<*>?))
 }
 
-data class ColorClause<T, C>(
+public data class ColorClause<T, C>(
     val df: DataFrame<T>,
     val selector: ColumnsSelector<T, C>? = null,
     val oldFormatter: RowColFormatter<T>? = null,
     val filter: RowCellFilter<T, C> = { true },
 )
 
-fun <T, C> FormattedFrame<T>.format(selector: ColumnsSelector<T, C>) = ColorClause(df, selector, formatter)
-fun <T, C> DataFrame<T>.format(selector: ColumnsSelector<T, C>) = ColorClause(this, selector)
+public fun <T, C> FormattedFrame<T>.format(selector: ColumnsSelector<T, C>): ColorClause<T, C> = ColorClause(df, selector, formatter)
+public fun <T, C> DataFrame<T>.format(selector: ColumnsSelector<T, C>): ColorClause<T, C> = ColorClause(this, selector)
 
-fun <T> FormattedFrame<T>.format() = ColorClause<T, Any?>(df, null, formatter)
-fun <T> DataFrame<T>.format() = ColorClause<T, Any?>(this)
+public fun <T> FormattedFrame<T>.format(): ColorClause<T, Any?> = ColorClause(df, null, formatter)
+public fun <T> DataFrame<T>.format(): ColorClause<T, Any?> = ColorClause(this)
 
-fun <T, C> ColorClause<T, C>.where(filter: RowCellFilter<T, C>) = copy(filter = filter)
+public fun <T, C> ColorClause<T, C>.where(filter: RowCellFilter<T, C>): ColorClause<T, C> = copy(filter = filter)
 
-typealias CellFormatter<V> = FormattingDSL.(V) -> CellAttributes?
+public typealias CellFormatter<V> = FormattingDSL.(V) -> CellAttributes?
 
-fun <T, C : Number?> ColorClause<T, C>.linearBg(from: Pair<Number, RGBColor>, to: Pair<Number, RGBColor>) = with {
-    if (it != null)
+public fun <T, C : Number?> ColorClause<T, C>.linearBg(from: Pair<Number, RGBColor>, to: Pair<Number, RGBColor>): FormattedFrame<T> = with {
+    if (it != null) {
         background(linear(it, from, to))
-    else null
+    } else null
 }
 
-fun <T, C> ColorClause<T, C>.with(formatter: CellFormatter<C>): FormattedFrame<T> {
+public fun <T, C> ColorClause<T, C>.with(formatter: CellFormatter<C>): FormattedFrame<T> {
     val columns =
         if (selector != null) df.getColumnsWithPaths(selector).mapNotNull { if (it.depth == 0) it.name else null }
             .toSet() else null

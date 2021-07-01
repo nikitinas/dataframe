@@ -1,26 +1,19 @@
 package org.jetbrains.dataframe
 
-import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.hasNulls
-import org.jetbrains.dataframe.columns.name
-import org.jetbrains.dataframe.columns.type
-import org.jetbrains.dataframe.columns.values
+import org.jetbrains.dataframe.columns.*
 import java.math.BigDecimal
 import kotlin.math.sqrt
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.jvmErasure
 
+public inline fun <reified T : Number> Iterable<T>.std(): Double = std(T::class)
 
-inline fun <reified T : Number> Iterable<T>.std(): Double = std(T::class)
+public inline fun <T, reified D : Number> DataFrame<T>.std(crossinline selector: RowSelector<T, D?>): Double = rows().asSequence().map { selector(it, it) }.filterNotNull().asIterable().std()
+public inline fun <T, reified D : Number> DataFrame<T>.std(col: ColumnReference<D>): Double = get(col).std()
+public inline fun <T, reified D : Number> DataFrame<T>.std(col: KProperty<D>): Double = get(col).std()
 
-inline fun <T, reified D : Number> DataFrame<T>.std(crossinline selector: RowSelector<T, D?>): Double = rows().asSequence().map { selector(it, it) }.filterNotNull().asIterable().std()
-inline fun <T, reified D : Number> DataFrame<T>.std(col: ColumnReference<D>): Double = get(col).std()
-inline fun <T, reified D : Number> DataFrame<T>.std(col: KProperty<D>): Double = get(col).std()
-
-fun <T> DataFrame<T>.std(): DataRow<T> {
+public fun <T> DataFrame<T>.std(): DataRow<T> {
     return columns().map {
         it.takeIf { it.isNumber() }?.let {
             column(it.name, listOf((it as DataColumn<Number>).std()))
@@ -28,7 +21,7 @@ fun <T> DataFrame<T>.std(): DataRow<T> {
     }.asDataFrame<T>()[0]
 }
 
-fun <T : Number> Iterable<T>.std(clazz: KClass<*>) = when (clazz) {
+public fun <T : Number> Iterable<T>.std(clazz: KClass<*>): Double = when (clazz) {
     Double::class -> (this as Iterable<Double>).std()
     Float::class -> (this as Iterable<Float>).std()
     Int::class, Short::class, Byte::class -> (this as Iterable<Int>).std()
@@ -37,64 +30,74 @@ fun <T : Number> Iterable<T>.std(clazz: KClass<*>) = when (clazz) {
     else -> throw IllegalArgumentException()
 }
 
-fun <T: Number> DataColumn<T?>.std(): Double = (if(hasNulls) values.filterNotNull() else (values as Iterable<T>)).std(type.jvmErasure as KClass<T>)
+public fun <T : Number> DataColumn<T?>.std(): Double = (if (hasNulls) values.filterNotNull() else (values as Iterable<T>)).std(type.jvmErasure as KClass<T>)
 
 @JvmName("doubleStd")
-fun Iterable<Double>.std() = stdMean().first
+public fun Iterable<Double>.std(): Double = stdMean().first
 
 @JvmName("floatStd")
-fun Iterable<Float>.std() = stdMean().first
+public fun Iterable<Float>.std(): Double = stdMean().first
 
 @JvmName("intStd")
-fun Iterable<Int>.std() = stdMean().first
+public fun Iterable<Int>.std(): Double = stdMean().first
 
 @JvmName("longStd")
-fun Iterable<Long>.std() = stdMean().first
+public fun Iterable<Long>.std(): Double = stdMean().first
 
 @JvmName("bigDecimalStd")
-fun Iterable<BigDecimal>.std() = stdMean().first
+public fun Iterable<BigDecimal>.std(): Double = stdMean().first
 
 @JvmName("doubleStdMean")
-fun Iterable<Double>.stdMean(): Pair<Double, Double> {
+public fun Iterable<Double>.stdMean(): Pair<Double, Double> {
     val m = mean(false)
-    return sqrt(fold(0.0) { acc, el ->
-        val diff = el - m
-        acc + diff * diff
-    }) to m
+    return sqrt(
+        fold(0.0) { acc, el ->
+            val diff = el - m
+            acc + diff * diff
+        }
+    ) to m
 }
 
 @JvmName("floatStdMean")
-fun Iterable<Float>.stdMean(): Pair<Double, Double> {
+public fun Iterable<Float>.stdMean(): Pair<Double, Double> {
     val m = mean(false)
-    return sqrt(fold(0.0){ acc, el ->
-        val diff = el - m
-        acc + diff * diff
-    }) to m
+    return sqrt(
+        fold(0.0) { acc, el ->
+            val diff = el - m
+            acc + diff * diff
+        }
+    ) to m
 }
 
 @JvmName("intStdMean")
-fun Iterable<Int>.stdMean(): Pair<Double, Double> {
+public fun Iterable<Int>.stdMean(): Pair<Double, Double> {
     val m = mean()
-    return sqrt(fold(0.0) { acc, el ->
-        val diff = el - m
-        acc + diff * diff
-    }) to m
+    return sqrt(
+        fold(0.0) { acc, el ->
+            val diff = el - m
+            acc + diff * diff
+        }
+    ) to m
 }
 
 @JvmName("longStdMean")
-fun Iterable<Long>.stdMean(): Pair<Double, Double> {
+public fun Iterable<Long>.stdMean(): Pair<Double, Double> {
     val m = mean()
-    return sqrt(fold(0.0) { acc, el ->
-        val diff = el - m
-        acc + diff * diff
-    }) to m
+    return sqrt(
+        fold(0.0) { acc, el ->
+            val diff = el - m
+            acc + diff * diff
+        }
+    ) to m
 }
 
 @JvmName("bigDecimalStdMean")
-fun Iterable<BigDecimal>.stdMean(): Pair<Double, Double> {
+public fun Iterable<BigDecimal>.stdMean(): Pair<Double, Double> {
     val m = mean()
-    return sqrt(fold(0.0) { acc, el ->
-        val diff = el.toDouble() - m
-        acc + diff * diff
-    }) to m
+    return sqrt(
+        fold(0.0) { acc, el ->
+            val diff = el.toDouble() - m
+            acc + diff * diff
+        }
+    ) to m
 }

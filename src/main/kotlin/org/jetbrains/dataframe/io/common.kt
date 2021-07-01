@@ -1,14 +1,9 @@
 package org.jetbrains.dataframe.io
 
-import org.jetbrains.dataframe.AnyFrame
-import org.jetbrains.dataframe.DataFrame
-import org.jetbrains.dataframe.Many
+import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.columns.guessColumnType
-import org.jetbrains.dataframe.emptyDataFrame
-import org.jetbrains.dataframe.toDataFrame
 import java.io.IOException
 import java.io.InputStream
-import java.lang.Exception
 import java.net.URL
 
 internal fun catchHttpResponse(url: URL, body: (InputStream) -> AnyFrame): AnyFrame {
@@ -28,7 +23,7 @@ internal fun catchHttpResponse(url: URL, body: (InputStream) -> AnyFrame): AnyFr
     }
 }
 
-fun <T> Many<Many<T>>.toDataFrame(containsColumns: Boolean = false): AnyFrame = when {
+public fun <T> Many<Many<T>>.toDataFrame(containsColumns: Boolean = false): AnyFrame = when {
     containsColumns -> {
         mapNotNull {
             if (it.size == 0) null
@@ -43,7 +38,7 @@ fun <T> Many<Many<T>>.toDataFrame(containsColumns: Boolean = false): AnyFrame = 
         val data = drop(1)
         header.mapIndexed { colIndex, name ->
             val values = data.map { row ->
-                if(row.size <= colIndex) null
+                if (row.size <= colIndex) null
                 else row[colIndex]
             }
             guessColumnType(name, values)

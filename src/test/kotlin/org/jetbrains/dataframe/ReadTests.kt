@@ -1,19 +1,20 @@
 package org.jetbrains.dataframe
 
 import io.kotest.matchers.shouldBe
-import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.columns.ColumnGroup
+import org.jetbrains.dataframe.columns.FrameColumn
 import org.jetbrains.dataframe.io.readJsonStr
 import org.junit.Test
 
 class ReadTests {
 
     @Test
-    fun parseJson1(){
+    fun parseJson1() {
         val json = """[
                 {"a":1, "b":"text"},
                 {"a":2, "b":5, "c":4.5}
-            ]""".trimIndent()
+            ]
+        """.trimIndent()
         val df = DataFrame.readJsonStr(json)
         df.ncol() shouldBe 3
         df.nrow() shouldBe 2
@@ -23,12 +24,13 @@ class ReadTests {
     }
 
     @Test
-    fun parseJson2(){
+    fun parseJson2() {
         val json = """[
                 {"a":"text"},
                 {"a":{"b":2}},
                 {"a":[6,7,8]}
-            ]""".trimIndent()
+            ]
+        """.trimIndent()
         val df = DataFrame.readJsonStr(json)
         println(df)
         df.ncol() shouldBe 1
@@ -41,12 +43,13 @@ class ReadTests {
     }
 
     @Test
-    fun parseJson3(){
+    fun parseJson3() {
         val json = """[
                 {"a":[3, 5]},
                 {},
                 {"a":[3.4, 5.6]}
-            ]""".trimIndent()
+            ]
+        """.trimIndent()
         val df = DataFrame.readJsonStr(json)
         df.ncol() shouldBe 1
         df.nrow() shouldBe 3
@@ -55,16 +58,16 @@ class ReadTests {
     }
 
     @Test
-    fun parseJson4(){
+    fun parseJson4() {
         val json = """[
                 {"a":[ {"b":2}, {"c":3} ]},
                 {"a":[ {"b":4}, {"d":5} ]}
-            ]""".trimIndent()
+            ]
+        """.trimIndent()
         val df = DataFrame.readJsonStr(json)
         df.ncol() shouldBe 1
         df.nrow() shouldBe 2
         println(df)
         val group = df["a"] as FrameColumn<*>
-
     }
 }

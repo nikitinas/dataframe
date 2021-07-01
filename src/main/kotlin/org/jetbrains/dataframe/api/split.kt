@@ -8,70 +8,71 @@ import org.jetbrains.dataframe.impl.createDataCollector
 import org.jetbrains.dataframe.impl.nameGenerator
 import kotlin.reflect.KProperty
 
-fun <T, C> DataFrame<T>.split(selector: ColumnsSelector<T, C>): SplitClause<T, C> =
+public fun <T, C> DataFrame<T>.split(selector: ColumnsSelector<T, C>): SplitClause<T, C> =
     SplitClause(this, selector, false) { it }
 
-fun <T> DataFrame<T>.split(column: String) = split { column.toColumnDef() }
-fun <T, C> DataFrame<T>.split(column: ColumnReference<C>) = split { column }
-fun <T, C> DataFrame<T>.split(column: KProperty<C>) = split { column.toColumnDef() }
+public fun <T> DataFrame<T>.split(column: String): SplitClause<T, Any?> = split { column.toColumnDef() }
+public fun <T, C> DataFrame<T>.split(column: ColumnReference<C>): SplitClause<T, C> = split { column }
+public fun <T, C> DataFrame<T>.split(column: KProperty<C>): SplitClause<T, C> = split { column.toColumnDef() }
 
-class SplitClause<T, C>(
-    val df: DataFrame<T>,
-    val columns: ColumnsSelector<T, C>,
-    val inward: Boolean,
-    val transform: (C) -> Any?
+public class SplitClause<T, C>(
+    public val df: DataFrame<T>,
+    public val columns: ColumnsSelector<T, C>,
+    public val inward: Boolean,
+    public val transform: (C) -> Any?
 )
 
-fun <T, C> SplitClause<T, C>.by(
+public fun <T, C> SplitClause<T, C>.by(
     vararg delimiters: String,
     trim: Boolean = true,
     ignoreCase: Boolean = false,
     limit: Int = 0
-) = by {
+): SplitClause<T, C> = by {
     it?.toString()?.split(*delimiters, ignoreCase = ignoreCase, limit = limit)?.let {
         if (trim) it.map { it.trim() }
         else it
     } ?: emptyList()
 }
 
-fun <T, C, K> SplitClause<T, C>.by(splitter: (C) -> List<K>) = SplitClause(df, columns, inward) {
+public fun <T, C, K> SplitClause<T, C>.by(splitter: (C) -> List<K>): SplitClause<T, C> = SplitClause(df, columns, inward) {
     splitter(it).toMany()
 }
 
-fun <T, C> SplitClause<T, C>.inward() = SplitClause(df, columns, true, transform)
+public fun <T, C> SplitClause<T, C>.inward(): SplitClause<T, C> = SplitClause(df, columns, true, transform)
 
-fun <T, C> SplitClause<T, C>.into(firstName: ColumnReference<*>, vararg otherNames: ColumnReference<*>) =
+public fun <T, C> SplitClause<T, C>.into(firstName: ColumnReference<*>, vararg otherNames: ColumnReference<*>): DataFrame<T> =
     into(listOf(firstName.name()) + otherNames.map { it.name() })
 
-fun <T, C> SplitClause<T, C>.intoMany(namesProvider: (ColumnWithPath<C>, numberOfNewColumns: Int) -> List<String>) =
+public fun <T, C> SplitClause<T, C>.intoMany(
+    namesProvider: (ColumnWithPath<C>, numberOfNewColumns: Int) -> List<String>
+): DataFrame<T> =
     doSplitCols(this, namesProvider)
 
-fun <T, C> SplitClause<T, C>.into(
+public fun <T, C> SplitClause<T, C>.into(
     vararg names: String,
     extraNamesGenerator: (ColumnWithPath<C>.(extraColumnIndex: Int) -> String)? = null
-) = into(names.toList(), extraNamesGenerator)
+): DataFrame<T> = into(names.toList(), extraNamesGenerator)
 
-fun <T, C> SplitClause<T, C>.into(
+public fun <T, C> SplitClause<T, C>.into(
     names: List<String>,
     extraNamesGenerator: (ColumnWithPath<C>.(extraColumnIndex: Int) -> String)? = null
-) = intoMany { col, numberOfNewCols ->
-    if (extraNamesGenerator != null && names.size < numberOfNewCols)
+): DataFrame<T> = intoMany { col, numberOfNewCols ->
+    if (extraNamesGenerator != null && names.size < numberOfNewCols) {
         names + (1..(numberOfNewCols - names.size)).map { extraNamesGenerator(col, it) }
-    else names
+    } else names
 }
 
 internal fun valueToList(value: Any?, splitStrings: Boolean = true): List<Any?> = when (value) {
     null -> emptyList()
     is AnyMany -> value
     is AnyFrame -> value.rows().toList()
-    else -> if(splitStrings) value.toString().split(",").map { it.trim() } else listOf(value)
+    else -> if (splitStrings) value.toString().split(",").map { it.trim() } else listOf(value)
 }
 
-fun <T, C> doSplitCols(
+public fun <T, C> doSplitCols(
     clause: SplitClause<T, C>,
     columnNamesGenerator: ColumnWithPath<C>.(Int) -> List<String>
 ): DataFrame<T> {
-
     val nameGenerator = clause.df.nameGenerator()
     val nrow = clause.df.nrow()
 
@@ -97,8 +98,9 @@ fun <T, C> doSplitCols(
         }
 
         var names = columnNamesGenerator(column, columnCollectors.size)
-        if (names.size < columnCollectors.size)
+        if (names.size < columnCollectors.size) {
             names = names + (1..(columnCollectors.size - names.size)).map { "splitted$it" }
+        }
 
         columnCollectors.mapIndexed { i, col ->
 
@@ -113,5 +115,4 @@ fun <T, C> doSplitCols(
     return removeResult.df.insert(toInsert)
 }
 
-fun <T, C> SplitClause<T, C>.intoRows(dropEmpty: Boolean = true) = df.explode(dropEmpty, columns)
-
+public fun <T, C> SplitClause<T, C>.intoRows(dropEmpty: Boolean = true): DataFrame<T> = df.explode(dropEmpty, columns)

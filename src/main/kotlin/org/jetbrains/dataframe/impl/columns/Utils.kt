@@ -1,39 +1,11 @@
 package org.jetbrains.dataframe.impl.columns
 
-import org.jetbrains.dataframe.columns.AnyCol
-import org.jetbrains.dataframe.ColumnKind
-import org.jetbrains.dataframe.ColumnPath
-import org.jetbrains.dataframe.ColumnPosition
-import org.jetbrains.dataframe.ColumnResolutionContext
-import org.jetbrains.dataframe.ColumnsSelector
-import org.jetbrains.dataframe.DataFrame
-import org.jetbrains.dataframe.DataFrameBase
-import org.jetbrains.dataframe.DataRow
-import org.jetbrains.dataframe.SelectReceiverImpl
-import org.jetbrains.dataframe.SortColumnsSelector
-import org.jetbrains.dataframe.UnresolvedColumnsPolicy
-import org.jetbrains.dataframe.columns.ColumnReference
-import org.jetbrains.dataframe.columns.Columns
-import org.jetbrains.dataframe.columns.ColumnWithPath
-import org.jetbrains.dataframe.columns.DataColumn
-import org.jetbrains.dataframe.columns.BaseColumn
-import org.jetbrains.dataframe.columns.FrameColumn
-import org.jetbrains.dataframe.columns.ColumnGroup
-import org.jetbrains.dataframe.columns.ValueColumn
-import org.jetbrains.dataframe.columns.toAccessor
-import org.jetbrains.dataframe.columns.type
-import org.jetbrains.dataframe.columns.values
-import org.jetbrains.dataframe.getType
+import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.columns.*
 import org.jetbrains.dataframe.impl.TreeNode
 import org.jetbrains.dataframe.impl.asList
 import org.jetbrains.dataframe.impl.equalsByElement
 import org.jetbrains.dataframe.impl.rollingHash
-import org.jetbrains.dataframe.isGroup
-import org.jetbrains.dataframe.columns.name
-import org.jetbrains.dataframe.toColumnDef
-import org.jetbrains.dataframe.toColumnOf
-import org.jetbrains.dataframe.toColumns
-import org.jetbrains.dataframe.typed
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.isSubtypeOf
 
@@ -91,13 +63,13 @@ internal fun AnyCol.asTable(): FrameColumnInternal<*> = this as FrameColumnInter
 internal fun <T> DataColumn<DataFrame<T>?>.asTable(): FrameColumn<T> = this as FrameColumnInternal<T>
 internal fun AnyCol.isTable(): Boolean = kind() == ColumnKind.Frame
 internal fun <T> DataColumn<T>.assertIsComparable(): DataColumn<T> {
-    if (!type.isSubtypeOf(getType<Comparable<*>?>()))
+    if (!type.isSubtypeOf(getType<Comparable<*>?>())) {
         throw RuntimeException("Column '$name' has type '$type' that is not Comparable")
+    }
     return this
 }
 
 internal fun <A, B> Columns<A>.transform(transform: (List<ColumnWithPath<A>>) -> List<ColumnWithPath<B>>): Columns<B> {
-
     class TransformedColumns<A, B>(
         val src: Columns<A>,
         val transform: (List<ColumnWithPath<A>>) -> List<ColumnWithPath<B>>
@@ -124,7 +96,7 @@ internal fun <C> Iterable<ColumnReference<C>>.toColumnSet(): Columns<C> = Column
 
 internal fun <C> Array<out KProperty<C>>.toColumns() = map { it.toColumnDef() }.toColumnSet()
 internal fun <T> Array<out ColumnReference<T>>.toColumns() = asIterable().toColumnSet()
-internal fun  Iterable<String>.toColumns() = map { it.toColumnDef() }.toColumnSet()
+internal fun Iterable<String>.toColumns() = map { it.toColumnDef() }.toColumnSet()
 
 internal fun <T, C> ColumnsSelector<T, C>.toColumns(): Columns<C> = toColumns {
     SelectReceiverImpl(

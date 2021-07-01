@@ -10,18 +10,18 @@ import org.jetbrains.dataframe.impl.columns.toColumns
 import org.jetbrains.dataframe.impl.columns.withDf
 import kotlin.reflect.KProperty
 
-infix operator fun <T> DataFrame<T>.minus(column: String) = remove(column)
-infix operator fun <T> DataFrame<T>.minus(column: Column) = remove(column)
-infix operator fun <T> DataFrame<T>.minus(cols: Iterable<Column>) = remove(cols)
-infix operator fun <T> DataFrame<T>.minus(cols: ColumnsSelector<T, *>) = remove(cols)
+public infix operator fun <T> DataFrame<T>.minus(column: String): DataFrame<T> = remove(column)
+public infix operator fun <T> DataFrame<T>.minus(column: Column): DataFrame<T> = remove(column)
+public infix operator fun <T> DataFrame<T>.minus(cols: Iterable<Column>): DataFrame<T> = remove(cols)
+public infix operator fun <T> DataFrame<T>.minus(cols: ColumnsSelector<T, *>): DataFrame<T> = remove(cols)
 
-fun <T> DataFrame<T>.remove(selector: ColumnsSelector<T, *>) = doRemove(selector).df
-fun <T> DataFrame<T>.remove(vararg cols: KProperty<*>) = remove { cols.toColumns() }
-fun <T> DataFrame<T>.remove(vararg cols: String) = remove { cols.toColumns() }
-fun <T> DataFrame<T>.remove(vararg cols: Column) = remove { cols.toColumns() }
-fun <T> DataFrame<T>.remove(cols: Iterable<Column>) = remove { cols.toColumnSet() }
+public fun <T> DataFrame<T>.remove(selector: ColumnsSelector<T, *>): DataFrame<T> = doRemove(selector).df
+public fun <T> DataFrame<T>.remove(vararg cols: KProperty<*>): DataFrame<T> = remove { cols.toColumns() }
+public fun <T> DataFrame<T>.remove(vararg cols: String): DataFrame<T> = remove { cols.toColumns() }
+public fun <T> DataFrame<T>.remove(vararg cols: Column): DataFrame<T> = remove { cols.toColumns() }
+public fun <T> DataFrame<T>.remove(cols: Iterable<Column>): DataFrame<T> = remove { cols.toColumnSet() }
 
-internal data class RemoveResult<T>(val df: DataFrame<T>, val removedColumns: List<TreeNode<ColumnPosition>>){
+internal data class RemoveResult<T>(val df: DataFrame<T>, val removedColumns: List<TreeNode<ColumnPosition>>) {
 
     val removedNothing: Boolean = removedColumns.isEmpty()
 
@@ -29,17 +29,15 @@ internal data class RemoveResult<T>(val df: DataFrame<T>, val removedColumns: Li
 }
 
 internal fun <T> DataFrame<T>.doRemove(selector: ColumnsSelector<T, *>): RemoveResult<T> {
-
     val colPaths = getColumnPaths(selector)
-    val originalOrder = colPaths.mapIndexed {index, path -> path to index}.toMap()
+    val originalOrder = colPaths.mapIndexed { index, path -> path to index }.toMap()
 
     val root = TreeNode.createRoot(ColumnPosition(-1, false, null))
 
-    if(colPaths.isEmpty()) return RemoveResult(this, emptyList())
+    if (colPaths.isEmpty()) return RemoveResult(this, emptyList())
 
     fun dfs(cols: Iterable<AnyColumn>, paths: List<ColumnPath>, node: TreeNode<ColumnPosition>): AnyFrame? {
-
-        if(paths.isEmpty()) return null
+        if (paths.isEmpty()) return null
 
         val depth = node.depth
         val children = paths.groupBy { it[depth] }
@@ -68,7 +66,7 @@ internal fun <T> DataFrame<T>.doRemove(selector: ColumnsSelector<T, *>): RemoveR
 
     val newDf = dfs(columns(), colPaths, root) ?: emptyDataFrame(nrow())
 
-    val removedColumns = root.allRemovedColumns().map {it.pathFromRoot() to it}.sortedBy { originalOrder[it.first] }.map { it.second }
+    val removedColumns = root.allRemovedColumns().map { it.pathFromRoot() to it }.sortedBy { originalOrder[it.first] }.map { it.second }
 
     return RemoveResult(newDf.typed(), removedColumns)
 }

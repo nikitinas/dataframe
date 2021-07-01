@@ -5,9 +5,9 @@ import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.DataRow
 import kotlin.reflect.KProperty
 
-interface ColumnGroup<out T> : BaseColumn<DataRow<T>>, DataFrame<T> {
+public interface ColumnGroup<out T> : BaseColumn<DataRow<T>>, DataFrame<T> {
 
-    val df: DataFrame<T>
+    public val df: DataFrame<T>
 
     override fun get(index: Int): DataRow<T>
 
@@ -19,7 +19,7 @@ interface ColumnGroup<out T> : BaseColumn<DataRow<T>>, DataFrame<T> {
 
     override fun get(columnName: String): AnyCol
 
-    override fun kind() = ColumnKind.Group
+    override fun kind(): ColumnKind = ColumnKind.Group
 
     override fun distinct(): ColumnGroup<T>
 
@@ -27,5 +27,5 @@ interface ColumnGroup<out T> : BaseColumn<DataRow<T>>, DataFrame<T> {
 
     override fun rename(newName: String): ColumnGroup<T>
 
-    override operator fun getValue(thisRef: Any?, property: KProperty<*>) = super.getValue(thisRef, property) as ColumnGroup<T>
+    override operator fun getValue(thisRef: Any?, property: KProperty<*>): ColumnGroup<T> = super.getValue(thisRef, property) as ColumnGroup<T>
 }

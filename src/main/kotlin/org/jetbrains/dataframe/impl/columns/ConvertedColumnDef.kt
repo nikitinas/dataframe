@@ -1,9 +1,9 @@
 package org.jetbrains.dataframe.impl.columns
 
-import org.jetbrains.dataframe.*
+import org.jetbrains.dataframe.ColumnResolutionContext
 import org.jetbrains.dataframe.columns.ColumnReference
 import org.jetbrains.dataframe.columns.ColumnWithPath
-import org.jetbrains.dataframe.columns.SingleColumn
+import org.jetbrains.dataframe.map
 import kotlin.reflect.KType
 
 internal class ConvertedColumnDef<C, R>(val source: ColumnReference<C>, val transform: (C) -> R, val type: KType?) :

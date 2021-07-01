@@ -1,26 +1,12 @@
 package org.jetbrains.dataframe.columns
 
-import org.jetbrains.dataframe.AnyFrame
-import org.jetbrains.dataframe.AnyRow
-import org.jetbrains.dataframe.DataColumnAggregations
-import org.jetbrains.dataframe.ColumnResolutionContext
-import org.jetbrains.dataframe.DataFrame
-import org.jetbrains.dataframe.DataRow
-import org.jetbrains.dataframe.Many
-import org.jetbrains.dataframe.commonType
-import org.jetbrains.dataframe.createStarProjectedType
-import org.jetbrains.dataframe.createTypeWithArgument
-import org.jetbrains.dataframe.emptyMany
-import org.jetbrains.dataframe.getType
+import org.jetbrains.dataframe.*
 import org.jetbrains.dataframe.impl.anyNull
-import org.jetbrains.dataframe.union
-import org.jetbrains.dataframe.impl.columns.FrameColumnImpl
 import org.jetbrains.dataframe.impl.columns.ColumnGroupImpl
+import org.jetbrains.dataframe.impl.columns.FrameColumnImpl
 import org.jetbrains.dataframe.impl.columns.ValueColumnImpl
 import org.jetbrains.dataframe.impl.columns.addPath
 import org.jetbrains.dataframe.internal.schema.DataFrameSchema
-import org.jetbrains.dataframe.manyOf
-import org.jetbrains.dataframe.toDataFrame
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -34,33 +20,38 @@ import kotlin.reflect.full.withNullability
  * All column extension functions that clash with [DataFrame] API (such as filter, forEach, map etc.) are defined for this interface,
  * because [ColumnGroup] doesn't inherit from it
  */
-interface DataColumn<out T> : DataColumnAggregations<T> {
+public interface DataColumn<out T> : DataColumnAggregations<T> {
 
-    companion object {
+    public companion object {
 
-        fun <T> create(name: String, values: List<T>, type: KType, defaultValue: T? = null): ValueColumn<T> = ValueColumnImpl(values, name, type, defaultValue)
+        public fun <T> create(name: String, values: List<T>, type: KType, defaultValue: T? = null): ValueColumn<T> = ValueColumnImpl(values, name, type, defaultValue)
 
-        fun <T> create(name: String, df: DataFrame<T>): ColumnGroup<T> = ColumnGroupImpl(df, name)
+        public fun <T> create(name: String, df: DataFrame<T>): ColumnGroup<T> = ColumnGroupImpl(df, name)
 
-        fun <T> create(name: String, df: DataFrame<T>, startIndices: Sequence<Int>, emptyToNull: Boolean): FrameColumn<T> = FrameColumnImpl(name, df, startIndices, emptyToNull)
+        public fun <T> create(name: String, df: DataFrame<T>, startIndices: Sequence<Int>, emptyToNull: Boolean): FrameColumn<T> = FrameColumnImpl(name, df, startIndices, emptyToNull)
 
-        fun <T> create(name: String, df: DataFrame<T>, startIndices: Iterable<Int>, emptyToNull: Boolean): FrameColumn<T> =
+        public fun <T> create(name: String, df: DataFrame<T>, startIndices: Iterable<Int>, emptyToNull: Boolean): FrameColumn<T> =
             create(name, df, startIndices.asSequence(), emptyToNull)
 
-        fun <T> frames(name: String, groups: List<DataFrame<T>?>): FrameColumn<T> = create(name, groups, null)
+        public fun <T> frames(name: String, groups: List<DataFrame<T>?>): FrameColumn<T> = create(name, groups, null)
 
-        internal fun <T> create(name: String, groups: List<DataFrame<T>?>, hasNulls: Boolean? = null, schema: Lazy<DataFrameSchema>? = null): FrameColumn<T> = FrameColumnImpl(name, groups, hasNulls, schema)
+        internal fun <T> create(
+            name: String,
+            groups: List<DataFrame<T>?>,
+            hasNulls: Boolean? = null,
+            schema: Lazy<DataFrameSchema>? = null
+        ): FrameColumn<T> = FrameColumnImpl(name, groups, hasNulls, schema)
 
-        fun create(name: String, values: List<Any?>) = guessColumnType(name, values)
+        public fun create(name: String, values: List<Any?>): DataColumn<*> = guessColumnType(name, values)
 
-        fun <T> createWithNullCheck(name: String, values: List<T>, type: KType): ValueColumn<T> = create(name, values, type.withNullability(values.anyNull()))
+        public fun <T> createWithNullCheck(name: String, values: List<T>, type: KType): ValueColumn<T> = create(name, values, type.withNullability(values.anyNull()))
 
-        inline fun <reified T> createWithNullCheck(name: String, values: List<T>): ValueColumn<T> = createWithNullCheck(name, values, getType<T>())
+        public inline fun <reified T> createWithNullCheck(name: String, values: List<T>): ValueColumn<T> = createWithNullCheck(name, values, getType<T>())
 
-        fun empty() = create("", emptyList<Unit>(), getType<Unit>()) as AnyCol
+        public fun empty(): AnyCol = create("", emptyList<Unit>(), getType<Unit>())
     }
 
-    fun hasNulls(): Boolean = type().isMarkedNullable
+    public fun hasNulls(): Boolean = type().isMarkedNullable
 
     override fun distinct(): DataColumn<T>
 
@@ -74,17 +65,17 @@ interface DataColumn<out T> : DataColumnAggregations<T> {
 
     override fun resolveSingle(context: ColumnResolutionContext): ColumnWithPath<T>? = this.addPath(context.df)
 
-    override operator fun getValue(thisRef: Any?, property: KProperty<*>) = super.getValue(thisRef, property) as DataColumn<T>
+    override operator fun getValue(thisRef: Any?, property: KProperty<*>): DataColumn<T> = super.getValue(thisRef, property) as DataColumn<T>
 
-    operator fun iterator() = values().iterator()
+    public operator fun iterator(): Iterator<T> = values().iterator()
 }
 
-typealias DoubleCol = DataColumn<Double?>
-typealias BooleanCol = DataColumn<Boolean?>
-typealias IntCol = DataColumn<Int?>
-typealias NumberCol = DataColumn<Number?>
-typealias StringCol = DataColumn<String?>
-typealias AnyCol = DataColumn<*>
+public typealias DoubleCol = DataColumn<Double?>
+public typealias BooleanCol = DataColumn<Boolean?>
+public typealias IntCol = DataColumn<Int?>
+public typealias NumberCol = DataColumn<Number?>
+public typealias StringCol = DataColumn<String?>
+public typealias AnyCol = DataColumn<*>
 
 internal val AnyCol.type get() = type()
 internal val AnyCol.hasNulls get() = hasNulls()
@@ -99,14 +90,14 @@ internal fun guessValueType(values: Sequence<Any?>, upperBound: KType? = null): 
     val classesInMany = mutableSetOf<KClass<*>>()
     var nullsInMany = false
     values.forEach {
-        when(it){
+        when (it) {
             null -> hasNulls = true
             is AnyRow -> hasRows = true
             is AnyFrame -> hasFrames = true
             is Many<*> -> {
                 hasMany = true
                 it.forEach {
-                    if(it == null) nullsInMany = true
+                    if (it == null) nullsInMany = true
                     else classesInMany.add(it.javaClass.kotlin)
                 }
             }
@@ -116,13 +107,13 @@ internal fun guessValueType(values: Sequence<Any?>, upperBound: KType? = null): 
     val allManyWithRows = classesInMany.isNotEmpty() && classesInMany.all { it.isSubclassOf(DataRow::class) } && !nullsInMany
     return when {
         classes.isNotEmpty() -> {
-            if(hasRows) classes.add(DataRow::class)
-            if(hasFrames) classes.add(DataFrame::class)
-            if(hasMany) {
-                if(classesInMany.isNotEmpty()) {
+            if (hasRows) classes.add(DataRow::class)
+            if (hasFrames) classes.add(DataFrame::class)
+            if (hasMany) {
+                if (classesInMany.isNotEmpty()) {
                     val typeInLists = classesInMany.commonType(nullsInMany, upperBound)
                     val typeOfOthers = classes.commonType(nullsInMany, upperBound)
-                    if(typeInLists == typeOfOthers){
+                    if (typeInLists == typeOfOthers) {
                         return Many::class.createTypeWithArgument(typeInLists, false)
                     }
                 }
@@ -134,9 +125,9 @@ internal fun guessValueType(values: Sequence<Any?>, upperBound: KType? = null): 
         hasRows && !hasFrames && !hasMany -> DataRow::class.createStarProjectedType(false)
         hasMany && !hasFrames && !hasRows -> Many::class.createTypeWithArgument(classesInMany.commonType(nullsInMany, upperBound))
         else -> {
-            if(hasRows) classes.add(DataRow::class)
-            if(hasFrames) classes.add(DataFrame::class)
-            if(hasMany) classes.add(Many::class)
+            if (hasRows) classes.add(DataRow::class)
+            if (hasFrames) classes.add(DataFrame::class)
+            if (hasMany) classes.add(Many::class)
             return classes.commonType(hasNulls, upperBound)
         }
     }
@@ -144,20 +135,26 @@ internal fun guessValueType(values: Sequence<Any?>, upperBound: KType? = null): 
 
 internal fun guessColumnType(name: String, values: List<Any?>) = guessColumnType(name, values, null)
 
-internal fun guessColumnType(name: String, values: List<Any?>, suggestedType: KType? = null, suggestedTypeIsUpperBound: Boolean = false, defaultValue: Any? = null): AnyCol  {
+internal fun guessColumnType(
+    name: String,
+    values: List<Any?>,
+    suggestedType: KType? = null,
+    suggestedTypeIsUpperBound: Boolean = false,
+    defaultValue: Any? = null
+): AnyCol {
     val type = when {
         suggestedType == null || suggestedTypeIsUpperBound -> guessValueType(values.asSequence(), suggestedType)
         else -> suggestedType
     }
 
-    return when(type.classifier!! as KClass<*>) {
+    return when (type.classifier!! as KClass<*>) {
         DataRow::class -> {
             val df = values.map { (it as AnyRow).toDataFrame() }.union()
             DataColumn.create(name, df) as AnyCol
         }
         DataFrame::class -> {
             val frames = values.map {
-                when(it) {
+                when (it) {
                     null -> null
                     is AnyFrame -> it
                     is AnyRow -> it.toDataFrame()
@@ -170,8 +167,8 @@ internal fun guessColumnType(name: String, values: List<Any?>, suggestedType: KT
         Many::class -> {
             val nullable = type.isMarkedNullable
             val lists = values.map {
-                when(it){
-                    null -> if(nullable) null else emptyMany()
+                when (it) {
+                    null -> if (nullable) null else emptyMany()
                     is Many<*> -> it
                     else -> manyOf(it)
                 }

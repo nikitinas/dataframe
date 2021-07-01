@@ -47,7 +47,7 @@ public fun <T, G> GroupedDataFrame<T, G>.sortBy(vararg cols: KProperty<Comparabl
 public fun <T, G, C> GroupedDataFrame<T, G>.sortBy(selector: SortColumnsSelector<G, C>): GroupedDataFrame<T, G> = doSortBy(selector)
 
 private fun <T, G, C> GroupedDataFrame<T, G>.createColumnFromGroupExpression(receiver: SelectReceiver<T>, default: C? = null, selector: DataFrameSelector<G, C>): DataColumn<C?> {
-    return receiver.exprGuess { row ->
+    return receiver.exprWithActualType { row ->
         val group: DataFrame<G>? = row[groups]
         if(group == null) default
         else selector(group, group)

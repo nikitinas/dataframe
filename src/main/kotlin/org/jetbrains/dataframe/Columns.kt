@@ -97,13 +97,17 @@ public fun <T, R> computeValues(df: DataFrame<T>, expression: AddExpression<T, R
     return nullable to list
 }
 
-public inline fun <T, reified R> DataFrameBase<T>.newColumn(name: String = "", noinline expression: AddExpression<T, R>): DataColumn<R> {
+public inline fun <T, reified R> DataFrameBase<T>.newColumn(name: String = "", noinline expression: AddExpression<T, R>): DataColumn<R> = newColumn(name, false, expression)
+
+public inline fun <T, reified R> DataFrameBase<T>.newColumn(name: String = "", useActualType: Boolean = false, noinline expression: AddExpression<T, R>): DataColumn<R> {
+    if(useActualType) return newColumnWithActualType(name, expression)
     val (nullable, values) = computeValues(this as DataFrame<T>, expression)
     if (R::class == DataFrame::class) return DataColumn.frames(name, values as List<AnyFrame?>) as DataColumn<R>
     return column(name, values, nullable)
 }
 
-public fun <T, R> DataFrameBase<T>.newGuessColumn(name: String, expression: AddExpression<T, R>): DataColumn<R> {
+@PublishedApi
+internal fun <T, R> DataFrameBase<T>.newColumnWithActualType(name: String, expression: AddExpression<T, R>): DataColumn<R> {
     val (_, values) = computeValues(this as DataFrame<T>, expression)
     return guessColumnType(name, values) as DataColumn<R>
 }

@@ -123,9 +123,9 @@ public interface SelectReceiver<out T> : DataFrameBase<T> {
     public infix fun <C> KProperty<C>.and(other: KProperty<C>): Columns<C> = toColumnDef() and other.toColumnDef()
     public infix fun <C> Columns<C>.and(other: String): Columns<Any?> = this and other.toColumnDef()
 
-    public operator fun <C> String.invoke(newColumnExpression: RowSelector<T, C>): DataColumn<C> = newGuessColumn(this, newColumnExpression)
+    public operator fun <C> String.invoke(newColumnExpression: RowSelector<T, C>): DataColumn<C> = newColumnWithActualType(this, newColumnExpression)
 
-    public infix fun <C> String.by(newColumnExpression: RowSelector<T, C>): DataColumn<C> = newGuessColumn(this, newColumnExpression)
+    public infix fun <C> String.by(newColumnExpression: RowSelector<T, C>): DataColumn<C> = newColumnWithActualType(this, newColumnExpression)
 
     public fun DataFrameBase<*>.string(columnName: String): DataColumn<String> = getColumn(columnName)
     public fun DataFrameBase<*>.int(columnName: String): DataColumn<Int> = getColumn(columnName)
@@ -139,9 +139,9 @@ public interface SelectReceiver<out T> : DataFrameBase<T> {
     public fun DataFrameBase<*>.nlong(columnName: String): DataColumn<Long?> = getColumn(columnName)
 }
 
-public inline fun <T, reified R> SelectReceiver<T>.expr(name: String = "", noinline expression: AddExpression<T, R>): DataColumn<R> = newColumn(name, expression)
+public inline fun <T, reified R> SelectReceiver<T>.expr(name: String = "", useActualType: Boolean = false, noinline expression: AddExpression<T, R>): DataColumn<R> = newColumn(name, useActualType, expression)
 
-public fun <T, R> SelectReceiver<T>.exprGuess(name: String = "", expression: AddExpression<T, R>): DataColumn<R> = newGuessColumn(name, expression)
+internal fun <T, R> SelectReceiver<T>.exprWithActualType(name: String = "", expression: AddExpression<T, R>): DataColumn<R> = newColumnWithActualType(name, expression)
 
 internal fun <T,C> ColumnsSelector<T, C>.filter(predicate: (ColumnWithPath<C>) -> Boolean): ColumnsSelector<T, C> = { this@filter(it, it).filter(predicate) }
 //internal fun Columns<*>.filter(predicate: (AnyCol) -> Boolean) = transform { it.filter { predicate(it.data) } }

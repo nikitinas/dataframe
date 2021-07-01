@@ -139,9 +139,9 @@ public interface SelectReceiver<out T> : DataFrameBase<T> {
     public fun DataFrameBase<*>.nlong(columnName: String): DataColumn<Long?> = getColumn(columnName)
 }
 
-inline fun <T, reified R> SelectReceiver<T>.expr(name: String = "", noinline expression: AddExpression<T, R>) = newColumn(name, expression)
+public inline fun <T, reified R> SelectReceiver<T>.expr(name: String = "", noinline expression: AddExpression<T, R>): DataColumn<R> = newColumn(name, expression)
 
-public fun <T, R> SelectReceiver<T>.exprGuess(name: String = "", expression: AddExpression<T, R>) = newGuessColumn(name, expression)
+public fun <T, R> SelectReceiver<T>.exprGuess(name: String = "", expression: AddExpression<T, R>): DataColumn<R> = newGuessColumn(name, expression)
 
 internal fun <T,C> ColumnsSelector<T, C>.filter(predicate: (ColumnWithPath<C>) -> Boolean): ColumnsSelector<T, C> = { this@filter(it, it).filter(predicate) }
 //internal fun Columns<*>.filter(predicate: (AnyCol) -> Boolean) = transform { it.filter { predicate(it.data) } }

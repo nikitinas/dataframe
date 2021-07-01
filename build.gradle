@@ -38,8 +38,13 @@ dependencies {
     implementation "com.github.jkcclemens:khttp:-SNAPSHOT"
 
     testImplementation "junit:junit:4.12"
-    testImplementation "io.kotest:kotest-assertions-core:4.5.0"
-    testImplementation "org.jetbrains.kotlinx:kotlin-jupyter-kernel:$jupyterApiVersion"
+    testImplementation("io.kotest:kotest-assertions-core:4.6.0") {
+        exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk8"
+    }
+    testImplementation("org.jetbrains.kotlinx:kotlin-jupyter-kernel:$jupyterApiVersion") {
+        exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk7"
+        exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk8"
+    }
     testImplementation "org.jetbrains.kotlin:kotlin-scripting-jvm"
 
     // needed to work around https://youtrack.jetbrains.com/issue/KT-15064

@@ -99,6 +99,8 @@ internal fun AnyFrame.toHtmlData(configuration: DisplayConfiguration = DisplayCo
     return HtmlData("", body, script)
 }
 
+fun Html(body: String) = HtmlData("", body, "")
+
 data class HtmlData(val style: String, val body: String, val script: String){
     override fun toString() = """
         <html>
@@ -190,12 +192,15 @@ internal class DataFrameFormatter(val formattedClass: String, val nullClass: Str
 
         var isFormatted: Boolean = false
 
+        fun appendHtml(content: String) = sb.append(content)
+
         fun append(prefix: String, content: String, postfix: String) {
             if(isFull) return
             val truncate = length + content.length > limit
             val s = if(truncate) content.substring(0, limit - length) else content
             length += s.length
-            sb.append(prefix + s + postfix)
+            val escaped = s.escapeHTML()
+            sb.append(prefix + escaped + postfix)
             if(truncate || isFull) sb.append("...")
         }
 
@@ -255,7 +260,8 @@ internal class DataFrameFormatter(val formattedClass: String, val nullClass: Str
                 }
             is Number -> appendCss(value.toString(), numberClass)
             is URL -> append("<a href='$value' target='_blank'>",value.toString(),"</a>")
-            else -> appendCss(value.toString().escapeHTML())
+            is HtmlData -> appendHtml(value.body)
+            else -> appendCss(value.toString())
         }
     }
 

@@ -95,7 +95,11 @@ public class FormattedFrame<T>(
     internal val df: DataFrame<T>,
     internal val formatter: RowColFormatter<T>? = null,
 ) {
-    public fun toHTML(configuration: DisplayConfiguration): String = df.toHTML(configuration.copy(cellFormatter = formatter as RowColFormatter<*>?))
+    public fun toHTML(configuration: DisplayConfiguration): String = df.toHTML(getDisplayConfiguration(configuration))
+
+    public fun getDisplayConfiguration(configuration: DisplayConfiguration): DisplayConfiguration {
+        return configuration.copy(cellFormatter = formatter as RowColFormatter<*>?)
+    }
 }
 
 public data class ColorClause<T, C>(

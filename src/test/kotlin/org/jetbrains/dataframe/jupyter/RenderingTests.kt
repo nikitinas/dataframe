@@ -1,6 +1,7 @@
 package org.jetbrains.dataframe.jupyter
 
 import io.kotest.matchers.should
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.intellij.lang.annotations.Language
 import org.jetbrains.dataframe.test.containNTimes
@@ -14,13 +15,28 @@ class RenderingTests : AbstractReplTest() {
             """
             val name by column<String>()
             val height by column<Int>()
-            dataFrameOf(name, height)(
+            val df = dataFrameOf(name, height)(
                 "Bill", 135,
                 "Mark", 160
             ).typed<Unit>()
+            df
             """.trimIndent()
         )
         html shouldContain "Bill"
+
+        @Language("kts")
+        val useRes = exec(
+            """
+            USE {
+                render<Int> { (it * 2).toString() }
+            }
+            """.trimIndent()
+        )
+        useRes shouldBe Unit
+
+        val html2 = execHtml("df")
+        html2 shouldContain (135 * 2).toString()
+        html2 shouldContain (160 * 2).toString()
     }
 
     @Test

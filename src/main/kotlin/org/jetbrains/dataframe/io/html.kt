@@ -2,14 +2,19 @@ package org.jetbrains.dataframe.io
 
 import org.jetbrains.dataframe.DataFrame
 import org.jetbrains.dataframe.RowColFormatter
-import org.jetbrains.dataframe.images.Image
+import org.jetbrains.dataframe.jupyter.CellRenderer
+import org.jetbrains.dataframe.jupyter.ImageCellRenderer
 import org.jetbrains.dataframe.size
 
-internal val tooltipLimit = 1000
+internal const val tooltipLimit = 1000
+internal fun getDefaultFooter(df: DataFrame<*>): String {
+    return "DataFrame [${df.size}]"
+}
 
 public fun <T> DataFrame<T>.toHTML(
     configuration: DisplayConfiguration = DisplayConfiguration.DEFAULT,
-    getFooter: (DataFrame<T>) -> String = { "DataFrame [${it.size}]" }
+    getFooter: (DataFrame<T>) -> String = ::getDefaultFooter,
+    cellRenderer: CellRenderer = ImageCellRenderer,
 ): String = buildString {
     append("<html><body>")
     append("<table><tr>")
@@ -22,18 +27,8 @@ public fun <T> DataFrame<T>.toHTML(
         append("<tr>")
         columns().forEach { col ->
             val cellVal = row[col]
-            val tooltip: String
-            val content: String
-            when (cellVal) {
-                is Image -> {
-                    tooltip = cellVal.url
-                    content = "<img src=\"${cellVal.url}\"/>"
-                }
-                else -> {
-                    tooltip = renderValueForHtml(cellVal, tooltipLimit)
-                    content = renderValueForHtml(cellVal, configuration.cellContentLimit)
-                }
-            }
+            val tooltip = cellRenderer.tooltip(cellVal, configuration)
+            val content = cellRenderer.content(cellVal, configuration)
             val attributes = configuration.cellFormatter?.invoke(row, col)?.attributes()?.joinToString(";") { "${it.first}:${it.second}" }.orEmpty()
             append("<td style=\"text-align:left;$attributes\" title=\"$tooltip\">$content</td>")
         }

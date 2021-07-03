@@ -96,4 +96,11 @@ internal fun renderValue(value: Any?) =
         else -> value.toString()
     }
 
+internal fun internallyRenderable(value: Any?): Boolean {
+    return when (value) {
+        is AnyFrame, is Double, is Many<*>, null, "" -> true
+        else -> false
+    }
+}
+
 public fun Double.format(digits: Int): String = "%.${digits}f".format(this)

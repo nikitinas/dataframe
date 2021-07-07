@@ -137,10 +137,10 @@ lintKotlinMain {
     exclude '**/*keywords*/**'
 }
 
-lintKotlinTest.enabled = false
+lintKotlinTest.enabled = true
 
 kotlinter {
-    ignoreFailures = true
+    ignoreFailures = false
     reporters = ['checkstyle', 'plain']
     experimentalRules = true
     disabledRules = [

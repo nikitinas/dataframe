@@ -99,8 +99,12 @@ public fun <T, R> computeValues(df: DataFrame<T>, expression: AddExpression<T, R
 
 public inline fun <T, reified R> DataFrameBase<T>.newColumn(name: String = "", noinline expression: AddExpression<T, R>): DataColumn<R> = newColumn(name, false, expression)
 
-public inline fun <T, reified R> DataFrameBase<T>.newColumn(name: String = "", useActualType: Boolean = false, noinline expression: AddExpression<T, R>): DataColumn<R> {
-    if(useActualType) return newColumnWithActualType(name, expression)
+public inline fun <T, reified R> DataFrameBase<T>.newColumn(
+    name: String = "",
+    useActualType: Boolean = false,
+    noinline expression: AddExpression<T, R>
+): DataColumn<R> {
+    if (useActualType) return newColumnWithActualType(name, expression)
     val (nullable, values) = computeValues(this as DataFrame<T>, expression)
     if (R::class == DataFrame::class) return DataColumn.frames(name, values as List<AnyFrame?>) as DataColumn<R>
     return column(name, values, nullable)

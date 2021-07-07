@@ -139,12 +139,16 @@ public interface SelectReceiver<out T> : DataFrameBase<T> {
     public fun DataFrameBase<*>.nlong(columnName: String): DataColumn<Long?> = getColumn(columnName)
 }
 
-public inline fun <T, reified R> SelectReceiver<T>.expr(name: String = "", useActualType: Boolean = false, noinline expression: AddExpression<T, R>): DataColumn<R> = newColumn(name, useActualType, expression)
+public inline fun <T, reified R> SelectReceiver<T>.expr(
+    name: String = "",
+    useActualType: Boolean = false,
+    noinline expression: AddExpression<T, R>
+): DataColumn<R> = newColumn(name, useActualType, expression)
 
 internal fun <T, R> SelectReceiver<T>.exprWithActualType(name: String = "", expression: AddExpression<T, R>): DataColumn<R> = newColumnWithActualType(name, expression)
 
-internal fun <T,C> ColumnsSelector<T, C>.filter(predicate: (ColumnWithPath<C>) -> Boolean): ColumnsSelector<T, C> = { this@filter(it, it).filter(predicate) }
-//internal fun Columns<*>.filter(predicate: (AnyCol) -> Boolean) = transform { it.filter { predicate(it.data) } }
+internal fun <T, C> ColumnsSelector<T, C>.filter(predicate: (ColumnWithPath<C>) -> Boolean): ColumnsSelector<T, C> = { this@filter(it, it).filter(predicate) }
+// internal fun Columns<*>.filter(predicate: (AnyCol) -> Boolean) = transform { it.filter { predicate(it.data) } }
 
 internal fun Columns<*>.colsInternal(predicate: (AnyCol) -> Boolean) = transform { it.flatMap { it.children().filter { predicate(it.data) } } }
 internal fun Columns<*>.dfsInternal(predicate: (ColumnWithPath<*>) -> Boolean) = transform { it.filter { it.isGroup() }.flatMap { it.children().dfs().filter(predicate) } }

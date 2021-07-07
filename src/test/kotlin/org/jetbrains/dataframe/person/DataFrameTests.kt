@@ -1832,6 +1832,6 @@ class DataFrameTests : BaseTest() {
     @Test
     fun `grouped sort by count`() {
         val sorted = typed.groupBy { name }.sortByCountDesc()
-        sorted.plain().name.values() shouldBe typed.rows().groupBy{ it.name }.toList().sortedByDescending { it.second.size }.map{ it.first }
+        sorted.plain().name.values() shouldBe typed.rows().groupBy { it.name }.toList().sortedByDescending { it.second.size }.map { it.first }
     }
 }

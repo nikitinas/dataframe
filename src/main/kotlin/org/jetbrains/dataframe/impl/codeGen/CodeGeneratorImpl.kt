@@ -26,7 +26,7 @@ internal fun GeneratedField.renderFieldType(): Code =
 internal fun getRequiredMarkers(schema: DataFrameSchema, markers: Iterable<Marker>) = markers
     .filter { it.isOpen && it.schema.compare(schema).isSuperOrEqual() }
 
-internal val charsToQuote = """[ {}()<>'"/|.\\!?@:;%^&*#$-]""".toRegex()
+internal val charsToQuote = """[ (){}\[\].<>'"/|\\!?@:;%^&*#$-]""".toRegex()
 
 internal fun String.needsQuoting(): Boolean {
     return isBlank() ||
